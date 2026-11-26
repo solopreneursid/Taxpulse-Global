@@ -51,7 +51,7 @@ try {
    assert.equal(await page.evaluate(()=>document.activeElement.classList.contains('skip')),true);
    await page.keyboard.press('Enter');
    assert.equal(await page.evaluate(()=>document.activeElement.id),'main');
-   assert.equal(await page.locator('#tools .tool-link').count(),22);
+   assert.equal(await page.locator('#tools .tool-link').count(),25);
    assert.equal(await page.locator('#tools .category-card').count(),6);
    assert.deepEqual(await page.locator('main > section.card:visible').evaluateAll(es=>es.map(e=>e.id)),['tools']);
    await page.locator('.nav a[href="/salary"]').click();
@@ -97,6 +97,14 @@ try {
    assert.equal(await page.locator('#purchasing-power-firstFactor').inputValue(),'');
    await page.locator('#ppp-reference-copy').click();assert.equal(await page.locator('#purchasing-power-referenceYear').inputValue(),'2024');assert.equal(await page.locator('#purchasing-power-firstFactor').inputValue(),'19.896916');
    assert.match(await page.locator('#ppp-reference-status').innerText(),/Independently unreviewed/);
+   await page.goto(origin+'/tools/taxable-income-opportunity');
+   await page.locator('#taxable-income-opportunity-country').selectOption('SG');
+   await page.locator('#taxable-income-opportunity-beforeTaxable').fill('80000');await page.locator('#taxable-income-opportunity-afterTaxable').fill('40000');
+   await page.locator('#taxable-income-opportunity-incrementalCashCost').fill('1000');await page.locator('#taxable-income-opportunity-scopeConfirmed').check();
+   await page.locator('#taxable-income-opportunity-form button[type=submit]').click();await page.locator('#taxable-income-opportunity-result').waitFor();assert.match(await page.locator('#taxable-income-opportunity-breakdown').innerText(),/SGD\s*1,800/);
+   await page.goto(origin+'/tools/financial-runway');
+   for(const [k,v] of Object.entries({monthlyIncome:10000,monthlyExpenses:6000,liquidSavings:10000,reserveFloor:5000,goalAmount:15000,horizonMonths:12}))await page.locator('#financial-runway-'+k).fill(String(v));
+   await page.locator('#financial-runway-form button[type=submit]').click();await page.locator('#financial-runway-result').waitFor();assert.match(await page.locator('#financial-runway-breakdown').innerText(),/Months to reach goal and reserve\s*3/);
    await page.locator('.nav a[href="/money"]').click();
    await page.locator('#category-money a[href="/tools/monthly-budget"]').click();
    await page.locator('#monthly-budget').waitFor();
@@ -290,6 +298,9 @@ try {
    await page.locator('#pay-result').waitFor();
    assert.match(await page.locator('#pay-annual').innerText(),/CAD\s*74,458\.50/);
    await page.locator('#profile-save').click();
+   await page.locator('.nav a[href="/taxes"]').click();await page.locator('#category-taxes a[href="/tools/salary-cliffs"]').click();
+   await page.locator('#salary-cliffs-use').click();await page.locator('#salary-cliffs-confirm').check();await page.locator('#salary-cliffs-form button[type=submit]').click();await page.locator('#salary-cliffs-result').waitFor();assert.match(await page.locator('#salary-cliffs-summary').innerText(),/downward steps across 100/);
+
    await page.locator('.nav a[href="/money"]').click();await page.locator('#profile-transfer summary').click();
    await page.locator('#profile-transfer-password').fill('fictional-profile-password');
    const [profileBackup]=await Promise.all([page.waitForEvent('download'),page.locator('#profile-transfer-export').click()]);
