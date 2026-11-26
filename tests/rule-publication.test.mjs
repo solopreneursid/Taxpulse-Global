@@ -57,7 +57,7 @@ test('atomic publication, fixture rejection, replay, emergency block and forward
  await assert.rejects(publishSnapshot(db,one.envelope,bad,approvedOptions(one)));
  assert.equal(sqlite.prepare('SELECT sequence FROM regulatory_head').get().sequence,0);
  assert.equal((await publishSnapshot(db,one.envelope,one.fixtures,approvedOptions(one))).state,'active');
- const env={RULE_DB:db,RULE_PUBLIC_KEY:publicKeyHex,RULE_MIN_SEQUENCE:'1'};
+ const env={RULE_DB:db,RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,RULE_MIN_SEQUENCE:'1'};
  assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).state,'signed-preview');
  await assert.rejects(publishSnapshot(db,one.envelope,one.fixtures,approvedOptions(one)));
  await blockSnapshot(db,1);assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).state,'blocked');
