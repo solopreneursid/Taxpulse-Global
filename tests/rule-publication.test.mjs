@@ -19,6 +19,8 @@ const publicKeyHex=hex(await crypto.subtle.exportKey('raw',key.publicKey)),optio
 const reviewer=await crypto.subtle.generateKey('Ed25519',true,['sign','verify']);
 const reviewerPublicKeyHex=hex(await crypto.subtle.exportKey('raw',reviewer.publicKey)),reviewerId='synthetic-test-reviewer';
 async function approvedPack(sequence){const packData=await pack(sequence);const payload=statutoryReviewPayload(packData.envelope,reviewerId,now.toISOString());return {...packData,review:{payload,signature:hex(await crypto.subtle.sign('Ed25519',reviewer.privateKey,snapshotBytes(payload)))}};}
+function migrate(db){for(const file of ['001-regulatory-snapshots.sql','002-regulatory-version-ledger.sql','003-regulatory-unique-versions.sql','004-regulatory-review-archive.sql'])db.exec(readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));}
+const approvedOptions=packData=>({...options,review:packData.review,reviewerPublicKeyHex,reviewerId});
 function dbAdapter(db){return {prepare(sql){const s=db.prepare(sql);let args=[];return {bind(...a){args=a;return this;},async first(){return s.get(...args);},async run(){return {meta:{changes:Number(s.run(...args).changes)}};}};}};}
 async function pack(sequence){
  const p={schemaVersion:2,sequence,engineFingerprint,issuedAt:'2026-11-25T00:00:00.000Z',expiresAt:'2026-11-30T00:00:00.000Z',mode:'preview',regional:structuredClone(regional),indiaSalary:structuredClone(indiaSalary),payroll:structuredClone(payroll),national:structuredClone(national),evidence:[]};
@@ -49,20 +51,24 @@ async function pack(sequence){
 }
 test('atomic publication, fixture rejection, replay, emergency block and forward recovery',async()=>{
  const sqlite=new DatabaseSync(':memory:');try{
- sqlite.exec(readFileSync(new URL('../migrations/001-regulatory-snapshots.sql',import.meta.url),'utf8'));const db=dbAdapter(sqlite);
- const one=await pack(1),bad=structuredClone(one.fixtures);bad[0].expected=1;
- await assert.rejects(publishSnapshot(db,one.envelope,bad,options));
- assert.equal(sqlite.prepare('SELECT sequence FROM regulatory_head').get().sequence,0);
- assert.equal((await publishSnapshot(db,one.envelope,one.fixtures,options)).state,'active');
- const env={RULE_DB:db,RULE_PUBLIC_KEY:publicKeyHex,RULE_MIN_SEQUENCE:'1'};
- assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).state,'signed-preview');
+ migrate(sqlite);const db=dbAdapter(sqlite);
+ const one=await approvedPack(1),bad=structuredClone(one.fixtures);bad[0].expected=1;
  await assert.rejects(publishSnapshot(db,one.envelope,one.fixtures,options));
+ await assert.rejects(publishSnapshot(db,one.envelope,bad,approvedOptions(one)));
+ assert.equal(sqlite.prepare('SELECT sequence FROM regulatory_head').get().sequence,0);
+ assert.equal((await publishSnapshot(db,one.envelope,one.fixtures,approvedOptions(one))).state,'active');
+ const env={RULE_DB:db,RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,RULE_MIN_SEQUENCE:'1'};
+ assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).state,'signed-preview');
+ await assert.rejects(publishSnapshot(db,one.envelope,one.fixtures,approvedOptions(one)));
  await blockSnapshot(db,1);assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).state,'blocked');
- const three=await pack(3);await publishSnapshot(db,three.envelope,three.fixtures,options);
+ const three=await approvedPack(3);await publishSnapshot(db,three.envelope,three.fixtures,approvedOptions(three));
  assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).sequence,3);
  assert.equal(sqlite.prepare('SELECT count(*) n FROM regulatory_snapshots').get().n,2);
  assert.equal(sqlite.prepare('SELECT count(*) n FROM regulatory_events').get().n,3);
+ const archived=sqlite.prepare('SELECT sequence,review_record FROM regulatory_snapshots ORDER BY sequence').all();
+ assert.deepEqual(archived.map(row=>JSON.parse(row.review_record)),[one,three].map(p=>({review:p.review,publisherPublicKeyHex:publicKeyHex,reviewerPublicKeyHex})));
+ assert.throws(()=>sqlite.exec("UPDATE regulatory_snapshots SET review_record=NULL"),/immutable snapshot archive/);
  }finally{sqlite.close();}
 });
 
-test('scheduled publisher requires independent approval, rejects tampering and retains active head',async()=>{const sqlite=new DatabaseSync(':memory:');try{sqlite.exec(readFileSync(new URL('../migrations/001-regulatory-snapshots.sql',import.meta.url),'utf8'));const db=dbAdapter(sqlite);let pending=null;const env={RULE_DB:db,RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,RULE_INBOX:{get:async()=>pending}};await assert.rejects(runScheduledPublication({...env,RULE_REVIEW_PUBLIC_KEY:publicKeyHex},engineFingerprint,{now}));assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).state,'no_candidate');pending=JSON.stringify(await pack(1));await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));assert.equal(sqlite.prepare('SELECT sequence FROM regulatory_head').get().sequence,0);pending=JSON.stringify(await approvedPack(1));assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).state,'active');assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).state,'already_processed');const two=await approvedPack(2);two.envelope.signature='0'.repeat(128);pending=JSON.stringify(two);await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));const wrongReview=await approvedPack(2);wrongReview.review.payload.reviewerId='wrong-reviewer';pending=JSON.stringify(wrongReview);await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));const replay=await approvedPack(2);replay.review=(await approvedPack(1)).review;pending=JSON.stringify(replay);await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));assert.equal(sqlite.prepare('SELECT sequence FROM regulatory_head').get().sequence,1);pending=JSON.stringify(await approvedPack(2));assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).sequence,2);}finally{sqlite.close();}});
+test('scheduled publisher requires independent approval, rejects tampering and retains active head',async()=>{const sqlite=new DatabaseSync(':memory:');try{migrate(sqlite);const db=dbAdapter(sqlite);let pending=null;const env={RULE_DB:db,RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,RULE_INBOX:{get:async()=>pending}};await assert.rejects(runScheduledPublication({...env,RULE_REVIEW_PUBLIC_KEY:publicKeyHex},engineFingerprint,{now}));assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).state,'no_candidate');pending=JSON.stringify(await pack(1));await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));assert.equal(sqlite.prepare('SELECT sequence FROM regulatory_head').get().sequence,0);pending=JSON.stringify(await approvedPack(1));assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).state,'active');assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).state,'already_processed');const two=await approvedPack(2);two.envelope.signature='0'.repeat(128);pending=JSON.stringify(two);await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));const wrongReview=await approvedPack(2);wrongReview.review.payload.reviewerId='wrong-reviewer';pending=JSON.stringify(wrongReview);await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));const replay=await approvedPack(2);replay.review=(await approvedPack(1)).review;pending=JSON.stringify(replay);await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));assert.equal(sqlite.prepare('SELECT sequence FROM regulatory_head').get().sequence,1);pending=JSON.stringify(await approvedPack(2));assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).sequence,2);}finally{sqlite.close();}});

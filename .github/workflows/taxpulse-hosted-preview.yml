@@ -17,10 +17,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install pinned browser test dependency
+      - name: Install locked browser test dependencies
         run: |
-          if [ ! -f package.json ]; then npm init -y; fi
-          npm install --save-dev --save-exact --package-lock=true --ignore-scripts playwright@1.65.1
+          npm ci --ignore-scripts
+          npm audit --audit-level=high --package-lock-only
           npx --no-install playwright install --with-deps chromium
       - name: Check exact hosted revision
         run: node browser-tests/hosted-smoke.mjs

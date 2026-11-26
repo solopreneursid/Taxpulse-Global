@@ -1,4 +1,7 @@
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { verifyProductionAuthorization } from './release-authorization.mjs';
 import { catalog } from './country.mjs';
 
 const manifest = JSON.parse(readFileSync(new URL('../rules/manifest.json', import.meta.url), 'utf8'));
@@ -53,7 +56,7 @@ function validEvidence(e, country, module) {
   return true;
 }
 
-export function assertProductionReady(m = manifest) {
+export function assertProductionReady(m = manifest, authorization, context) {
   if (!m || m.schemaVersion !== 1 || m.releaseMode !== 'production') {
     throw Error('Production release not authorized');
   }
@@ -79,7 +82,18 @@ export function assertProductionReady(m = manifest) {
       }
     }
   }
-  return true;
+  return verifyProductionAuthorization(m, authorization, context);
 }
 
-if (process.argv.includes('--production')) assertProductionReady();
+if (process.argv.includes('--production')) {
+  // Keep preview failure independent of signing configuration.
+  if (manifest.releaseMode !== 'production') assertProductionReady();
+  const cwd = new URL('../', import.meta.url);
+  const commit = execFileSync('git',['rev-parse','HEAD'],{cwd,encoding:'utf8'}).trim();
+  if(execFileSync('git',['status','--porcelain','--untracked-files=no'],{cwd,encoding:'utf8'}).trim())throw Error('Dirty tracked release tree');
+  const {TAXPULSE_RELEASE_APPROVAL,TAXPULSE_RELEASE_ARTIFACT,TAXPULSE_FOUNDER_PUBLIC_KEY,TAXPULSE_RELEASE_REVIEWER_PUBLIC_KEY}=process.env;
+  if(!TAXPULSE_RELEASE_APPROVAL||!TAXPULSE_RELEASE_ARTIFACT)throw Error('Release approval and exact deployment artifact required');
+  const artifactSha256=createHash('sha256').update(readFileSync(TAXPULSE_RELEASE_ARTIFACT)).digest('hex');
+  const authorization=JSON.parse(readFileSync(TAXPULSE_RELEASE_APPROVAL,'utf8'));
+  assertProductionReady(manifest,authorization,{commit,artifactSha256,founderPublicKeyHex:TAXPULSE_FOUNDER_PUBLIC_KEY,reviewerPublicKeyHex:TAXPULSE_RELEASE_REVIEWER_PUBLIC_KEY});
+}

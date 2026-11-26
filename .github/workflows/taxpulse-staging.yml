@@ -18,11 +18,8 @@ jobs:
         with:
           node-version: '22'
       - run: node --test tests/*.test.mjs
-      - name: Install pinned browser test dependency
-        run: |
-          if [ ! -f package.json ]; then npm init -y; fi
-          npm install --save-dev --save-exact --package-lock=true --ignore-scripts playwright@1.65.1
-          test -f package-lock.json
+      - name: Install locked browser test dependencies
+        run: npm ci --ignore-scripts
       - name: Audit installed test dependencies
         run: npm audit --audit-level=high --package-lock-only
       - name: Install Chromium
