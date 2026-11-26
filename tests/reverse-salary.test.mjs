@@ -43,10 +43,13 @@ test('automatic search distinguishes limit from impossibility',()=>{
  assert.equal(automaticReverseSalary({profile,target:300000,period:'annual'}).searchComplete,true);
 });
 
-test('automatic search preserves incomplete status where no safe tighter bound exists',()=>{
+test('automatic Alberta search resolves previously incomplete target',()=>{
  const profile={country:'CA',region:'AB',taxYear:'2026',scopeConfirmed:true};
  const result=automaticReverseSalary({profile,target:100000,period:'annual'});
- assert.equal(result.found,false);assert.equal(result.searchComplete,false);
+ assert.equal(result.found,true);assert.equal(result.searchComplete,true);
+ assert.ok(result.achieved>=100000);
+ assert.ok(calculateSalaryRemainder({...profile,pay:result.requiredPay-1}).annualRemainder<100000);
+ assert.equal(automaticReverseSalary({profile,target:150000,period:'annual'}).found,false);
 });
 test('automatic search handles fixed UAE premiums at both tiers',()=>{
  for(const basic of [16000,16000.01]){
@@ -73,5 +76,35 @@ for(const [country,region,pay,extras] of [
   assert.ok(result.requiredPay<=pay);
   assert.ok(result.achieved>=target);
   assert.ok(calculateSalaryRemainder({...profile,pay:result.requiredPay-1})[field]<target);
+ }
+});
+
+test('India validates fixed deductions at the lowest feasible salary',()=>{
+ const profile={country:'IN',region:'IN',taxYear:'2026',scopeConfirmed:true,epfMonthlyWage:0,professionalTaxAnnual:2400};
+ const result=automaticReverseSalary({profile,target:0,period:'annual'});
+ assert.equal(result.requiredPay,2400);assert.equal(result.achieved,0);
+ assert.equal(automaticReverseSalary({profile,target:100,period:'monthly'}).requiredPay,3600);
+});
+for(const [country,region,pay,extras] of [
+ ['CA','AB',68900,{}],['CA','AB',74600,{}],['CA','AB',85000,{}],['CA','AB',118000,{}],['CA','AB',150000,{}],
+ ['IN','IN',1275000,{epfMonthlyWage:15000,professionalTaxAnnual:2400}],
+ ['IN','IN',1275015,{epfMonthlyWage:15000,professionalTaxAnnual:2400}],
+ ['IN','IN',1350000,{epfMonthlyWage:15000,professionalTaxAnnual:2400}],
+ ['IN','IN',5075005,{epfMonthlyWage:15000,professionalTaxAnnual:2400}],
+ ['IN','IN',10075005,{epfMonthlyWage:15000,professionalTaxAnnual:2400}],
+ ['IN','IN',20075005,{epfMonthlyWage:15000,professionalTaxAnnual:2400}],
+ ['IN','IN',50000000,{epfMonthlyWage:0,professionalTaxAnnual:0}]
+])test('reverse salary handles rounded threshold and high income '+country+' '+pay,()=>{
+ const profile={country,region,taxYear:'2026',scopeConfirmed:true,...extras};
+ for(const period of ['annual','monthly']){
+  const field=period==='annual'?'annualRemainder':'averageMonthlyRemainder';
+  const target=calculateSalaryRemainder({...profile,pay})[field];
+  const r=automaticReverseSalary({profile,target,period});
+  assert.equal(r.found,true);assert.equal(r.searchComplete,true);
+  assert.ok(r.requiredPay<=pay);assert.ok(r.achieved>=target);
+  // Independently exhaust the 1000 whole units immediately preceding the result,
+  // including earlier local maxima at the rebate and surcharge cliffs.
+  const lower=Math.max(country==='CA'?60000:profile.epfMonthlyWage*12,r.requiredPay-1000);
+  for(let p=lower;p<r.requiredPay;p++)assert.ok(calculateSalaryRemainder({...profile,pay:p})[field]<target,'Skipped '+p);
  }
 });

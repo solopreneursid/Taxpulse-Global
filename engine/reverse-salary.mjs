@@ -34,7 +34,12 @@ export function automaticReverseSalary({profile,target,period},ruleContext={}){
  let floor=minimum;
  if(key==='DE:DE')floor=Math.max(floor,Math.ceil(profile.annualTaxableIncome/12));
  if(key==='AE:AE')floor=Math.max(floor,Math.ceil(profile.monthlyBasicSalary));
- if(key==='IN:IN')floor=Math.max(floor,profile.epfMonthlyWage*12);
+ if(key==='IN:IN'){
+  // At these low wages income tax is zero. Avoid evaluating a valid profile
+  // at a salary where its fixed employee deductions exceed wages.
+  if(!Number.isSafeInteger(profile.epfMonthlyWage)||profile.epfMonthlyWage<0||profile.epfMonthlyWage>15000||!Number.isSafeInteger(profile.professionalTaxAnnual)||profile.professionalTaxAnnual<0||profile.professionalTaxAnnual>2500)throw new RangeError('Invalid confirmed contribution wage or professional tax');
+  floor=Math.max(floor,profile.epfMonthlyWage*12,Math.ceil(profile.epfMonthlyWage*12*0.12+profile.professionalTaxAnnual));
+ }
  // Validate the profile even if the requested target exceeds the supported range.
  if(!Number.isFinite(floor)||floor>maximum)throw new RangeError('Unsupported profile');
  floor=Math.ceil(floor);
@@ -54,13 +59,25 @@ export function automaticReverseSalary({profile,target,period},ruleContext={}){
  // Singapore whole-dollar CPF rises by at most one dollar per dollar of pay;
  // Australia is restricted above the low-income offset phaseout.
  // Germany and UAE hold assessment and basic wage fixed.
- // Canada and India remain conservative pending proof across rounding and relief boundaries.
+ // India bundled new-regime tax is nondecreasing: progressive rates,
+ // rebate/relief and surcharge/relief are minima of nondecreasing functions
+ // with matching threshold boundaries. Cess and rounding preserve that.
+ // Fixed EPF and professional tax do not vary. Net salary itself may dip.
+ // Alberta bundled deductions before rounding are nondecreasing: CPP/EI
+ // premiums rise or plateau, enhanced CPP reduces taxable-income slope by
+ // at most 4%, federal+provincial marginal rates exceed the marginal
+ // contribution-credit rates. Independent cent rounding can introduce
+ // small dips; subtract CAD 1 from any observed deduction as a conservative
+ // lower bound at all later whole-dollar wages (well above the sum of the
+ // half-cent rounding errors of these components). Never extrapolate
+ // this proof to arbitrary signed schedules.
  // Iterating a necessary bound cannot skip any feasible candidate.
  let start=Math.max(floor,Math.floor((annualTarget+deductionFloor)/multiplier));
- if(Object.keys(ruleContext).length===0&&['US:TX','GB:RUK','GB:SCT','AU:AU','SG:SG','DE:DE','AE:AE'].includes(key)){
+ if(Object.keys(ruleContext).length===0&&['US:TX','GB:RUK','GB:SCT','AU:AU','SG:SG','DE:DE','AE:AE','IN:IN','CA:AB'].includes(key)){
   for(let i=0;i<64&&start<=maximum;i++){
    const at=calculateSalaryRemainder({...profile,pay:start},ruleContext);
-   const next=Math.floor((annualTarget+at.totalModeledDeductions)/multiplier);
+   const safeDeduction=key==='CA:AB'?Math.max(0,at.totalModeledDeductions-1):at.totalModeledDeductions;
+   const next=Math.floor((annualTarget+safeDeduction)/multiplier);
    if(next<=start)break;
    start=next;
   }
