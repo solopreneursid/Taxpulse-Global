@@ -80,7 +80,11 @@
       "income-tax",
       "payroll"
     ],
-    "kind": "change-discovery"
+    "kind": "change-discovery",
+    "alternateUrls": [
+      "https://www.canada.ca/en/revenue-agency/services/forms-publications/payroll/t4032-payroll-deductions-tables/t4032oc-jan/t4032oc-january-general-information.html"
+    ],
+    "preferredUrl": "https://www.canada.ca/en/revenue-agency/services/forms-publications/payroll/t4032-payroll-deductions-tables/t4032oc-jan/t4032oc-january-general-information.html"
   },
   {
     "id": "AU-7",

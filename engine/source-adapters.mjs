@@ -162,7 +162,28 @@ export function extractScottishIncomeBands(html){
  }
  return {jurisdiction:'GB-SCT',component:'regional-income-tax',taxYear:String(year),effectiveFrom:year+'-04-06',effectiveUntil:(year+1)+'-04-06',parameters:{bounds,rates,allowanceBase:allowance,zeroAllowanceIncome:top},scope:'Scottish ordinary-income bands; taper requires separate evidence',status:'candidate',legalStatus:'review_required',automaticActivation:false};
 }
+// Annual CPP/EI maxima are separately published from pay-period withholding.
+// Exact CRA table labels, contribution arithmetic and calendar year must agree.
+export function extractCraPayroll(html){
+ if(typeof html!=='string'||html.length>2*1024*1024)throw Error('Invalid CRA payroll source');
+ const text=normalize(html),years=[...text.matchAll(/CPP contributions for (\d{4})\b/g)].map(x=>Number(x[1])),eiYears=[...text.matchAll(/EI premiums for (\d{4})\b/g)].map(x=>Number(x[1]));
+ const uniqueYear=[...new Set(years)];if(uniqueYear.length!==1||uniqueYear[0]<2020||uniqueYear[0]>2100||eiYears.length===0||eiYears.some(y=>y!==uniqueYear[0]))throw Error('Missing or inconsistent CRA calendar year');
+ const year=uniqueYear[0],ts=tables(html.replace(/<sup\b[^>]*>[\s\S]*?<\/sup>/gi,''));
+ const exact=label=>{const rows=ts.flatMap(t=>t.filter(r=>r[0]===label));if(rows.length!==1)throw Error('Missing or ambiguous CRA row '+label);return rows[0];};
+ const cents=v=>{if(!/^(?:\d{1,3}(?:,\d{3})*|\d+)\.\d{2}$/.test(v))throw Error('Invalid CRA amount');const n=Number(v.replaceAll(',',''));if(!Number.isFinite(n)||n<0||n>1e9)throw Error('CRA amount exceeds limit');return Math.round(n*100);};
+ const bp=v=>{if(!/^0\.\d{4}$/.test(v))throw Error('Invalid CRA rate');return Number(v.slice(2));};
+ const base=exact('CPP base contribution'),enhanced=exact('First additional CPP contribution'),combined=exact('CPP contribution'),second=exact('Second additional CPP contribution'),ei=exact('Canada except QC');
+ if([base,enhanced,combined].some(r=>r.length!==6)||second.length!==6||ei.length!==6)throw Error('Unexpected CRA table shape');
+ const [ceiling,exemption,pensionable]=base.slice(1,4).map(cents);
+ if(ceiling-exemption!==pensionable||ceiling<=exemption||[ceiling,exemption].some(x=>x%100))throw Error('Invalid CPP wage base');
+ for(const r of [base,enhanced,combined]){if(r.slice(1,4).map(cents).some((x,i)=>x!==[ceiling,exemption,pensionable][i])||Math.round(pensionable*bp(r[4])/10000)!==cents(r[5]))throw Error('CPP maxima disagree with published rates');}
+ const [lower,upper,span]=second.slice(1,4).map(cents);
+ if(lower!==ceiling||upper<=lower||upper%100||upper-lower!==span||Math.round(span*bp(second[4])/10000)!==cents(second[5])||bp(base[4])+bp(enhanced[4])!==bp(combined[4]))throw Error('CPP2 maxima mismatch');
+ const eiCeiling=cents(ei[1]),eiRate=bp(ei[2]);if(!eiCeiling||eiCeiling%100||Math.round(eiCeiling*eiRate/10000)!==cents(ei[4]))throw Error('EI maximum mismatch');
+ return {jurisdiction:'CA',component:'cpp-ei',taxYear:String(year),effectiveFrom:year+'-01-01',effectiveUntil:(year+1)+'-01-01',parameters:{cppExemption:exemption/100,cppCeiling:ceiling/100,cpp2Ceiling:upper/100,cppRateBasisPoints:bp(combined[4]),cpp2RateBasisPoints:bp(second[4]),cppEnhancedRateBasisPoints:bp(enhanced[4]),eiCeiling:eiCeiling/100,eiRateBasisPoints:eiRate},scope:'Annual employee contributions outside Quebec; excludes pay-period rounding and exemptions',status:'candidate',legalStatus:'review_required',automaticActivation:false};
+}
 export function extractCandidate(source,bytes){
+ if(source.id==='CA-6'&&source.url==="https://www.canada.ca/en/revenue-agency/services/forms-publications/payroll/t4032-payroll-deductions-tables/t4032oc-jan/t4032oc-january-general-information.html")return extractCraPayroll(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
  if(source.id==='GB-SCT-bands'&&['https://www.gov.uk/scottish-income-tax/how-it-works','https://www.gov.uk/scottish-rate-income-tax/how-it-works'].includes(source.url))return extractScottishIncomeBands(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
  if(source.id==='GB-2'&&source.url==='https://www.gov.uk/income-tax-rates')return extractUkIncomeBands(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
  if(source.id==='SG-8'&&source.url==='https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-residency-and-tax-rates/individual-income-tax-rates')return extractIrasResidentBrackets(new TextDecoder('utf-8',{fatal:true}).decode(bytes));
