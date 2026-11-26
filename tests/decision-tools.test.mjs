@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,standardIndirectTax} from '../engine/decision-tools.mjs';
+import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,standardIndirectTax,financialHealthSnapshot} from '../engine/decision-tools.mjs';
 const ctc={annualCtc:1800000,employerContributions:100000,nonCashBenefits:200000,employeeContributions:21600,otherPayrollDeductions:2500,residentIndividual:true,ageGroup:'under-60',oldEligibleDeductions:0,newEligibleDeductions:0};
 test('CTC cash component and tax reconciliation',()=>{
  const r=indiaCtc(ctc);assert.equal(r.annualGross,1500000);assert.equal(r.new.incomeTax,97500);assert.equal(r.new.annualCash,1378400);assert.equal(r.taxRulesVerified,false);
@@ -72,4 +72,11 @@ test('standard indirect tax rejects unsupported scope and rounds a single amount
  const input={country:'GB',priceBasis:'exclusive',amount:0.03,scopeConfirmed:true};
  assert.equal(standardIndirectTax(input).taxAmount,0.01);
  assert.throws(()=>standardIndirectTax({...input,country:'IN'}));assert.throws(()=>standardIndirectTax({...input,amount:-1}));assert.throws(()=>standardIndirectTax({...input,amount:0.001}));assert.throws(()=>standardIndirectTax({...input,priceBasis:'other'}));
+});
+
+test('financial health combines a balance sheet with cash flow without double-counting debt payments',()=>{
+ const base={currency:'INR',monthlyIncome:10000,monthlyExpenses:6000,liquidSavings:10000,otherAssets:40000,liabilities:20000,monthlyDebtPayments:2000,reserveFloor:5000,goalAmount:15000,horizonMonths:12};
+ const r=financialHealthSnapshot(base);assert.equal(r.totalAssets,50000);assert.equal(r.netWorth,30000);assert.equal(r.monthlyBalance,4000);assert.equal(r.debtServicePercent,20);assert.equal(r.projectedLiquidSavings,58000);assert.equal(r.monthsToGoal,3);assert.equal(r.taxRulesVerified,false);
+ assert.equal(financialHealthSnapshot({...base,monthlyIncome:0}).debtServicePercent,null);assert.equal(financialHealthSnapshot({...base,liabilities:60000}).netWorth,-10000);
+ assert.throws(()=>financialHealthSnapshot({...base,monthlyDebtPayments:6001}));assert.throws(()=>financialHealthSnapshot({...base,otherAssets:-1}));
 });

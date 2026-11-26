@@ -135,3 +135,13 @@ export function standardIndirectTax(input){
  const net=input.priceBasis==='exclusive'?amount:amount-tax,gross=net+tax;
  return {...sample,currency:s.currency,ratePercent:s.rate/100,netAmount:out(net),taxAmount:out(tax),grossAmount:out(gross),scope:s.scope,sourceUrls:[s.source],sourceReviewedOn:'2026-11-26',warnings:[s.scope+'. Published standard rate cross-check as of 26 November 2026, not independently approved. Confirm registered seller, tax point, place of supply, standard-rated classification and price basis before using. Single amount rounded to nearest currency cent; not invoice-line rounding, input tax recovery, filing, exemption, zero-rating, reduced rate, reverse charge or cross-border advice.']};
 }
+
+/** Integrated snapshot; user-entered balances and cash flows, no estimated asset valuations. */
+export function financialHealthSnapshot(input){
+ exact(input,['currency','monthlyIncome','monthlyExpenses','liquidSavings','otherAssets','liabilities','monthlyDebtPayments','reserveFloor','goalAmount','horizonMonths']);
+ const {otherAssets,liabilities,monthlyDebtPayments,...plan}=input;
+ const liquid=units(input.liquidSavings),assets=liquid+units(otherAssets),debt=units(liabilities),payments=units(monthlyDebtPayments),expenses=units(input.monthlyExpenses),income=units(input.monthlyIncome);
+ if(payments>expenses)throw Error('Monthly debt payments must already be included in monthly expenses');
+ const runway=financialRunway(plan);
+ return {...sample,currency:input.currency,totalAssets:out(assets),liabilities:out(debt),netWorth:out(assets-debt),monthlyDebtPayments:out(payments),debtServicePercent:income===0n?null:Number(round(payments*10000n,income))/100,monthlyBalance:runway.monthlyBalance,projectedLiquidSavings:runway.projectedSavings,monthsToGoal:runway.monthsToGoal,wholeMonthsBeforeReserve:runway.wholeMonthsBeforeReserve,warnings:[...runway.warnings,'Snapshot of user-entered balances only. Other assets exclude liquid savings. Monthly expenses include debt payments; do not count them twice. Debt-service percentage is based on after-tax cash income, not lender underwriting. Asset and debt balances are not projected, and no credit rating, solvency assessment or recommendation is inferred.']};
+}
