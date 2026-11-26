@@ -37,6 +37,8 @@ const advancedBrowser='globalThis.TaxPulseAdvanced = (() => {\n'+read('engine/ad
 write('advanced-browser.js.txt',advancedBrowser);
 write('secure-records.mjs.txt',read('engine/secure-records.mjs'));
 write('browser-vault.mjs.txt',read('engine/browser-vault.mjs'));
+write('document-text.mjs.txt',read('engine/document-text.mjs'));
+write('local-tools.mjs.txt',read('staging/simple/local-tools.mjs'));
 
 write('webmanifest.txt',"{\"id\":\"/\",\"name\":\"TaxPulse Global Preview\",\"short_name\":\"TaxPulse\",\"start_url\":\"/\",\"scope\":\"/\",\"display\":\"standalone\",\"background_color\":\"#f8fafc\",\"theme_color\":\"#4f46e5\",\"description\":\"Illustrative financial scenario calculations; tax rules not verified.\"}");
 
@@ -73,5 +75,5 @@ const fingerprintInputs=['national-registry','national-versions','historical-ver
 const fingerprint=createHash('sha256').update(JSON.stringify(fingerprintInputs)).digest('hex');
 write('browser-fingerprint.mjs.txt','export default '+JSON.stringify(fingerprint)+';\n');
 
-const previewInputs=['regulatory-dashboard.mjs','monitor-sources.mjs','worker.mjs','simple-index.html.txt','simple.css.txt','simple.mjs.txt','browser-budget.mjs.txt','browser-financial-profile.mjs.txt','browser-decision-tools.mjs.txt','browser-fingerprint.mjs.txt','browser-manifest.mjs.txt'];
+const previewInputs=['secure-records.mjs.txt','browser-vault.mjs.txt','document-text.mjs.txt','local-tools.mjs.txt','regulatory-dashboard.mjs','monitor-sources.mjs','worker.mjs','simple-index.html.txt','simple.css.txt','simple.mjs.txt','browser-budget.mjs.txt','browser-financial-profile.mjs.txt','browser-decision-tools.mjs.txt','browser-fingerprint.mjs.txt','browser-manifest.mjs.txt'];
 write('preview-revision.txt',createHash('sha256').update(JSON.stringify(previewInputs.map(n=>[n,readFileSync(new URL(n,bundle),'utf8')]))).digest('hex'));

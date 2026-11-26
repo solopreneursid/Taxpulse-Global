@@ -25,6 +25,7 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(await (await call('/',{method:'HEAD'})).text(),'');
  assert.equal((await call('/assets/country-rules.js')).status,404);
  assert.equal((await call('/assets/browser-vault.mjs')).status,404);
+ for(const path of ['/assets/engine/browser-vault.mjs','/assets/engine/secure-records.mjs','/assets/engine/document-text.mjs','/assets/local-tools.mjs'])assert.equal((await call(path)).status,200);
  assert.equal((await call('/assets/secure-records.mjs')).status,404);
  const catalog=await (await call('/v1/catalog')).json();assert.equal(catalog.countries.length,3);assert.deepEqual(catalog.filingStatusOptions.US,['single','mfj','hoh','mfs']);assert.match(catalog.countries.find(c=>c.code==='IN').taxYearLabel,/2026-27/);
  assert.equal((await (await call('/openapi.json')).json()).openapi,'3.1.0');
