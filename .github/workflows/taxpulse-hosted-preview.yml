@@ -9,7 +9,7 @@ permissions:
 jobs:
   hosted-preview:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,3 +24,10 @@ jobs:
           npx --no-install playwright install --with-deps chromium
       - name: Check exact hosted revision
         run: node browser-tests/hosted-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hosted-verification-report
+          path: hosted-verification-report.json
+          if-no-files-found: warn
+          retention-days: 14
