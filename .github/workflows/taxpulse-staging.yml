@@ -18,11 +18,17 @@ jobs:
         with:
           node-version: '22'
       - run: node --test tests/*.test.mjs
-      - name: Install pinned browser test dependency
+      - name: Generate lockfile for isolated dependency bootstrap
+        if: github.event_name == 'pull_request' && github.head_ref == 'fix/regulatory-ledger-integrity'
         run: |
-          if [ ! -f package.json ]; then npm init -y; fi
-          npm install --save-dev --save-exact --package-lock=true --ignore-scripts playwright@1.65.1
-          test -f package-lock.json
+          if [ ! -f package-lock.json ]; then
+            npm install --package-lock-only --ignore-scripts
+            echo 'TAXPULSE_LOCKFILE_BEGIN'
+            cat package-lock.json
+            echo 'TAXPULSE_LOCKFILE_END'
+          fi
+      - name: Install locked browser test dependencies
+        run: npm ci --ignore-scripts
       - name: Audit installed test dependencies
         run: npm audit --audit-level=high --package-lock-only
       - name: Install Chromium
