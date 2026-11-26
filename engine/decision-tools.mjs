@@ -38,3 +38,17 @@ export function indiaDeductionScenario(input,ruleContext={}){
  const before=compareIndiaRegimes(base,ruleContext.indiaSalary),after=compareIndiaRegimes({...base,oldEligibleDeductions:whole(base.oldEligibleDeductions+whole(input.extraOldEligibleDeductions)),newEligibleDeductions:whole(base.newEligibleDeductions+whole(input.extraNewEligibleDeductions))},ruleContext.indiaSalary);
  return {...sample,currency:'INR',before,after,oldTaxReduction:before.oldRegime.incomeTax-after.oldRegime.incomeTax,newTaxReduction:before.newRegime.incomeTax-after.newRegime.incomeTax,warnings:['Only use deductions already confirmed eligible for each regime, excluding the standard deduction. A tax reduction is not a net financial benefit; the underlying expenditure may cost more. No deduction eligibility or regime recommendation is inferred.']};
 }
+
+/** Single-product monthly contribution-margin and break-even scenario. No tax assumptions. */
+export function businessBreakEven(input){
+ exact(input,['currency','unitPrice','unitVariableCost','monthlyFixedCosts','monthlyUnits','targetMonthlySurplus']);
+ currency(input.currency);
+ const price=units(input.unitPrice),variable=units(input.unitVariableCost),fixed=units(input.monthlyFixedCosts),target=units(input.targetMonthlySurplus);
+ if(!Number.isSafeInteger(input.monthlyUnits)||input.monthlyUnits<0||input.monthlyUnits>1000000000)throw new RangeError('Enter whole monthly sales units');
+ if(price===0n)throw new RangeError('Sale price must be positive');
+ const sold=BigInt(input.monthlyUnits),margin=price-variable,revenue=price*sold,variableTotal=variable*sold;
+ const surplus=revenue-variableTotal-fixed;
+ const required=need=>need===0n?0:margin<=0n?null:(need+margin-1n)/margin;
+ const asUnits=v=>{if(v===null)return null;if(v>1000000000000n)throw new RangeError('Required sales outside supported range');return Number(v);};
+ return {...sample,currency:input.currency,monthlyRevenue:out(revenue),monthlyVariableCosts:out(variableTotal),monthlyFixedCosts:out(fixed),unitContribution:out(margin),monthlyOperatingSurplus:out(surplus),breakEvenUnits:asUnits(required(fixed)),targetUnits:asUnits(required(fixed+target)),targetGap:out(surplus>=target?0n:target-surplus),warnings:['Single product or billable service unit, constant net selling price and variable cost, and fixed monthly operating costs. Enter prices and costs excluding recoverable sales tax. No automatic income tax, VAT/GST, payroll, inventory, debt, working capital or cash-collection timing. Operating surplus is not net income or cash flow.']};
+}
