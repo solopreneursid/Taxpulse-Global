@@ -1,6 +1,6 @@
 name: TaxPulse daily regulatory evidence (review only)
 on:
-  # Daily schedule will be enabled after the new repository's collector key is enrolled and verified.
+  # Fresh signed-delivery verification after standalone key enrollment; cron held until read-back.
   workflow_dispatch:
   push:
     branches: [main]
