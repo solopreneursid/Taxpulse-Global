@@ -407,6 +407,14 @@ try {
    page.once('dialog',d=>d.accept());
    await page.locator('#local-vault-delete').click();
    await page.waitForFunction(()=>document.getElementById('local-vault-status').textContent.includes('deleted'));
+   await page.waitForFunction(()=>Boolean(navigator.serviceWorker.controller));
+   await context.setOffline(true);
+   const offline=await page.goto(origin+'/tax-rules');
+   assert.equal(offline.status(),503);
+   assert.match(await page.locator('h1').innerText(),/TaxPulse is offline/);
+   await context.setOffline(false);
+   await page.goto(origin+'/tax-rules');
+   await page.locator('#country-status li').last().waitFor({state:'attached'});
    assert.deepEqual(errors,[]);
    assert.ok(requests.every(r=>r.url.startsWith(origin+'/')&&r.method==='GET'),'Unexpected network request: '+JSON.stringify(requests));
    console.log('Browser smoke passed '+viewport.width+'px');

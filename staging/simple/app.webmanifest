@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "TaxPulse Global Preview",
+  "short_name": "TaxPulse",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#4f46e5",
+  "description": "Illustrative tax and financial tools; rules not verified.",
+  "icons": [
+    {
+      "src": "/assets/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

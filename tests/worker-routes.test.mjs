@@ -27,6 +27,7 @@ test('generated Worker routes and validation',async()=>{
  assert.equal((await call('/assets/browser-vault.mjs')).status,404);
  for(const path of ['/assets/engine/browser-vault.mjs','/assets/engine/secure-records.mjs','/assets/engine/document-text.mjs','/assets/local-tools.mjs'])assert.equal((await call(path)).status,200);
  assert.equal((await call('/assets/secure-records.mjs')).status,404);
+ const manifest=await call('/app.webmanifest');assert.equal(manifest.status,200);assert.equal((await manifest.json()).display,'standalone');const sw=await call('/sw.js');assert.equal(sw.status,200);assert.equal(sw.headers.get('service-worker-allowed'),'/');assert.match(await sw.text(),/No tax calculations are available offline/);
  const catalog=await (await call('/v1/catalog')).json();assert.equal(catalog.countries.length,3);assert.deepEqual(catalog.filingStatusOptions.US,['single','mfj','hoh','mfs']);assert.match(catalog.countries.find(c=>c.code==='IN').taxYearLabel,/2026-27/);
  assert.equal((await (await call('/openapi.json')).json()).openapi,'3.1.0');
  const payload={country:'GB',taxYear:'2026',module:'pit',parameters:{grossSalary:130000}};
