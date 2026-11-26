@@ -27,3 +27,6 @@ See REVIEW-HANDOFF.md. Generate the 56-scope hashed inventory with `node scripts
 
 ## Source and hosted verification separation
 Source CI runs regression, dependency audit, local Chromium and reproducible build. The separate hosted workflow is mandatory after every preview deployment and exact pin update; it checks the locally reproduced revision, hashes every public static asset (including service worker), and runs hosted browser tests. This avoids races between old pins and deployments; source CI alone is not evidence of hosted success. No dynamic runtime bytes or private server modules are certified by the static asset check.
+
+## Recovery and commercial rollout boundaries
+CI exercises an isolated backup and restore with the complete review archive schema. D1 provider-level restore remains untested. No SEO indexing, advertisements, affiliate placement, customer data or paid APIs may be enabled while the preview manifest is unverified. See docs/PHASE-59-66-EXECUTION.md for the sequencing and acceptance criteria.
