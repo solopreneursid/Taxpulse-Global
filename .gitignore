@@ -1,0 +1,10 @@
+node_modules/
+package-lock.json
+regulatory-probe.json
+*.pem
+*.key
+.env
+.env.*
+coverage/
+playwright-report/
+test-results/

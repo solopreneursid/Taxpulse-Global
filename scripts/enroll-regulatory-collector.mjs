@@ -1,6 +1,6 @@
 import {generateKeyPairSync} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
-const repo='solopreneursid/YorpHives_Website',name='TAXPULSE_EVIDENCE_PRIVATE_KEY';
+const repo='solopreneursid/Taxpulse-Global',name='TAXPULSE_EVIDENCE_PRIVATE_KEY';
 if(process.argv.length!==3||process.argv[2]!=='ENROLL_TAXPULSE_EVIDENCE')throw Error('Usage: node scripts/enroll-regulatory-collector.mjs ENROLL_TAXPULSE_EVIDENCE');
 const status=spawnSync('gh',['auth','status'],{stdio:'ignore'});
 if(status.status!==0)throw Error('Authenticate GitHub CLI first with gh auth login');

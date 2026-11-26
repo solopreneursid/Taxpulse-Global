@@ -1,5 +1,5 @@
 import {readFile} from 'node:fs/promises';
-const repo='solopreneursid/YorpHives_Website',workflow=repo+'/.github/workflows/taxpulse-regulatory-daily.yml@refs/heads/main';
+const repo='solopreneursid/Taxpulse-Global',workflow=repo+'/.github/workflows/taxpulse-regulatory-daily.yml@refs/heads/main';
 if(process.env.GITHUB_REPOSITORY!==repo||process.env.GITHUB_REF!=='refs/heads/main'||process.env.GITHUB_WORKFLOW_REF!==workflow||!['push','schedule','workflow_dispatch'].includes(process.env.GITHUB_EVENT_NAME)||!/^\d{1,16}$/.test(process.env.GITHUB_RUN_ID||''))throw Error('Untrusted workflow context');
 const body=await readFile(process.argv[2]||'regulatory-probe.json');
 if(!body.length||body.length>300000)throw Error('Invalid evidence size');

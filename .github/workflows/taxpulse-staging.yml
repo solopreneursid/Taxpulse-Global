@@ -1,0 +1,53 @@
+name: TaxPulse staging checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  staging-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/*.test.mjs
+      - name: Install pinned browser test dependency
+        run: |
+          if [ ! -f package.json ]; then npm init -y; fi
+          npm install --save-dev --save-exact --package-lock=true --ignore-scripts playwright@1.65.1
+          test -f package-lock.json
+      - name: Audit installed test dependencies
+        run: npm audit --audit-level=high --package-lock-only
+      - name: Install Chromium
+        run: npx --no-install playwright install --with-deps chromium
+      - name: Test the actual simple workspace in Chromium
+        run: node browser-tests/smoke.mjs
+      - name: Verify deployed preview independently
+        run: node browser-tests/hosted-smoke.mjs
+  regulatory-source-probe:
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch official sources without changing rules
+        run: node scripts/probe-regulatory-sources.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: regulatory-source-probe
+          path: regulatory-probe.json
+          if-no-files-found: warn
+          retention-days: 7

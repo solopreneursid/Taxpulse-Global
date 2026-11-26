@@ -8,13 +8,16 @@ GitHub Actions run 45750589819: authentic workflow identity verifies in Node, bu
 The daily collector can sign the exact body digest, run ID, timestamp, and purpose with an isolated Ed25519 collector key. The Worker verifies the signature using the explicitly enrolled public key, without fetching identity-provider or artifact metadata. It accepts review-only evidence into the existing regulatory observation store. The collector key cannot sign regulatory snapshots, certify statutory review, publish rules, change source code or deploy. Artifact verification is disabled by default. OIDC remains an optional path, not relied upon for daily delivery.
 
 ## Enrollment
-On the founder's trusted local machine, with Node.js 22+ and authenticated GitHub CLI, check out the TaxPulse development branch and run from products/taxpulse-global:
+On the founder's trusted local machine, with Node.js 22+ and authenticated GitHub CLI, clone `solopreneursid/Taxpulse-Global` and run from its repository root:
 ```sh
 node scripts/enroll-regulatory-collector.mjs ENROLL_TAXPULSE_EVIDENCE
 ```
-The command generates a separate collector key pair and writes the private PEM directly to the repository Actions secret TAXPULSE_EVIDENCE_PRIVATE_KEY. It refuses to replace an existing secret. Share only the printed public verification key (64 hexadecimal characters) with the authorized Cloudflare administrator. Enroll it as EVIDENCE_COLLECTOR_PUBLIC_KEY on hqventures-taxpulse-regulatory-evidence-preview only; verify bindings and current Worker version. The signing job must be restricted to the trusted daily main workflow. Never paste the private key into chat, put it in source code, artifacts, logs, or statutory approval configuration.
+The command generates a new collector key pair and writes the private PEM directly to the standalone repository Actions secret TAXPULSE_EVIDENCE_PRIVATE_KEY. It refuses to replace an existing secret. Share only the printed public verification key (64 hexadecimal characters) with the authorized Cloudflare administrator. Enroll it as EVIDENCE_COLLECTOR_PUBLIC_KEY on hqventures-taxpulse-regulatory-evidence-preview only; verify bindings and current Worker version. The signing job must be restricted to the trusted daily main workflow. Never paste the private key into chat, put it in source code, artifacts, logs, or statutory approval configuration.
 
 Verify the first signed daily workflow response and direct KV read-back, including checkedAt, collectorRunId, exact digest, provenance and automaticRuleChanges=false. If enrollment fails or the public key is lost, coordinate rotation of both sides; never silently replace just one side. If the collector key is compromised, disable its public key immediately and review affected evidence. This does not affect the publisher's separately enrolled keys.
 
 ## Separate publication approval
 The founder-controlled publisher and independent qualified statutory reviewer must each enroll distinct public keys with secure private key custody. Do not reuse the collector key. The publisher remains inactive until approved rule packages exist and the separate release gate is satisfied.
+
+## Migration status
+The old YorpHives collector successfully delivered and persisted signed evidence in run 45751998039. The standalone repository requires a new repository-scoped secret. Keep the previous collector running until signed delivery from this repository and storage read-back are verified, then disable the old schedule and retire the old key. No statutory approval or production activation is implied.

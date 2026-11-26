@@ -3,9 +3,9 @@ import {verifyArtifactProof} from './regulatory-artifact-proof.mjs';
 import {reconcileRegulatoryReports} from './regulatory-reconciliation.mjs';
 const ISSUER='https://token.actions.githubusercontent.com';
 export const AUDIENCE='taxpulse-regulatory-evidence-preview';
-const REPO='solopreneursid/YorpHives_Website',REF='refs/heads/hqventures/taxpulse-global';
+const REPO='solopreneursid/Taxpulse-Global';
 const MAX=300000;
-function trustedWorkflow(p){const main='refs/heads/main';return (p.ref===REF&&p.event_name==='push'&&p.workflow_ref===REPO+'/.github/workflows/taxpulse-staging.yml@'+REF)||(p.ref===main&&['schedule','workflow_dispatch','push'].includes(p.event_name)&&p.workflow_ref===REPO+'/.github/workflows/taxpulse-regulatory-daily.yml@'+main);}
+function trustedWorkflow(p){return p.ref==='refs/heads/main'&&['schedule','workflow_dispatch','push'].includes(p.event_name)&&p.workflow_ref===REPO+'/.github/workflows/taxpulse-regulatory-daily.yml@refs/heads/main';}
 
 function decode(s){if(typeof s!=='string'||!/^[A-Za-z0-9_-]+$/.test(s))throw Error('Invalid JWT');return Uint8Array.from(atob(s.replaceAll('-','+').replaceAll('_','/')+'='.repeat((4-s.length%4)%4)),c=>c.charCodeAt(0));}
 function jsonPart(s){return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(decode(s)));}
@@ -13,7 +13,7 @@ export async function verifyCollectorToken(token,{fetcher=fetch,now=Date.now()}=
  if(typeof token!=='string'||token.length>16000)throw Error('Invalid token');
  const parts=token.split('.');if(parts.length!==3)throw Error('Invalid token');
  const h=jsonPart(parts[0]),p=jsonPart(parts[1]),sec=Math.floor(now/1000);
- if(h.alg!=='RS256'||typeof h.kid!=='string'||h.kid.length>200||p.iss!==ISSUER||p.aud!==AUDIENCE||p.repository_id!=='1457876727'||p.repository!==REPO||!trustedWorkflow(p)||![p.iat,p.nbf,p.exp].every(Number.isSafeInteger)||p.iat>sec+30||p.nbf>sec+30||p.exp<=sec||p.exp-p.iat>600||p.exp<=p.iat||p.iat<sec-600||typeof p.run_id!=='string'||!/^\d+$/.test(p.run_id))throw Error('Collector identity not permitted');
+ if(h.alg!=='RS256'||typeof h.kid!=='string'||h.kid.length>200||p.iss!==ISSUER||p.aud!==AUDIENCE||p.repository_id!=='1472653424'||p.repository!==REPO||!trustedWorkflow(p)||![p.iat,p.nbf,p.exp].every(Number.isSafeInteger)||p.iat>sec+30||p.nbf>sec+30||p.exp<=sec||p.exp-p.iat>600||p.exp<=p.iat||p.iat<sec-600||typeof p.run_id!=='string'||!/^\d+$/.test(p.run_id))throw Error('Collector identity not permitted');
  let r;try{r=await fetcher(ISSUER+'/.well-known/jwks',{redirect:'error',signal:AbortSignal.timeout(5000)});}catch{throw Error('Issuer keys unavailable');}if(!r.ok)throw Error('Issuer keys unavailable');
  let jwks;try{jwks=await r.json();}catch{throw Error('Issuer keys unavailable');}const matches=jwks.keys?.filter(k=>k.kid===h.kid&&k.kty==='RSA'&&(!k.alg||k.alg==='RS256'));
  if(matches?.length!==1)throw Error('Issuer key not found');

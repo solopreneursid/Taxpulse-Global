@@ -1,5 +1,5 @@
-const API='https://api.github.com/repos/solopreneursid/YorpHives_Website';
-const REPO_ID=1457876727,WORKFLOW_ID=431146278;
+const API='https://api.github.com/repos/solopreneursid/Taxpulse-Global';
+const REPO_ID=1472653424,WORKFLOW_ID=431177201;
 const WORKFLOW='.github/workflows/taxpulse-regulatory-daily.yml';
 const MAX=300000;
 const hex=b=>Array.from(new Uint8Array(b),x=>x.toString(16).padStart(2,'0')).join('');

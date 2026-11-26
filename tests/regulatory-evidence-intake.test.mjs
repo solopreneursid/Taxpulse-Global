@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {verifyCollectorToken,acceptIndependentReport,createEvidenceIntake,AUDIENCE} from '../engine/regulatory-evidence-intake.mjs';
 import {updateReviewQueue} from '../engine/regulatory-review-queue.mjs';
 const now=new Date('2026-11-26T03:30:00Z'),sec=now.getTime()/1000;
-const repo='solopreneursid/YorpHives_Website',ref='refs/heads/hqventures/taxpulse-global';
-const claims={iss:'https://token.actions.githubusercontent.com',aud:AUDIENCE,repository_id:'1457876727',repository:repo,ref,event_name:'push',workflow_ref:repo+'/.github/workflows/taxpulse-staging.yml@'+ref,iat:sec-5,nbf:sec-5,exp:sec+300,run_id:'12345'};
+const repo='solopreneursid/Taxpulse-Global',ref='refs/heads/main';
+const claims={iss:'https://token.actions.githubusercontent.com',aud:AUDIENCE,repository_id:'1472653424',repository:repo,ref,event_name:'push',workflow_ref:repo+'/.github/workflows/taxpulse-regulatory-daily.yml@'+ref,iat:sec-5,nbf:sec-5,exp:sec+300,run_id:'12345'};
 const pair=await crypto.subtle.generateKey({name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'},true,['sign','verify']);
 const jwk={...await crypto.subtle.exportKey('jwk',pair.publicKey),kid:'test',alg:'RS256'};
 const b64=v=>Buffer.from(JSON.stringify(v)).toString('base64url');
@@ -12,7 +12,7 @@ async function token(p){const content=b64({alg:'RS256',kid:'test'})+'.'+b64(p);c
 const opts={now:now.getTime(),fetcher:async url=>{assert.equal(url,'https://token.actions.githubusercontent.com/.well-known/jwks');return Response.json({keys:[jwk]});}};
 test('only matching signed workflow identity is accepted',async()=>{
  assert.deepEqual(await verifyCollectorToken(await token(claims),opts),{runId:'12345'});
- for(const patch of [{aud:'other'},{repository_id:'1'},{event_name:'pull_request'},{ref:'refs/heads/main'},{workflow_ref:'other'},{exp:sec-1}])await assert.rejects(verifyCollectorToken(await token({...claims,...patch}),opts));
+ for(const patch of [{aud:'other'},{repository_id:'1'},{event_name:'pull_request'},{ref:'refs/heads/other'},{repository:'solopreneursid/YorpHives_Website',repository_id:'1457876727'},{workflow_ref:'other'},{exp:sec-1}])await assert.rejects(verifyCollectorToken(await token({...claims,...patch}),opts));
  const signed=await token(claims);const parts=signed.split('.');parts[2]=Buffer.alloc(256).toString('base64url');await assert.rejects(verifyCollectorToken(parts.join('.'),opts));
 });
 const source={id:'SG-8',jurisdiction:'SG',url:'https://www.iras.gov.sg/example'};

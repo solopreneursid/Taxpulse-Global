@@ -21,7 +21,7 @@ Existing hosted previews are experimental and not suitable for financial decisio
 - The production release gate now requires actual backend country support and official-source evidence for every required module, not merely verified flags.
 - Local-only encrypted record storage is implemented in `engine/browser-vault.mjs`, backed by `engine/secure-records.mjs`, and retained as development-only code; not served by the simple workspace. It is not yet wired into the user-facing save/open workflow.
 - The simulated Pro checkout trigger is disabled in the isolated prototype frontend.
-- The staging workflow runs `node --test products/taxpulse-global/tests/*.test.mjs` on branch updates.
+- The staging workflow runs `node --test tests/*.test.mjs` on branch updates.
 
 ## Local encrypted record contract
 
@@ -108,3 +108,6 @@ Append-only v2 archive adds seven historical rate schedules for India, Canada an
 ## Germany and UAE salary remainder
 
 The scoped salary model now covers Germany (caller-confirmed annual taxable income and actual health insurer supplement, individual tariff, solidarity surcharge, monthly statutory insurance for childless employees outside Saxony) and the UAE (non-GCC expatriate ordinary wages and standard ILOE insurance premium incl VAT). This is not automatic gross-to-net payroll: German taxable income is supplied, UAE pension-covered employees and foreign tax are excluded. All eight original countries now have a scoped salary remainder example. See rules/evidence/german-emirati-salary-2026-review.json. Production flags remain unchanged.
+
+## Standalone repository
+TaxPulse Global is maintained at https://github.com/solopreneursid/Taxpulse-Global. The product is rooted here, not under `products/taxpulse-global`. See `REPOSITORY-MIGRATION.md` for the verified import and credential cutover. All changes remain preview-only unless the release gate is separately satisfied.
