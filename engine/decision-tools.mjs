@@ -145,3 +145,25 @@ export function financialHealthSnapshot(input){
  const runway=financialRunway(plan);
  return {...sample,currency:input.currency,totalAssets:out(assets),liabilities:out(debt),netWorth:out(assets-debt),monthlyDebtPayments:out(payments),debtServicePercent:income===0n?null:Number(round(payments*10000n,income))/100,monthlyBalance:runway.monthlyBalance,projectedLiquidSavings:runway.projectedSavings,monthsToGoal:runway.monthsToGoal,wholeMonthsBeforeReserve:runway.wholeMonthsBeforeReserve,warnings:[...runway.warnings,'Snapshot of user-entered balances only. Other assets exclude liquid savings. Monthly expenses include debt payments; do not count them twice. Debt-service percentage is based on after-tax cash income, not lender underwriting. Asset and debt balances are not projected, and no credit rating, solvency assessment or recommendation is inferred.']};
 }
+
+/** Ordinary company-tax rate calculation on an already established taxable profit. */
+export function scopedCorporateTax(input){
+ exact(input,['jurisdiction','taxableProfit','scopeConfirmed']);
+ if(input.scopeConfirmed!==true||!['GB','AE','AU-base','AU-full'].includes(input.jurisdiction))throw Error('Confirm ordinary company scope');
+ const p=units(input.taxableProfit);let numerator,currency,source,scope,period;
+ if(input.jurisdiction==='GB'){
+  currency='GBP';source='https://www.gov.uk/guidance/corporation-tax-marginal-relief';period='1 April 2026 to 31 March 2027';
+  scope='UK resident ordinary non-ring-fence trading company, full aligned accounting year, no associated companies, no exempt distributions, augmented profits equal taxable profits, eligible for small profits rate and marginal relief.';
+  numerator=p<=5000000n?p*1900n:p>=25000000n?p*2500n:p*2500n-(25000000n-p)*150n;
+ }else if(input.jurisdiction==='AE'){
+  currency='AED';source='https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/';period='Calendar year 2026';
+  scope='UAE ordinary resident juridical person, full calendar-year tax period; not exempt, free-zone, multinational minimum-tax or small-business relief case.';
+  numerator=(p>37500000n?p-37500000n:0n)*900n;
+ }else{
+  currency='AUD';source='https://www.ato.gov.au/tax-rates-and-codes/company-tax-rate-changes';period='1 July 2026 to 30 June 2027';
+  scope='Australian ordinary resident company, confirmed '+(input.jurisdiction==='AU-base'?'base rate entity eligible for 25%':'not a base rate entity, full 30% rate')+', full aligned income year, no special entity rates.';
+  numerator=p*(input.jurisdiction==='AU-base'?2500n:3000n);
+ }
+ const tax=round(numerator,10000n);
+ return {...sample,currency,taxableProfit:out(p),grossCorporateTax:out(tax),profitAfterModeledTax:out(p-tax),effectiveRatePercent:p===0n?0:Number(round(tax*10000n,p))/100,sourceUrls:[source],sourceReviewedOn:'2026-11-26',taxPeriod:period,scope,warnings:[scope+' '+period+'. Taxable profit must already be independently established, not turnover or accounting profit. Gross modeled rate calculation before other credits, offsets, reliefs, adjustments, withholding, dividend taxes or filing-specific rounding. No eligibility, accounting adjustments, associated-company count, free-zone status or tax residence inferred. No filing or statutory approval.']};
+}

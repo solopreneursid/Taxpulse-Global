@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,standardIndirectTax,financialHealthSnapshot} from '../engine/decision-tools.mjs';
+import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax} from '../engine/decision-tools.mjs';
 const ctc={annualCtc:1800000,employerContributions:100000,nonCashBenefits:200000,employeeContributions:21600,otherPayrollDeductions:2500,residentIndividual:true,ageGroup:'under-60',oldEligibleDeductions:0,newEligibleDeductions:0};
 test('CTC cash component and tax reconciliation',()=>{
  const r=indiaCtc(ctc);assert.equal(r.annualGross,1500000);assert.equal(r.new.incomeTax,97500);assert.equal(r.new.annualCash,1378400);assert.equal(r.taxRulesVerified,false);
@@ -79,4 +79,21 @@ test('financial health combines a balance sheet with cash flow without double-co
  const r=financialHealthSnapshot(base);assert.equal(r.totalAssets,50000);assert.equal(r.netWorth,30000);assert.equal(r.monthlyBalance,4000);assert.equal(r.debtServicePercent,20);assert.equal(r.projectedLiquidSavings,58000);assert.equal(r.monthsToGoal,3);assert.equal(r.taxRulesVerified,false);
  assert.equal(financialHealthSnapshot({...base,monthlyIncome:0}).debtServicePercent,null);assert.equal(financialHealthSnapshot({...base,liabilities:60000}).netWorth,-10000);
  assert.throws(()=>financialHealthSnapshot({...base,monthlyDebtPayments:6001}));assert.throws(()=>financialHealthSnapshot({...base,otherAssets:-1}));
+});
+
+test('UK ordinary company tax small rate, marginal relief and main rate fixtures',()=>{
+ const input={jurisdiction:'GB',scopeConfirmed:true,taxableProfit:50000};
+ assert.equal(scopedCorporateTax(input).grossCorporateTax,9500);
+ assert.equal(scopedCorporateTax({...input,taxableProfit:100000}).grossCorporateTax,22750);
+ assert.equal(scopedCorporateTax({...input,taxableProfit:250000}).grossCorporateTax,62500);
+ assert.equal(scopedCorporateTax({...input,taxableProfit:300000}).grossCorporateTax,75000);
+});
+test('UAE threshold and Australia confirmed company rate fixtures',()=>{
+ const input={jurisdiction:'AE',scopeConfirmed:true,taxableProfit:375000};
+ assert.equal(scopedCorporateTax(input).grossCorporateTax,0);
+ assert.equal(scopedCorporateTax({...input,taxableProfit:375100}).grossCorporateTax,9);
+ assert.equal(scopedCorporateTax({...input,taxableProfit:1000000}).grossCorporateTax,56250);
+ assert.equal(scopedCorporateTax({...input,jurisdiction:'AU-base',taxableProfit:100000}).grossCorporateTax,25000);
+ assert.equal(scopedCorporateTax({...input,jurisdiction:'AU-full',taxableProfit:100000}).grossCorporateTax,30000);
+ assert.throws(()=>scopedCorporateTax({...input,scopeConfirmed:false}));assert.throws(()=>scopedCorporateTax({...input,jurisdiction:'IN'}));assert.throws(()=>scopedCorporateTax({...input,taxableProfit:-1}));
 });

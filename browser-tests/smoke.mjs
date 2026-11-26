@@ -51,7 +51,7 @@ try {
    assert.equal(await page.evaluate(()=>document.activeElement.classList.contains('skip')),true);
    await page.keyboard.press('Enter');
    assert.equal(await page.evaluate(()=>document.activeElement.id),'main');
-   assert.equal(await page.locator('#tools .tool-link').count(),27);
+   assert.equal(await page.locator('#tools .tool-link').count(),28);
    assert.equal(await page.locator('#tools .category-card').count(),6);
    assert.deepEqual(await page.locator('main > section.card:visible').evaluateAll(es=>es.map(e=>e.id)),['tools']);
    await page.locator('.nav a[href="/salary"]').click();
@@ -109,6 +109,7 @@ try {
    await page.goto(origin+'/tools/financial-health');
    for(const [k,v] of Object.entries({monthlyIncome:10000,monthlyExpenses:6000,liquidSavings:10000,otherAssets:40000,liabilities:20000,monthlyDebtPayments:2000,reserveFloor:5000,goalAmount:15000,horizonMonths:12}))await page.locator('#financial-health-'+k).fill(String(v));
    await page.locator('#financial-health-form button[type=submit]').click();await page.locator('#financial-health-result').waitFor();assert.match(await page.locator('#financial-health-breakdown').innerText(),/Current net worth\s*INR\s*30,000/);
+   await page.goto(origin+'/tools/scoped-corporate-tax');await page.locator('#scoped-corporate-tax-jurisdiction').selectOption('AE');await page.locator('#scoped-corporate-tax-taxableProfit').fill('1000000');await page.locator('#scoped-corporate-tax-scopeConfirmed').check();await page.locator('#scoped-corporate-tax-form button[type=submit]').click();await page.locator('#scoped-corporate-tax-result').waitFor();assert.match(await page.locator('#scoped-corporate-tax-breakdown').innerText(),/AED\s*56,250/);
    await page.locator('.nav a[href="/money"]').click();
    await page.locator('#category-money a[href="/tools/monthly-budget"]').click();
    await page.locator('#monthly-budget').waitFor();
