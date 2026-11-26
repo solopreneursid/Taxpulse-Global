@@ -1,3 +1,4 @@
+import {verifyStatutoryReview} from './statutory-review.mjs';
 import {nationalEvidenceRules} from './national-registry.mjs';
 import {verifyRuleSnapshot,snapshotBytes} from './rule-snapshot.mjs';
 import {calculateRegionalTax,compareIndiaRegimes,calculateSalaryRemainder,calculateEmployeeContributions,assessTaxableIncome,calculateCapitalGain} from './taxable-income.mjs';
@@ -34,13 +35,14 @@ export async function verifyPublicationFixtures(snapshot,evidence,fixtures){
   }
  }
 }
-export async function publishSnapshot(db,envelope,fixtures,{publicKeyHex,engineFingerprint,now=new Date()}){
+export async function publishSnapshot(db,envelope,fixtures,{publicKeyHex,engineFingerprint,review,reviewerPublicKeyHex,reviewerId,now=new Date()}){
+ await verifyStatutoryReview(envelope,review,{publicKeyHex,reviewerPublicKeyHex,reviewerId,now});
  const head=await readRuleHead(db);
  const previous=head.envelope?JSON.parse(head.envelope).payload:{regional:{versions:regionalRules()},indiaSalary:{versions:[resolveIndiaSalaryRule('2026')]},payroll:{versions:payrollRules()}};
  const snapshot=await verifyRuleSnapshot(envelope,{publicKeyHex,engineFingerprint,minimumSequence:head.sequence,previous,now});
  verifyCoverage(snapshot);
  await verifyPublicationFixtures(snapshot,envelope.payload.evidence,fixtures);
- const result=await db.prepare("UPDATE regulatory_head SET sequence=?,digest=?,envelope=?,state='active' WHERE id=1 AND sequence=?").bind(snapshot.sequence,snapshot.digest,new TextDecoder().decode(snapshotBytes(envelope)),head.sequence).run();
+ const result=await db.prepare("UPDATE regulatory_head SET sequence=?,digest=?,envelope=?,review_record=?,state='active' WHERE id=1 AND sequence=?").bind(snapshot.sequence,snapshot.digest,new TextDecoder().decode(snapshotBytes(envelope)),new TextDecoder().decode(snapshotBytes({review,publisherPublicKeyHex:publicKeyHex,reviewerPublicKeyHex})),head.sequence).run();
  if(result.meta?.changes!==1)throw Error('Concurrent publication; retry with fresh head');
  return {sequence:snapshot.sequence,digest:snapshot.digest,state:'active',taxRulesVerified:false};
 }
