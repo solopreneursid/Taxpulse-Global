@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario} from '../engine/decision-tools.mjs';
+import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven} from '../engine/decision-tools.mjs';
 const ctc={annualCtc:1800000,employerContributions:100000,nonCashBenefits:200000,employeeContributions:21600,otherPayrollDeductions:2500,residentIndividual:true,ageGroup:'under-60',oldEligibleDeductions:0,newEligibleDeductions:0};
 test('CTC cash component and tax reconciliation',()=>{
  const r=indiaCtc(ctc);assert.equal(r.annualGross,1500000);assert.equal(r.new.incomeTax,97500);assert.equal(r.new.annualCash,1378400);assert.equal(r.taxRulesVerified,false);
@@ -14,4 +14,15 @@ test('relocation break-even, negative savings and unreachable targets',()=>{
 });
 test('deductions comparison is independently computed under both regimes',()=>{
  const x={grossSalary:1500000,residentIndividual:true,ageGroup:'under-60',oldEligibleDeductions:0,newEligibleDeductions:0,extraOldEligibleDeductions:100000,extraNewEligibleDeductions:0};const r=indiaDeductionScenario(x);assert.ok(r.oldTaxReduction>0);assert.equal(r.newTaxReduction,0);assert.equal(r.taxRulesVerified,false);assert.throws(()=>indiaDeductionScenario({...x,extraOldEligibleDeductions:-1}));
+});
+
+test('business break-even and operating surplus reconcile in minor units',()=>{
+ const i={currency:'INR',unitPrice:1000,unitVariableCost:400,monthlyFixedCosts:30000,monthlyUnits:80,targetMonthlySurplus:15000};
+ const r=businessBreakEven(i);assert.equal(r.monthlyRevenue,80000);assert.equal(r.monthlyVariableCosts,32000);assert.equal(r.unitContribution,600);assert.equal(r.monthlyOperatingSurplus,18000);assert.equal(r.breakEvenUnits,50);assert.equal(r.targetUnits,75);assert.equal(r.targetGap,0);assert.equal(r.taxRulesVerified,false);
+ assert.equal(businessBreakEven({...i,monthlyUnits:40}).targetGap,21000);
+ assert.equal(businessBreakEven({...i,unitVariableCost:1000}).breakEvenUnits,null);
+ assert.equal(businessBreakEven({...i,unitVariableCost:1200}).targetUnits,null);
+ assert.equal(businessBreakEven({...i,monthlyFixedCosts:0,targetMonthlySurplus:0,unitVariableCost:1200}).breakEvenUnits,0);
+ assert.equal(businessBreakEven({...i,currency:'USD',unitPrice:1.03,unitVariableCost:.33,monthlyFixedCosts:1,monthlyUnits:2,targetMonthlySurplus:0}).breakEvenUnits,2);
+ for(const change of [{unitPrice:0},{unitVariableCost:-1},{monthlyUnits:1.5},{monthlyUnits:1e10},{unitPrice:0.001},{currency:'XYZ'},{extra:1}])assert.throws(()=>businessBreakEven({...i,...change}));
 });
