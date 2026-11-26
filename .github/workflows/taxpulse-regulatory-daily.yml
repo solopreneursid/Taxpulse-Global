@@ -1,6 +1,7 @@
 name: TaxPulse daily regulatory evidence (review only)
 on:
-  # Fresh signed-delivery verification after standalone key enrollment; cron held until read-back.
+  schedule:
+    - cron: '47 1 * * *'
   workflow_dispatch:
   push:
     branches: [main]
