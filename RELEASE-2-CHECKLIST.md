@@ -30,3 +30,5 @@ Source CI runs regression, dependency audit, local Chromium and reproducible bui
 
 ## Recovery and commercial rollout boundaries
 CI exercises an isolated backup and restore with the complete review archive schema. D1 provider-level restore remains untested. No SEO indexing, advertisements, affiliate placement, customer data or paid APIs may be enabled while the preview manifest is unverified. See docs/PHASE-59-66-EXECUTION.md for the sequencing and acceptance criteria.
+
+Each successful source CI generates preview-build-evidence.json containing the exact commit, revision, engine fingerprint and SHA-256 hashes for the Worker static-import closure. Compare the actual downloaded Worker module bytes with this evidence before declaring a preview release verified. The independent hosted gate additionally checks the served public assets. Neither evidence artifact is an independent statutory approval or production signature.
