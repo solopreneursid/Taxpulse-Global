@@ -52,3 +52,26 @@ export function businessBreakEven(input){
  const asUnits=v=>{if(v===null)return null;if(v>1000000000000n)throw new RangeError('Required sales outside supported range');return Number(v);};
  return {...sample,currency:input.currency,monthlyRevenue:out(revenue),monthlyVariableCosts:out(variableTotal),monthlyFixedCosts:out(fixed),unitContribution:out(margin),monthlyOperatingSurplus:out(surplus),breakEvenUnits:asUnits(required(fixed)),targetUnits:asUnits(required(fixed+target)),targetGap:out(surplus>=target?0n:target-surplus),warnings:['Single product or billable service unit, constant net selling price and variable cost, and fixed monthly operating costs. Enter prices and costs excluding recoverable sales tax. No automatic income tax, VAT/GST, payroll, inventory, debt, working capital or cash-collection timing. Operating surplus is not net income or cash flow.']};
 }
+
+export function indiaTaxCliffs(input,ruleContext={}){
+ exact(input,['startSalary','endSalary','residentIndividual','ageGroup','oldEligibleDeductions','newEligibleDeductions','regime']);
+ const {startSalary,endSalary,regime}=input;
+ if(!Number.isSafeInteger(startSalary)||!Number.isSafeInteger(endSalary)||startSalary<0||endSalary>1e9||endSalary<=startSalary||endSalary-startSalary>2000||!['old','new'].includes(regime))throw new RangeError('Choose a whole-rupee interval of 1–2,000 increments');
+ const base={country:'IN',taxYear:'2026',residentIndividual:input.residentIndividual,ageGroup:input.ageGroup,ordinarySalaryOnly:true,oldEligibleDeductions:input.oldEligibleDeductions,newEligibleDeductions:input.newEligibleDeductions};
+ const taxAt=grossSalary=>compareIndiaRegimes({...base,grossSalary},ruleContext.indiaSalary)[regime+'Regime'].incomeTax;
+ let prior=taxAt(startSalary),startTax=prior,cliffCount=0,worstTaxJump=0,worstSalary=null,worstNetChange=0;
+ const cliffs=[];
+ for(let gross=startSalary+1;gross<=endSalary;gross++){
+  const tax=taxAt(gross),jump=tax-prior;
+  if(jump>1){cliffCount++;if(cliffs.length<50)cliffs.push({grossSalary:gross,previousTax:prior,incomeTax:tax,taxIncrease:jump,netChange:1-jump});if(jump>worstTaxJump){worstTaxJump=jump;worstSalary=gross;worstNetChange=1-jump;}}
+  prior=tax;
+ }
+ return {...sample,currency:'INR',startSalary,endSalary,regime,startTax,endTax:prior,cliffCount,worstTaxJump,worstSalary,worstNetChange,cliffs,truncated:cliffCount>cliffs.length,examinedIncrements:endSalary-startSalary,warnings:['Exhaustive whole-rupee scan of the selected India ordinary-salary interval only. A cliff means income tax rises by more than the one-rupee gross increase, including statutory rounding; a rounding cliff is not necessarily a policy discontinuity. Excludes payroll, benefits, special income, eligibility changes and salary outside this interval.']};
+}
+export function indiaTaxOpportunity(input,ruleContext={}){
+ exact(input,['grossSalary','residentIndividual','ageGroup','oldEligibleDeductions','newEligibleDeductions','extraOldEligibleDeductions','extraNewEligibleDeductions','incrementalCashCost']);
+ const {incrementalCashCost,...scenario}=input;
+ const cost=units(incrementalCashCost),r=indiaDeductionScenario(scenario,ruleContext);
+ const oldTax=units(r.oldTaxReduction),newTax=units(r.newTaxReduction);
+ return {...sample,currency:'INR',oldTaxReduction:r.oldTaxReduction,newTaxReduction:r.newTaxReduction,incrementalCashCost:out(cost),oldCashEffect:out(oldTax-cost),newCashEffect:out(newTax-cost),before:r.before,after:r.after,warnings:['Enter only additional deductions already confirmed eligible for each regime. Incremental cash cost is the extra outlay needed to obtain those deductions; use zero for a qualifying expense already incurred. Cash effect means tax reduction minus additional cash outlay, not investment return, total wealth change or advice. No eligibility, contribution limits or future benefits are inferred.']};
+}

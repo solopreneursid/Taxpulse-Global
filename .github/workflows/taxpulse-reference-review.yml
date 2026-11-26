@@ -1,0 +1,32 @@
+name: TaxPulse public reference data review
+on:
+  pull_request:
+    paths:
+      - 'engine/reference-data.mjs'
+      - 'scripts/collect-reference-data.mjs'
+      - '.github/workflows/taxpulse-reference-review.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '40 12 * * 1-5'
+permissions:
+  contents: read
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/reference-data.test.mjs
+      - run: node scripts/collect-reference-data.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: public-reference-review
+          path: reference-review/
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,5 +1,5 @@
 import {openEncryptedVault} from './engine/browser-vault.mjs';
-import {parsePayslipText} from './engine/document-text.mjs';
+import {parsePayslipText,reconcilePayslipAmounts} from './engine/document-text.mjs';
 const $=id=>document.getElementById(id);
 const text=$('local-document-text'),file=$('local-document-file'),out=$('local-document-result'),status=$('local-document-status');
 let documentGeneration=0;
@@ -8,6 +8,13 @@ file.addEventListener('change',async()=>{const generation=++documentGeneration;o
 text.addEventListener('input',()=>{documentGeneration++;out.replaceChildren();status.textContent='';});
 $('local-document-parse').addEventListener('click',()=>{out.replaceChildren();try{const result=parsePayslipText(text.value);for(const [key,label] of [['grossPay','Gross pay'],['incomeTax','Tax withheld'],['netPay','Net pay']]){const row=result.fields[key],dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=row.ambiguous?'Multiple matches — review manually':row.value===null?'Not found or invalid':String(row.value)+' — confirm amount and currency';out.append(dt,dd);}status.textContent='Sample amounts only; not verified. Nothing uploaded.';}catch{status.textContent='Enter valid plain text within the supported size.';}});
 $('local-document-clear').addEventListener('click',clearDocument);
+const docConfirm=$('local-document-confirm'),docOther=$('local-document-other'),docReconcile=$('local-document-reconciliation');
+function clearReconciliation(){docReconcile.textContent='';docConfirm.checked=false;docOther.value='';}
+text.addEventListener('input',clearReconciliation);file.addEventListener('change',clearReconciliation);$('local-document-clear').addEventListener('click',clearReconciliation);
+for(const el of [docConfirm,docOther])el.addEventListener('input',()=>{docReconcile.textContent='';});
+$('local-document-reconcile').addEventListener('click',()=>{try{const r=reconcilePayslipAmounts(parsePayslipText(text.value),{sameCurrencyAndPeriod:docConfirm.checked,otherDeductions:docOther.valueAsNumber});docReconcile.textContent=r.balanced?'Arithmetic balances. This does not verify the payslip.':'Unreconciled difference: '+r.unreconciledDifference.toFixed(2)+' in the confirmed currency. Check missing amounts, deductions or additions.';}catch{docReconcile.textContent='Confirm all amounts use the same currency and period; enter other deductions (zero if none) and resolve missing or ambiguous fields.';}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearReconciliation();});window.addEventListener('pagehide',clearReconciliation);
+
 const password=$('local-vault-password'),note=$('local-vault-note'),select=$('local-vault-record'),vaultStatus=$('local-vault-status');
 const controls=['local-vault-save','local-vault-open','local-vault-delete'].map($);
 let busy=false,generation=0;

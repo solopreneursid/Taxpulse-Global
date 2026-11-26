@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven} from '../engine/decision-tools.mjs';
+import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity} from '../engine/decision-tools.mjs';
 const ctc={annualCtc:1800000,employerContributions:100000,nonCashBenefits:200000,employeeContributions:21600,otherPayrollDeductions:2500,residentIndividual:true,ageGroup:'under-60',oldEligibleDeductions:0,newEligibleDeductions:0};
 test('CTC cash component and tax reconciliation',()=>{
  const r=indiaCtc(ctc);assert.equal(r.annualGross,1500000);assert.equal(r.new.incomeTax,97500);assert.equal(r.new.annualCash,1378400);assert.equal(r.taxRulesVerified,false);
@@ -25,4 +25,17 @@ test('business break-even and operating surplus reconcile in minor units',()=>{
  assert.equal(businessBreakEven({...i,monthlyFixedCosts:0,targetMonthlySurplus:0,unitVariableCost:1200}).breakEvenUnits,0);
  assert.equal(businessBreakEven({...i,currency:'USD',unitPrice:1.03,unitVariableCost:.33,monthlyFixedCosts:1,monthlyUnits:2,targetMonthlySurplus:0}).breakEvenUnits,2);
  for(const change of [{unitPrice:0},{unitVariableCost:-1},{monthlyUnits:1.5},{monthlyUnits:1e10},{unitPrice:0.001},{currency:'XYZ'},{extra:1}])assert.throws(()=>businessBreakEven({...i,...change}));
+});
+
+const indiaProfile={residentIndividual:true,ageGroup:'under-60',oldEligibleDeductions:0,newEligibleDeductions:0};
+test('India cliff scan catches rounded rebate boundary',()=>{
+ const i={...indiaProfile,startSalary:1275000,endSalary:1275020,regime:'new'};
+ const r=indiaTaxCliffs(i);assert.equal(r.examinedIncrements,20);assert.ok(r.cliffCount>0);assert.equal(r.worstSalary,1275005);assert.equal(r.worstTaxJump,10);assert.equal(r.worstNetChange,-9);assert.equal(r.taxRulesVerified,false);
+ assert.equal(indiaTaxCliffs({...i,startSalary:400000,endSalary:400010}).cliffCount,0);
+ assert.throws(()=>indiaTaxCliffs({...i,endSalary:1277001}));assert.throws(()=>indiaTaxCliffs({...i,regime:'other'}));
+});
+test('India opportunity uses cost-adjusted tax savings not gross savings',()=>{
+ const i={...indiaProfile,grossSalary:1500000,extraOldEligibleDeductions:100000,extraNewEligibleDeductions:0,incrementalCashCost:100000};
+ const r=indiaTaxOpportunity(i);assert.ok(r.oldTaxReduction>0);assert.equal(r.oldCashEffect,r.oldTaxReduction-100000);assert.equal(r.newCashEffect,-100000);assert.equal(r.taxRulesVerified,false);
+ assert.equal(indiaTaxOpportunity({...i,incrementalCashCost:0}).oldCashEffect,r.oldTaxReduction);assert.throws(()=>indiaTaxOpportunity({...i,incrementalCashCost:-1}));
 });
