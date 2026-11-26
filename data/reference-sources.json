@@ -24,6 +24,7 @@
   "limitations": [
     "Dated, source-retrieved candidates are available through explicit preview copy controls only; no automatic defaults or independent approval. See data/public-reference-candidate.json.",
     "PPP factors must share a reference year. Exchange rates are not purchasing power.",
-    "No inferred city prices or automated salary recommendations."
+    "No inferred city prices or automated salary recommendations.",
+    "Scheduled collection emits a read-only drift report against the bundled candidate, including unavailable sources and changed periods/currencies. No automatic publication."
   ]
 }

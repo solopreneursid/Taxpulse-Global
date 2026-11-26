@@ -45,3 +45,26 @@ export function referenceInputs(report,kind,first,second,{today=new Date().toISO
  }
  throw Error('Unsupported reference kind');
 }
+
+/** Read-only comparison of public candidate observations; never authorizes publication. */
+export function compareReferenceCandidates(bundled,collected,{today=new Date().toISOString().slice(0,10)}={}){
+ date(today);
+ if(bundled?.schemaVersion!==1||bundled.reviewStatus!=='pending'||collected?.schemaVersion!==1||collected.reviewStatus!=='pending')throw Error('Invalid candidate reports');
+ const rows=[];
+ for(const kind of ['ecb','ppp']){
+  const previous=bundled.sources?.[kind],next=collected.sources?.[kind];
+  if(next?.status!=='retrieved'){rows.push({kind,status:'unavailable',reviewRequired:true});continue;}
+  if(!/^[a-f0-9]{64}$/.test(next.sourceDigest||'')||next.observation?.reviewStatus!=='pending')throw Error('Invalid source evidence');
+  const a=previous?.observation,b=next.observation;
+  const fields=kind==='ecb'?'rates':'values',period=kind==='ecb'?'observedAt':'referenceYear';
+  if(kind==='ecb'){
+   if(next.url!==ECB_URL||b.source!==ECB_URL||b.baseCurrency!=='EUR'||date(b.observedAt)>today||Date.parse(today)-Date.parse(b.observedAt)>7*86400000)throw Error('Invalid collected ECB period');
+  }else if(b.source!==PPP_URL||b.indicator!=='PA.NUS.PRVT.PP'||!Number.isInteger(b.referenceYear)||b.referenceYear<1990||b.referenceYear>Number(today.slice(0,4)))throw Error('Invalid collected PPP period');
+  const expected=kind==='ecb'?['EUR',...ECB_CURRENCIES]:Object.values(COUNTRIES);
+  if(!b[fields]||Object.keys(b[fields]).length!==expected.length||expected.some(c=>!Object.hasOwn(b[fields],c)))throw Error('Incomplete observations');
+  const changed=expected.filter(c=>positive(b[fields][c])!==a?.[fields]?.[c]);
+  const changedPeriod=a?.[period]!==b[period];
+  rows.push({kind,status:changed.length||changedPeriod?'review_required':'unchanged',previousPeriod:a?.[period]??null,collectedPeriod:b[period],changedCurrencies:changed,sourceDigest:next.sourceDigest,reviewRequired:Boolean(changed.length||changedPeriod)});
+ }
+ return {schemaVersion:1,checkedOn:today,automaticActivation:false,reviewStatus:'pending',sources:rows};
+}

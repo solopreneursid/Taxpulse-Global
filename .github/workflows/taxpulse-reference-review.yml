@@ -4,6 +4,8 @@ on:
     paths:
       - 'engine/reference-data.mjs'
       - 'scripts/collect-reference-data.mjs'
+      - 'data/public-reference-candidate.json'
+      - 'tests/reference-data.test.mjs'
       - '.github/workflows/taxpulse-reference-review.yml'
   workflow_dispatch:
   schedule:
