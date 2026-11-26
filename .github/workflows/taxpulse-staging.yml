@@ -26,8 +26,8 @@ jobs:
         run: npx --no-install playwright install --with-deps chromium
       - name: Test the actual simple workspace in Chromium
         run: node browser-tests/smoke.mjs
-      - name: Verify deployed preview independently
-        run: node browser-tests/hosted-smoke.mjs
+      - name: Reproduce staging build
+        run: node staging/integrated/build.mjs
   regulatory-source-probe:
     continue-on-error: true
     runs-on: ubuntu-latest

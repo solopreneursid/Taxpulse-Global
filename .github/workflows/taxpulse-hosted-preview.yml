@@ -22,12 +22,16 @@ jobs:
           npm ci --ignore-scripts
           npm audit --audit-level=high --package-lock-only
           npx --no-install playwright install --with-deps chromium
+      - name: Verify exact static asset bytes against source build
+        run: node scripts/verify-hosted-assets.mjs
       - name: Check exact hosted revision
         run: node browser-tests/hosted-smoke.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: hosted-verification-report
-          path: hosted-verification-report.json
+          path: |
+            hosted-verification-report.json
+            hosted-asset-integrity.json
           if-no-files-found: warn
           retention-days: 14

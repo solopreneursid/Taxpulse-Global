@@ -24,3 +24,6 @@ Run `node scripts/production-readiness-report.mjs` for a read-only manifest and 
 
 ## Independent review packet
 See REVIEW-HANDOFF.md. Generate the 56-scope hashed inventory with `node scripts/prepare-review-packet.mjs independent-review-packet.json` or the read-only independent review handoff workflow. Do not treat this artifact as statutory evidence or a signed release authorization.
+
+## Source and hosted verification separation
+Source CI runs regression, dependency audit, local Chromium and reproducible build. The separate hosted workflow is mandatory after every preview deployment and exact pin update; it checks the locally reproduced revision, hashes every public static asset (including service worker), and runs hosted browser tests. This avoids races between old pins and deployments; source CI alone is not evidence of hosted success. No dynamic runtime bytes or private server modules are certified by the static asset check.
