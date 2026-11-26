@@ -7,6 +7,10 @@ for(const r of SNAPSHOTS){if(!Array.isArray(r.bounds)||!Array.isArray(r.rates)||
 for(const r of SNAPSHOTS){Object.freeze(r.bounds);Object.freeze(r.rates);Object.freeze(r.sourceUrls);Object.freeze(r);}
 Object.freeze(SNAPSHOTS);
 const find=id=>SNAPSHOTS.find(r=>r.id===id);
+const validDay=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v))&&new Date(v).toISOString().slice(0,10)===v;
+for(const r of SNAPSHOTS){if(!validDay(r.start)||!validDay(r.end))throw Error('Invalid historical dates');}
+for(const a of SNAPSHOTS)for(const b of SNAPSHOTS)if(a!==b&&a.country===b.country&&a.start<=b.end&&b.start<=a.end)throw Error('Overlapping historical periods');
+export function historicalRuleAtDate(country,day){if(!validDay(day))throw RangeError('Use an actual ISO calendar date');const matches=SNAPSHOTS.filter(r=>r.country===country&&r.start<=day&&day<=r.end);if(matches.length!==1)throw RangeError('No unique retained ordinary-income schedule for date');return copy(matches[0]);}
 const copy=r=>({...r,bounds:[...r.bounds],rates:[...r.rates],sourceUrls:[...r.sourceUrls]});
 export function historicalRuleCatalog(){return SNAPSHOTS.map(copy);}
 function money(v){

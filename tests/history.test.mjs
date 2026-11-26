@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {historicalRuleCatalog,compareHistoricalTax as calc} from '../engine/history.mjs';
+import {historicalRuleCatalog,historicalRuleAtDate,compareHistoricalTax as calc} from '../engine/history.mjs';
 import {createReceipt,verifyReceipt} from '../engine/proof.mjs';
 const us={country:'US',firstRuleId:'US-2024-single-ordinary-v1',secondRuleId:'US-2026-single-ordinary-v1',taxableIncome:100000,scopeConfirmed:true};
 const au={country:'AU',firstRuleId:'AU-2024-25-resident-ordinary-v1',secondRuleId:'AU-2027-28-resident-ordinary-v1',taxableIncome:100000,scopeConfirmed:true};
@@ -20,3 +20,5 @@ test('UK unchanged ordinary bands produce zero change',()=>{const r=calc({countr
 test('historical replay across fingerprints uses retained trusted rules',async()=>{const r=await createReceipt({kind:'historical-tax',input:au,engineFingerprint:'a'.repeat(64)});assert.deepEqual(await verifyReceipt(r,'b'.repeat(64)),{integrity:true,sameEngine:false,reproduced:true});});
 test('nonhistorical replay still requires matching build',async()=>{const r=await createReceipt({kind:'salary-remainder',input:{country:'US',region:'TX',taxYear:'2026',pay:100000,scopeConfirmed:true},engineFingerprint:'a'.repeat(64)});assert.deepEqual(await verifyReceipt(r,'b'.repeat(64)),{integrity:true,sameEngine:false,reproduced:false});});
 test('rehashed altered rule snapshot is not reproducible',async()=>{const r=await createReceipt({kind:'historical-tax',input:au,engineFingerprint:'a'.repeat(64)});r.payload.result.second.rule.rates[1]=0;const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(canonical(r.payload))));r.digest=Array.from(new Uint8Array(bytes),b=>b.toString(16).padStart(2,'0')).join('');assert.deepEqual(await verifyReceipt(r,'b'.repeat(64)),{integrity:true,sameEngine:false,reproduced:false});});
+
+test('historical lookup respects calendar and fiscal period transitions',()=>{for(const [c,before,after,first,second] of [['AU','2026-06-30','2026-07-01','AU-2025-26-resident-ordinary-v1','AU-2026-27-resident-ordinary-v1'],['AU','2027-06-30','2027-07-01','AU-2026-27-resident-ordinary-v1','AU-2027-28-resident-ordinary-v1'],['GB','2026-04-05','2026-04-06','GB-2025-26-ordinary-v1','GB-2026-27-ordinary-v1'],['US','2025-12-31','2026-01-01','US-2025-single-ordinary-v1','US-2026-single-ordinary-v1']]){assert.equal(historicalRuleAtDate(c,before).id,first);assert.equal(historicalRuleAtDate(c,after).id,second);}for(const [c,d] of [['IN','2026-04-01'],['US','2027-01-01'],['AU','2026-02-30'],['GB','2026-4-6'],['SG','2026-01-01']])assert.throws(()=>historicalRuleAtDate(c,d));});

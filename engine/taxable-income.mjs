@@ -286,6 +286,7 @@ export function calculateRegionalTax(input,registry){
 // UK category A uses actual monthly pay-period thresholds, not annual NI thresholds.
 const PAY_SOURCES={"US":["https://www.irs.gov/irb/2025-45_IRB","https://www.irs.gov/instructions/i941","https://www.irs.gov/taxtopics/tc560","https://www.texas.gov/business-taxes/taxes"],"GB":["https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027","https://www.gov.uk/income-tax-rates"]};
 export function calculateSalaryRemainder(input,ruleContext={}){
+ if(Object.keys(ruleContext).length&&ruleContext.national&&['IN','DE','AE'].includes(input?.country))throw new RangeError('Salary model is not fully synchronized with signed rules');
  if(input&&['DE','AE'].includes(input.country))return germanEmiratiSalaryRemainder(input,ruleContext);
  if(input&&['CA','AU','IN','SG'].includes(input.country))return extendedSalaryRemainder(input,ruleContext);
  const keys=['country','region','taxYear','pay','scopeConfirmed'];

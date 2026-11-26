@@ -1,0 +1,16 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {calculateSalaryRemainder,calculateRegionalTax,calculateEmployeeContributions,assessTaxableIncome,compareIndiaRegimes} from '../engine/taxable-income.mjs';
+const annual=(country,region,pay)=>calculateSalaryRemainder({country,region,pay,taxYear:'2026',scopeConfirmed:true});
+const regional=(country,region,income)=>calculateRegionalTax({country,region,income,taxYear:'2026',scopeConfirmed:true});
+const contrib=(country,income,extra={})=>calculateEmployeeContributions({country,income,taxYear:'2026',scopeConfirmed:true,...extra});
+const assess=(country,taxableIncome,extra={})=>assessTaxableIncome({country,taxableIncome,taxYear:'2026',...extra});
+test('US SSA and IRS payroll maxima and additional Medicare boundary',()=>{const r=annual('US','TX',201000);assert.deepEqual(r.contributions.map(c=>c.amount),[11439,2914.5,9]);assert.equal(r.taxRulesVerified,false);});
+test('GB HMRC category A upper monthly boundary',()=>{const a=annual('GB','RUK',4189),b=annual('GB','RUK',4289);assert.equal(a.employeeContributions,3015.36);assert.ok(Math.abs(b.employeeContributions-a.employeeContributions-24)<.001);});
+test('CA PE annual tax is not prorated July payroll withholding',()=>{const a=regional('CA','PE',200000),b=regional('CA','PE',201000);assert.ok(Math.abs(b.regionalTax-a.regionalTax-200)<.001);assert.equal(a.taxRulesVerified,false);});
+test('CA CRA CPP and EI published maxima',()=>{assert.deepEqual(contrib('CA',85000).components.map(c=>c.amount),[4230.45,416,1123.07]);});
+test('AU 2026-27 resident rates and full Medicare levy are separate',()=>{assert.equal(assess('AU',135000,{residentEligible:true}).incomeTax,31020);assert.equal(contrib('AU',135000).totalEmployeeContribution,2700);});
+test('SG IRAS resident gross tax and CPF age bands are distinct',()=>{assert.equal(assess('SG',1000000,{residentEligible:true}).incomeTax,199150);assert.equal(contrib('SG',8001,{ageBand:'56-60'}).totalEmployeeContribution,1440);});
+test('DE statutory tariff at EUR 50,000 individual assessed income',()=>{assert.equal(assess('DE',50000,{assessment:'individual'}).incomeTax,10548);});
+test('AE ILOE inclusive basic wage threshold plus 5 percent VAT',()=>{const input={country:'AE',region:'AE',taxYear:'2026',pay:20000,monthlyBasicSalary:16000,scopeConfirmed:true};assert.equal(calculateSalaryRemainder(input).employeeContributions,63);assert.equal(calculateSalaryRemainder({...input,monthlyBasicSalary:16000.01}).employeeContributions,126);});
+test('IN TY 2026-27 ordinary salary rebate and marginal relief examples',()=>{const i={country:'IN',taxYear:'2026',grossSalary:1275000,residentIndividual:true,ageGroup:'under-60',ordinarySalaryOnly:true,oldEligibleDeductions:0,newEligibleDeductions:0};assert.equal(compareIndiaRegimes(i).newRegime.incomeTax,0);assert.equal(compareIndiaRegimes({...i,grossSalary:1285000}).newRegime.incomeTax,10400);});
