@@ -1,3 +1,4 @@
+import {encryptRecord,decryptRecord} from './secure-records.mjs';
 import {calculateSalaryRemainder} from './taxable-income.mjs';
 const own=(o,k)=>Object.hasOwn(o,k);
 const regions=Object.freeze({TX:['US','USD','annual'],RUK:['GB','GBP','monthly'],SCT:['GB','GBP','monthly'],AB:['CA','CAD','annual'],AU:['AU','AUD','annual'],IN:['IN','INR','annual'],SG:['SG','SGD','monthly'],DE:['DE','EUR','monthly'],AE:['AE','AED','monthly']});
@@ -35,4 +36,18 @@ export function negotiationFromProfile(profile,monthlyIncrease,ruleContext={}){
  const current=salaryFromProfile(profile,ruleContext);
  if(minor(monthlyIncrease)===0)throw new RangeError('Enter a positive increase');
  return {current,monthlyIncrease};
+}
+
+const checkFingerprint=v=>{if(typeof v!=='string'||! /^[a-f0-9]{64}$/.test(v))throw Error('Invalid engine fingerprint');return v;};
+export async function exportEncryptedProfile(profile,password,engineFingerprint,ruleContext={}){
+ checkFingerprint(engineFingerprint);
+ const salary=salaryFromProfile(profile,ruleContext);
+ return encryptRecord({kind:'taxpulse-financial-profile',schemaVersion:1,engineFingerprint,salary},password);
+}
+export async function importEncryptedProfile(envelope,password,engineFingerprint,ruleContext={}){
+ checkFingerprint(engineFingerprint);
+ const data=await decryptRecord(envelope,password);
+ exact(data,['kind','schemaVersion','engineFingerprint','salary']);
+ if(data.kind!=='taxpulse-financial-profile'||data.schemaVersion!==1||data.engineFingerprint!==engineFingerprint)throw Error('Incompatible financial profile; use the original engine or enter the assumptions again');
+ return createFinancialProfile(data.salary,ruleContext);
 }

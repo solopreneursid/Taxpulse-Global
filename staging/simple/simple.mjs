@@ -1,7 +1,7 @@
 import runtime from './engine/runtime-context.mjs';
 import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity} from './engine/decision-tools.mjs';
 import {calculateBudget,expenseCategories} from './engine/budget.mjs';
-import {createFinancialProfile,offerFromProfile} from './engine/financial-profile.mjs';
+import {createFinancialProfile,offerFromProfile,exportEncryptedProfile,importEncryptedProfile} from './engine/financial-profile.mjs';
 import {compareInternational} from './engine/international.mjs';
 import {compareCompensation} from './engine/compensation.mjs';
 import {negotiateSalary} from './engine/negotiation.mjs';
@@ -663,12 +663,44 @@ showWorkspace();
 
 // Explicit, tab-memory-only transfer; never persists or transmits salary data.
 let savedProfile=null;
+let profileTransferGeneration=0,profileTransferBusy=false;
+const profilePassword=$('profile-transfer-password'),profileFile=$('profile-transfer-file'),profileTransferStatus=$('profile-transfer-status');
+function showSavedProfile(profile){savedProfile=profile;$('profile-summary').textContent='Saved example: '+profile.region+' · '+money(profile.salary.pay,profile.currency)+' '+profile.payPeriod;$('profile-bar').hidden=false;$('profile-use-intl').disabled=false;$('budget-use-profile').disabled=false;}
+function clearProfileTransfer(){profileTransferGeneration++;profilePassword.value='';profileFile.value='';profileTransferStatus.textContent='';}
+async function transferProfile(action){
+ if(profileTransferBusy)return;
+ if(runtime.state!=='bundled-preview'){profileTransferStatus.textContent='Profile transfer requires the bundled preview.';return;}
+ profileTransferBusy=true;const generation=profileTransferGeneration,pass=profilePassword.value,file=profileFile.files?.[0],profile=savedProfile;
+ profilePassword.value='';profileFile.value='';
+ $('profile-transfer-export').disabled=true;$('profile-transfer-import').disabled=true;
+ try{
+  if(action==='export'){
+   if(!profile)throw Error('Keep a salary example in this tab first');
+   const envelope=await exportEncryptedProfile(profile,pass,engineFingerprint,ruleContext);
+   if(generation!==profileTransferGeneration)return;
+   const url=URL.createObjectURL(new Blob([JSON.stringify(envelope)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='taxpulse-encrypted-profile.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+   profileTransferStatus.textContent='Encrypted profile downloaded. Keep the passphrase separately.';
+  }else{
+   if(!file||file.size>2100000)throw Error('Choose a supported encrypted profile file');
+   const envelope=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await file.arrayBuffer()));
+   const restored=await importEncryptedProfile(envelope,pass,engineFingerprint,ruleContext);
+   if(generation!==profileTransferGeneration)return;
+   showSavedProfile(restored);profileTransferStatus.textContent='Encrypted example restored and recalculated in this tab.';
+  }
+ }catch{if(generation===profileTransferGeneration)profileTransferStatus.textContent='Transfer failed. Check the file, passphrase, saved example and matching engine version.';}
+ finally{profileTransferBusy=false;$('profile-transfer-export').disabled=false;$('profile-transfer-import').disabled=false;}
+}
+$('profile-transfer-export').addEventListener('click',()=>transferProfile('export'));
+$('profile-transfer-import').addEventListener('click',()=>transferProfile('import'));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearProfileTransfer();});
+window.addEventListener('pagehide',clearProfileTransfer);
+
 $('profile-save').addEventListener('click',()=>{
  if(!lastPay)return;
- try{savedProfile=createFinancialProfile(lastPay.input,ruleContext);$('profile-summary').textContent='Saved example: '+savedProfile.region+' · '+money(savedProfile.salary.pay,savedProfile.currency)+' '+savedProfile.payPeriod;$('profile-bar').hidden=false;$('profile-use-intl').disabled=false;$('budget-use-profile').disabled=false;$('profile-save-status').textContent='Example kept in this tab. Open Work Abroad or My Money to reuse it.';}
+ try{showSavedProfile(createFinancialProfile(lastPay.input,ruleContext));$('profile-save-status').textContent='Example kept in this tab. Open Work Abroad or My Money to reuse it.';}
  catch{$('profile-save-status').textContent='Calculate a supported salary example first.';}
 });
-$('profile-clear').addEventListener('click',()=>{savedProfile=null;$('profile-summary').textContent='';$('profile-bar').hidden=true;$('profile-use-intl').disabled=true;$('budget-use-profile').disabled=true;$('profile-save-status').textContent='Saved example forgotten. Existing calculator inputs are unchanged.';$('profile-intl-status').textContent='';});
+$('profile-clear').addEventListener('click',()=>{clearProfileTransfer();savedProfile=null;$('profile-summary').textContent='';$('profile-bar').hidden=true;$('profile-use-intl').disabled=true;$('budget-use-profile').disabled=true;$('profile-save-status').textContent='Saved example forgotten. Existing calculator inputs are unchanged.';$('profile-intl-status').textContent='';});
 $('profile-use-intl').addEventListener('click',()=>{
  if(!savedProfile)return;
  try{const s=offerFromProfile(savedProfile,ruleContext);$('intl-1-region').value=s.region;intlChanged(1);$('intl-1-pay').value=String(s.pay);
