@@ -1,0 +1,56 @@
+name: One-time TaxPulse history import
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/import-taxpulse-history.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: taxpulse-history-import
+  cancel-in-progress: false
+jobs:
+  import:
+    if: github.repository == 'solopreneursid/Taxpulse-Global' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Import only the pinned TaxPulse subtree and its history
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_commit=c348a836d3880fe4b393b5a756a3e8f31a8ef792
+          expected_tree=6a15a027137d89ba66b330af0a70028cc4804f5a
+          destination=migration/taxpulse-import
+          if git ls-remote --exit-code --heads origin "refs/heads/$destination"; then
+            echo 'Import branch already exists; refusing to overwrite.'
+            exit 1
+          fi
+          source_dir="$(mktemp -d)"
+          trap 'rm -rf "$source_dir"' EXIT
+          git clone --no-tags --single-branch --branch hqventures/taxpulse-global https://github.com/solopreneursid/YorpHives_Website.git "$source_dir/source"
+          git -C "$source_dir/source" cat-file -e "$source_commit^{commit}"
+          test "$(git -C "$source_dir/source" rev-parse "$source_commit:products/taxpulse-global")" = "$expected_tree"
+          split="$(git -C "$source_dir/source" subtree split --prefix=products/taxpulse-global "$source_commit")"
+          test "$(git -C "$source_dir/source" rev-parse "$split^{tree}")" = "$expected_tree"
+          git -C "$source_dir/source" branch taxpulse-export "$split"
+          git fetch --no-tags "$source_dir/source" refs/heads/taxpulse-export
+          git config user.name 'TaxPulse migration'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -b "$destination"
+          git merge --allow-unrelated-histories --no-ff -m "Import TaxPulse Global product history from $source_commit" "$split"
+          python3 - "$split" <<'PY'
+          import subprocess, sys
+          def entries(ref):
+              return dict((line.split(b'\t',1)[1],line.split(b'\t',1)[0]) for line in subprocess.check_output(['git','ls-tree','-r','-z',ref]).split(b'\0') if line)
+          source=entries(sys.argv[1]); target=entries('HEAD')
+          assert len(source)==181, len(source)
+          assert all(target.get(path)==entry for path,entry in source.items()), 'Product file mismatch'
+          assert set(target)-set(source)=={b'LICENSE',b'.github/workflows/import-taxpulse-history.yml'}, 'Unexpected files'
+          print(f'Verified {len(source)} identical product files.')
+          PY
+          git push origin "HEAD:refs/heads/$destination"
+          printf 'Imported source: %s\nProduct tree: %s\nFiltered history commit: %s\nImported branch: %s\n' "$source_commit" "$expected_tree" "$split" "$(git rev-parse HEAD)"
