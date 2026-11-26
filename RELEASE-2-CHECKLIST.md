@@ -13,3 +13,11 @@ The production CLI now also requires two distinct trusted Ed25519 public keys an
 
 ### Offline approval workflow
 Use `node scripts/release-approval.mjs prepare MANIFEST ARTIFACT COMMIT OUTPUT` to prepare a 24-hour approval for the exact release. Each designated signer independently reviews the same manifest, artifact and commit, then runs the tool's `sign` command with their own offline private key and independently pinned role public key. Exchange only the resulting signed JSON files, never private keys. Use `assemble` with both signatures and pinned public keys to produce the gate's approval JSON. Running the script without arguments prints exact usage. The script rejects preview manifests, changed artifacts, expired payloads, mismatched keys and duplicate signers. Generating or assembling an approval does not deploy anything and cannot substitute for actual statutory review.
+
+## Outstanding founder-controlled release gates
+Run `node scripts/production-readiness-report.mjs` for a read-only manifest and backend coverage inventory. This report is not the production gate or an independent assessment. No private key, token, or customer data is read or emitted.
+- Qualified independent reviewers must approve exact country/module scopes against official sources and signed fixtures.
+- Founder and independent reviewer generate and retain distinct offline keys; only public keys are enrolled.
+- Independent security assessor reviews deployed boundaries, browser storage, recovery and key revocation.
+- Physical low-end mobile usability and accessibility testing remains necessary; no WCAG conformance claim.
+- Freeze the actual artifact and approve its digest via the dual-signature release workflow. Production remains blocked until the actual gate succeeds.

@@ -284,6 +284,17 @@ try {
    assert.equal(await page.locator('#pay-error').innerText(),'');
    await page.locator('#pay-result').waitFor();
    assert.match(await page.locator('#pay-annual').innerText(),/CAD\s*74,458\.50/);
+   await page.locator('#profile-save').click();
+   await page.locator('.nav a[href="/money"]').click();await page.locator('#profile-transfer summary').click();
+   await page.locator('#profile-transfer-password').fill('fictional-profile-password');
+   const [profileBackup]=await Promise.all([page.waitForEvent('download'),page.locator('#profile-transfer-export').click()]);
+   await page.waitForFunction(()=>document.getElementById('profile-transfer-status').textContent.includes('Encrypted profile downloaded'));
+   assert.ok(!readFileSync(await profileBackup.path(),'utf8').includes('annualTakeHome'));
+   await page.locator('#profile-clear').click();
+   await page.locator('#profile-transfer-file').setInputFiles(await profileBackup.path());await page.locator('#profile-transfer-password').fill('fictional-profile-password');
+   await page.locator('#profile-transfer-import').click();await page.waitForFunction(()=>document.getElementById('profile-transfer-status').textContent.includes('restored and recalculated'));
+   assert.equal(await page.locator('#profile-bar').isVisible(),true);
+   await page.locator('#profile-clear').click();await page.evaluate(id=>{location.hash=id},"salary-remainder");await page.locator('#salary-remainder').waitFor({state:'visible'});
    await page.locator('#pay-region').selectOption('IN');
    assert.equal(await page.locator('#pay-epf').isEnabled(),true);
    await page.locator('#pay-amount').fill('1500000');
@@ -411,6 +422,7 @@ try {
    await page.locator('#local-document-text').fill('Gross pay: 1000\nIncome tax: 100\nNet pay: 900');
    await page.locator('#local-document-parse').click();
    assert.match(await page.locator('#local-document-result').innerText(),/1000/);
+   await page.locator('#local-document-confirm').check();await page.locator('#local-document-other').fill('0');await page.locator('#local-document-reconcile').click();assert.match(await page.locator('#local-document-reconciliation').innerText(),/Arithmetic balances/);
    await page.locator('#local-document-clear').click();
    assert.equal(await page.locator('#local-document-text').inputValue(),'');
    await page.locator('#local-vault summary').click();
