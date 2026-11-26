@@ -51,7 +51,7 @@ try {
    assert.equal(await page.evaluate(()=>document.activeElement.classList.contains('skip')),true);
    await page.keyboard.press('Enter');
    assert.equal(await page.evaluate(()=>document.activeElement.id),'main');
-   assert.equal(await page.locator('#tools .tool-link').count(),20);
+   assert.equal(await page.locator('#tools .tool-link').count(),22);
    assert.equal(await page.locator('#tools .category-card').count(),6);
    assert.deepEqual(await page.locator('main > section.card:visible').evaluateAll(es=>es.map(e=>e.id)),['tools']);
    await page.locator('.nav a[href="/salary"]').click();
@@ -82,6 +82,16 @@ try {
    assert.equal(await page.locator('#business-break-even-result').isVisible(),false);
    await page.locator('#business-break-even-form button[type=submit]').click();
    assert.match(await page.locator('#business-break-even-breakdown').innerText(),/Not achievable/);
+   await page.goto(origin+'/tools/india-tax-cliffs');
+   await page.locator('#india-tax-cliffs-startSalary').fill('1275000');await page.locator('#india-tax-cliffs-endSalary').fill('1275020');
+   await page.locator('#india-tax-cliffs-residentIndividual').selectOption('true');await page.locator('#india-tax-cliffs-confirm').check();
+   await page.locator('#india-tax-cliffs-form button[type=submit]').click();await page.locator('#india-tax-cliffs-result').waitFor();
+   assert.ok(await page.locator('#india-tax-cliffs-steps li').count()>0);
+   await page.goto(origin+'/tools/india-tax-opportunity');
+   await page.locator('#india-tax-opportunity-grossSalary').fill('1500000');await page.locator('#india-tax-opportunity-residentIndividual').selectOption('true');
+   await page.locator('#india-tax-opportunity-extraOldEligibleDeductions').fill('100000');await page.locator('#india-tax-opportunity-incrementalCashCost').fill('100000');
+   await page.locator('#india-tax-opportunity-confirm').check();await page.locator('#india-tax-opportunity-form button[type=submit]').click();await page.locator('#india-tax-opportunity-result').waitFor();
+   assert.match(await page.locator('#india-tax-opportunity-breakdown').innerText(),/New regime net cash effect/);
    await page.locator('.nav a[href="/money"]').click();
    await page.locator('#category-money a[href="/tools/monthly-budget"]').click();
    await page.locator('#monthly-budget').waitFor();
