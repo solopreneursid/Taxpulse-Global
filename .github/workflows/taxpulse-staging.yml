@@ -18,15 +18,6 @@ jobs:
         with:
           node-version: '22'
       - run: node --test tests/*.test.mjs
-      - name: Generate lockfile for isolated dependency bootstrap
-        if: github.event_name == 'pull_request' && github.head_ref == 'fix/regulatory-ledger-integrity'
-        run: |
-          if [ ! -f package-lock.json ]; then
-            npm install --package-lock-only --ignore-scripts
-            echo 'TAXPULSE_LOCKFILE_BEGIN'
-            cat package-lock.json
-            echo 'TAXPULSE_LOCKFILE_END'
-          fi
       - name: Install locked browser test dependencies
         run: npm ci --ignore-scripts
       - name: Audit installed test dependencies
