@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "observedOn": "2026-11-26",
+  "scope": "read-only engineering observation; not independent security assessment",
+  "previewRevision": "1eaf625066f061122996ab40b612cacee2397f523c5393169386b014755b096b",
+  "hostedVerificationRun": 45825332126,
+  "preview": {
+    "activeVersion": "44736c62-9a86-4c37-815b-efcd18aa253e",
+    "bindings": [
+      "REGULATORY_STATE"
+    ],
+    "schedules": 0
+  },
+  "publisher": {
+    "activeVersion": "03147c4d-0e33-402f-b580-03d46256e193",
+    "bindings": [
+      "RULE_DB",
+      "RULE_INBOX"
+    ],
+    "schedules": 0
+  },
+  "d1": {
+    "quickCheck": "ok",
+    "foreignKeyViolations": 0,
+    "headSequence": 0,
+    "headState": "empty",
+    "hasDigest": false,
+    "hasReview": false,
+    "snapshots": 0,
+    "events": 0,
+    "versions": 0
+  },
+  "limitations": [
+    "No key enrollment observed in the inspected Workers.",
+    "No production system or recovery operation tested.",
+    "No independent security or statutory approval implied."
+  ]
+}

@@ -1,0 +1,29 @@
+name: TaxPulse independent review handoff
+on:
+  pull_request:
+    paths:
+      - 'scripts/prepare-review-packet.mjs'
+      - 'REVIEW-HANDOFF.md'
+      - 'rules/**'
+      - 'engine/release-gate.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  review-packet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/review-packet.test.mjs
+      - run: node scripts/prepare-review-packet.mjs independent-review-packet.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: independent-review-packet
+          path: independent-review-packet.json
+          retention-days: 30

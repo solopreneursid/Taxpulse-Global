@@ -21,3 +21,6 @@ Run `node scripts/production-readiness-report.mjs` for a read-only manifest and 
 - Independent security assessor reviews deployed boundaries, browser storage, recovery and key revocation.
 - Physical low-end mobile usability and accessibility testing remains necessary; no WCAG conformance claim.
 - Freeze the actual artifact and approve its digest via the dual-signature release workflow. Production remains blocked until the actual gate succeeds.
+
+## Independent review packet
+See REVIEW-HANDOFF.md. Generate the 56-scope hashed inventory with `node scripts/prepare-review-packet.mjs independent-review-packet.json` or the read-only independent review handoff workflow. Do not treat this artifact as statutory evidence or a signed release authorization.
