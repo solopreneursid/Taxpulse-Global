@@ -1,3 +1,5 @@
+import referenceCandidate from './engine/public-reference-candidate.mjs';
+import {referenceInputs} from './engine/reference-data.mjs';
 import runtime from './engine/runtime-context.mjs';
 import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity} from './engine/decision-tools.mjs';
 import {calculateBudget,expenseCategories} from './engine/budget.mjs';
@@ -740,3 +742,19 @@ const summary=runtime.monitoring;
 const intro=document.createElement('p');intro.textContent=summary?.checkedAt&&!summary.stale?'Last monitoring run: '+summary.checkedAt+'. '+summary.reviewPending+' sources require review.':'Live monitoring results are unavailable or stale. No verification is implied.';regulatoryPanel.append(intro);
 if(summary){const stats=document.createElement('p');stats.textContent=summary.configuredSources+' configured sources · '+summary.unavailable+' unavailable or not checked. Monitoring does not establish legal accuracy.';regulatoryPanel.append(stats);const list=document.createElement('div');list.className='tool-grid';for(const source of summary.sources){const card=document.createElement('article');card.className='regulatory-source';const title=document.createElement('strong');title.textContent=source.jurisdiction+' · '+source.topics.join(', ');const status=document.createElement('p');status.textContent=source.reviewPending?'Review needed':source.status.replaceAll('_',' ');const link=document.createElement('a');link.href=source.url;link.textContent='Official source';link.rel='noopener noreferrer';link.target='_blank';card.append(title,status,link);list.append(card);}regulatoryPanel.append(list);}
 $('updates').append(regulatoryPanel);
+
+function copyReference(kind){
+ const isFx=kind==='ecb',status=$(isFx?'intl-reference-status':'ppp-reference-status');
+ try{
+  const first=isFx?intlCurrency[$('intl-1-region').value]:$('purchasing-power-firstCurrency').value;
+  const second=isFx?intlCurrency[$('intl-2-region').value]:$('purchasing-power-secondCurrency').value;
+  const values=referenceInputs(referenceCandidate,kind,first,second);
+  if(isFx){$('intl-rate').value=String(values.rate);$('intl-date').value=values.rateDate;clearInternational();}
+  else{for(const [k,v] of Object.entries(values))$('purchasing-power-'+k).value=String(v);$('purchasing-power-result').hidden=true;$('purchasing-power-error').textContent='';}
+  status.textContent=(isFx?'ECB candidate dated '+values.rateDate:'World Bank household-consumption PPP candidate for '+values.referenceYear)+' copied. Independently unreviewed, editable assumptions; confirm before calculating.';
+ }catch{status.textContent='No compatible, sufficiently current candidate for this pair. Enter your own dated values.';}
+}
+$('intl-reference-copy').addEventListener('click',()=>copyReference('ecb'));
+$('ppp-reference-copy').addEventListener('click',()=>copyReference('ppp'));
+for(const id of ['intl-1-region','intl-2-region','intl-rate','intl-date'])$(id).addEventListener('input',()=>{$('intl-reference-status').textContent='';});
+for(const id of ['firstCurrency','secondCurrency','firstFactor','secondFactor','referenceYear'])$('purchasing-power-'+id).addEventListener('input',()=>{$('ppp-reference-status').textContent='';});

@@ -30,3 +30,18 @@ export function ecbCrossRate(snapshot,firstCurrency,secondCurrency){
  if(!snapshot||snapshot.baseCurrency!=='EUR'||!Object.hasOwn(snapshot.rates||{},firstCurrency)||!Object.hasOwn(snapshot.rates||{},secondCurrency)||firstCurrency===secondCurrency)throw Error('Unsupported currency pair');
  return Math.round(positive(snapshot.rates[firstCurrency])/positive(snapshot.rates[secondCurrency])*1e6)/1e6;
 }
+
+export function referenceInputs(report,kind,first,second,{today=new Date().toISOString().slice(0,10)}={}){
+ if(!report||report.schemaVersion!==1||report.reviewStatus!=='pending'||first===second||!Object.values(COUNTRIES).includes(first)||!Object.values(COUNTRIES).includes(second))throw Error('Invalid reference selection');
+ const source=report.sources?.[kind];if(!source||source.status!=='retrieved'||! /^[a-f0-9]{64}$/.test(source.sourceDigest)||source.observation?.reviewStatus!=='pending')throw Error('Candidate evidence unavailable');
+ const o=source.observation;
+ if(kind==='ecb'){
+  if(source.url!==ECB_URL||o.source!==ECB_URL||date(o.observedAt)>date(today)||Date.parse(today)-Date.parse(o.observedAt)>7*86400000)throw Error('Stale or invalid ECB candidate');
+  const rate=ecbCrossRate(o,first,second);if(rate<=0)throw Error('Exchange rate below supported precision');return {rate,rateDate:o.observedAt};
+ }
+ if(kind==='ppp'){
+  if(o.source!==PPP_URL||o.indicator!=='PA.NUS.PRVT.PP'||!Number.isInteger(o.referenceYear)||o.referenceYear<1990||o.referenceYear>Number(date(today).slice(0,4))||!Object.hasOwn(o.values||{},first)||!Object.hasOwn(o.values||{},second))throw Error('Invalid PPP candidate');
+  return {firstFactor:Math.round(positive(o.values[first])*1e6)/1e6,secondFactor:Math.round(positive(o.values[second])*1e6)/1e6,referenceYear:o.referenceYear};
+ }
+ throw Error('Unsupported reference kind');
+}

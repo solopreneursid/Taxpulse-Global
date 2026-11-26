@@ -92,6 +92,11 @@ try {
    await page.locator('#india-tax-opportunity-extraOldEligibleDeductions').fill('100000');await page.locator('#india-tax-opportunity-incrementalCashCost').fill('100000');
    await page.locator('#india-tax-opportunity-confirm').check();await page.locator('#india-tax-opportunity-form button[type=submit]').click();await page.locator('#india-tax-opportunity-result').waitFor();
    assert.match(await page.locator('#india-tax-opportunity-breakdown').innerText(),/New regime net cash effect/);
+   await page.goto(origin+'/tools/purchasing-power');
+   await page.locator('#purchasing-power-firstCurrency').selectOption('INR');await page.locator('#purchasing-power-secondCurrency').selectOption('USD');
+   assert.equal(await page.locator('#purchasing-power-firstFactor').inputValue(),'');
+   await page.locator('#ppp-reference-copy').click();assert.equal(await page.locator('#purchasing-power-referenceYear').inputValue(),'2024');assert.equal(await page.locator('#purchasing-power-firstFactor').inputValue(),'19.896916');
+   assert.match(await page.locator('#ppp-reference-status').innerText(),/Independently unreviewed/);
    await page.locator('.nav a[href="/money"]').click();
    await page.locator('#category-money a[href="/tools/monthly-budget"]').click();
    await page.locator('#monthly-budget').waitFor();

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "retrievedAt": "2026-11-26T12:32:59.446Z",
+  "reviewStatus": "pending",
+  "sources": {
+    "ecb": {
+      "status": "retrieved",
+      "url": "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml",
+      "sourceDigest": "1ae4eb5172f1dd87bef40b95fb900335492654c28d596aeafbc248fcac0b05aa",
+      "observation": {
+        "source": "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml",
+        "observedAt": "2026-11-25",
+        "baseCurrency": "EUR",
+        "rates": {
+          "EUR": 1,
+          "USD": 1.0935,
+          "GBP": 0.8373,
+          "AUD": 1.6644,
+          "CAD": 1.5591,
+          "INR": 100.859,
+          "SGD": 1.4129
+        },
+        "unsupportedCurrencies": [
+          "AED"
+        ],
+        "reviewStatus": "pending"
+      }
+    },
+    "ppp": {
+      "status": "retrieved",
+      "url": "https://api.worldbank.org/v2/country/IND;USA;GBR;CAN;AUS;DEU;SGP;ARE/indicator/PA.NUS.PRVT.PP?date=2024&format=json&per_page=100",
+      "sourceDigest": "80929c9490151d53e9fbd0779833beb88f2e1aad84ad9d6fda59860875195a0a",
+      "observation": {
+        "source": "https://data.worldbank.org/indicator/PA.NUS.PRVT.PP",
+        "indicator": "PA.NUS.PRVT.PP",
+        "referenceYear": 2024,
+        "license": "CC BY 4.0",
+        "unit": "local currency units per international dollar",
+        "values": {
+          "AED": 2.56310995667988,
+          "AUD": 1.427398,
+          "CAD": 1.240903,
+          "EUR": 0.701547,
+          "GBP": 0.682739,
+          "INR": 19.8969156536629,
+          "SGD": 1.04202980034753,
+          "USD": 1
+        },
+        "reviewStatus": "pending"
+      }
+    }
+  },
+  "evidenceRun": 45820660605
+}

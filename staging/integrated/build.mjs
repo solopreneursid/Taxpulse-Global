@@ -54,6 +54,8 @@ write('webmanifest.txt',"{\"id\":\"/\",\"name\":\"TaxPulse Global Preview\",\"sh
 write('browser-financial-profile.mjs.txt',read('engine/financial-profile.mjs'));
 write('browser-budget.mjs.txt',read('engine/budget.mjs'));
 write('browser-decision-tools.mjs.txt',read('engine/decision-tools.mjs'));
+write('browser-reference-data.mjs.txt',read('engine/reference-data.mjs'));
+write('public-reference-candidate.mjs.txt','export default '+JSON.stringify(JSON.parse(read('data/public-reference-candidate.json')))+';\n');
 
 const nationalRegistry=read('engine/national-registry.mjs').replace("import baseline from '../rules/national-investment-2026.json' with {type:'json'};","import baseline from './national-versions.mjs';");
 const nationalVersions='export default '+JSON.stringify(JSON.parse(read('rules/national-investment-2026.json')))+';\n';
@@ -76,5 +78,5 @@ const fingerprintInputs=['national-registry','national-versions','historical-ver
 const fingerprint=createHash('sha256').update(JSON.stringify(fingerprintInputs)).digest('hex');
 write('browser-fingerprint.mjs.txt','export default '+JSON.stringify(fingerprint)+';\n');
 
-const previewInputs=['app.webmanifest.txt','app-icon.svg.txt','sw.js.txt','pwa.mjs.txt','secure-records.mjs.txt','browser-vault.mjs.txt','document-text.mjs.txt','local-tools.mjs.txt','regulatory-dashboard.mjs','monitor-sources.mjs','worker.mjs','simple-index.html.txt','simple.css.txt','simple.mjs.txt','browser-budget.mjs.txt','browser-financial-profile.mjs.txt','browser-decision-tools.mjs.txt','browser-fingerprint.mjs.txt','browser-manifest.mjs.txt'];
+const previewInputs=['app.webmanifest.txt','app-icon.svg.txt','sw.js.txt','pwa.mjs.txt','secure-records.mjs.txt','browser-vault.mjs.txt','document-text.mjs.txt','local-tools.mjs.txt','regulatory-dashboard.mjs','monitor-sources.mjs','worker.mjs','simple-index.html.txt','simple.css.txt','simple.mjs.txt','browser-budget.mjs.txt','browser-financial-profile.mjs.txt','browser-decision-tools.mjs.txt','browser-reference-data.mjs.txt','public-reference-candidate.mjs.txt','browser-fingerprint.mjs.txt','browser-manifest.mjs.txt'];
 write('preview-revision.txt',createHash('sha256').update(JSON.stringify(previewInputs.map(n=>[n,readFileSync(new URL(n,bundle),'utf8')]))).digest('hex'));

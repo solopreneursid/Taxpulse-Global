@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "candidate-collection",
+  "status": "candidate-available",
   "sources": {
     "ppp": {
       "publisher": "World Bank / International Comparison Program",
@@ -22,7 +22,7 @@
     }
   },
   "limitations": [
-    "Automated source collection creates pending-review artifacts only; manual calculator inputs remain in use. No approved snapshot bundled.",
+    "Dated, source-retrieved candidates are available through explicit preview copy controls only; no automatic defaults or independent approval. See data/public-reference-candidate.json.",
     "PPP factors must share a reference year. Exchange rates are not purchasing power.",
     "No inferred city prices or automated salary recommendations."
   ]
