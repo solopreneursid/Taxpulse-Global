@@ -117,3 +117,21 @@ export function financialRunway(input){
  const runway=balance<0n?Number(available/(-balance)):null;
  return {...sample,currency:input.currency,monthlyBalance:out(balance),availableAboveReserve:out(available),projectedSavings:out(savings+balance*BigInt(input.horizonMonths)),monthsToGoal,wholeMonthsBeforeReserve:runway,goalGapNow:out(needed>savings?needed-savings:0n),warnings:['Constant monthly income and costs. Goal is in addition to the selected reserve. Negative projected savings means a modeled funding shortfall, not available credit. No interest, inflation, investment return, taxes, debt restructuring or emergency costs are inferred.']};
 }
+
+const indirectSchedules=Object.freeze({
+ GB:Object.freeze({currency:'GBP',rate:2000,source:'https://www.gov.uk/vat-rates',scope:'UK standard-rated domestic supply'}),
+ DE:Object.freeze({currency:'EUR',rate:1900,source:'https://www.gesetze-im-internet.de/ustg_1980/__12.html',scope:'Germany ordinary standard-rated domestic supply'}),
+ AU:Object.freeze({currency:'AUD',rate:1000,source:'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/how-gst-works',scope:'Australia standard-rated domestic taxable sale'}),
+ SG:Object.freeze({currency:'SGD',rate:900,source:'https://www.iras.gov.sg/taxes/goods-services-tax-%28gst%29/basics-of-gst/current-gst-rates',scope:'Singapore standard-rated domestic taxable supply'}),
+ AE:Object.freeze({currency:'AED',rate:500,source:'https://mof.gov.ae/en/public-finance/tax/value-added-tax-vat/',scope:'UAE standard-rated domestic taxable supply'}),
+ CA:Object.freeze({currency:'CAD',rate:500,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'Alberta only, confirmed place of supply; federal GST'})
+});
+/** Single ordinary taxable supply, as at the recorded source review date. */
+export function standardIndirectTax(input){
+ exact(input,['country','priceBasis','amount','scopeConfirmed']);
+ if(!Object.hasOwn(indirectSchedules,input.country)||input.scopeConfirmed!==true||!['exclusive','inclusive'].includes(input.priceBasis))throw Error('Confirm standard-rated domestic supply and supported jurisdiction');
+ const s=indirectSchedules[input.country],amount=units(input.amount),rate=BigInt(s.rate);
+ const tax=input.priceBasis==='exclusive'?round(amount*rate,10000n):round(amount*rate,10000n+rate);
+ const net=input.priceBasis==='exclusive'?amount:amount-tax,gross=net+tax;
+ return {...sample,currency:s.currency,ratePercent:s.rate/100,netAmount:out(net),taxAmount:out(tax),grossAmount:out(gross),scope:s.scope,sourceUrls:[s.source],sourceReviewedOn:'2026-11-26',warnings:[s.scope+'. Published standard rate cross-check as of 26 November 2026, not independently approved. Confirm registered seller, tax point, place of supply, standard-rated classification and price basis before using. Single amount rounded to nearest currency cent; not invoice-line rounding, input tax recovery, filing, exemption, zero-rating, reduced rate, reverse charge or cross-border advice.']};
+}

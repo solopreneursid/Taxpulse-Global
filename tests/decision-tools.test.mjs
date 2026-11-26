@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway} from '../engine/decision-tools.mjs';
+import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,standardIndirectTax} from '../engine/decision-tools.mjs';
 const ctc={annualCtc:1800000,employerContributions:100000,nonCashBenefits:200000,employeeContributions:21600,otherPayrollDeductions:2500,residentIndividual:true,ageGroup:'under-60',oldEligibleDeductions:0,newEligibleDeductions:0};
 test('CTC cash component and tax reconciliation',()=>{
  const r=indiaCtc(ctc);assert.equal(r.annualGross,1500000);assert.equal(r.new.incomeTax,97500);assert.equal(r.new.annualCash,1378400);assert.equal(r.taxRulesVerified,false);
@@ -59,4 +59,17 @@ test('cash runway respects reserve, exact whole-month arithmetic and unreachable
  const r=financialRunway(base);assert.equal(r.monthlyBalance,4000);assert.equal(r.monthsToGoal,3);assert.equal(r.projectedSavings,58000);assert.equal(r.wholeMonthsBeforeReserve,null);
  const deficit=financialRunway({...base,monthlyExpenses:12000});assert.equal(deficit.wholeMonthsBeforeReserve,2);assert.equal(deficit.monthsToGoal,null);assert.equal(deficit.projectedSavings,-14000);
  assert.throws(()=>financialRunway({...base,horizonMonths:0}));assert.throws(()=>financialRunway({...base,monthlyIncome:-1}));
+});
+
+for(const [country,tax] of [['GB',20],['DE',19],['AU',10],['SG',9],['AE',5],['CA',5]])test('standard-rated single-supply source fixture '+country,()=>{
+ const input={country,priceBasis:'exclusive',amount:100,scopeConfirmed:true};
+ const r=standardIndirectTax(input);assert.equal(r.taxAmount,tax);assert.equal(r.grossAmount,100+tax);assert.equal(r.taxRulesVerified,false);
+ assert.equal(standardIndirectTax({...input,priceBasis:'inclusive',amount:100+tax}).netAmount,100);
+ assert.equal(standardIndirectTax({...input,amount:0}).taxAmount,0);
+ assert.throws(()=>standardIndirectTax({...input,scopeConfirmed:false}));
+});
+test('standard indirect tax rejects unsupported scope and rounds a single amount',()=>{
+ const input={country:'GB',priceBasis:'exclusive',amount:0.03,scopeConfirmed:true};
+ assert.equal(standardIndirectTax(input).taxAmount,0.01);
+ assert.throws(()=>standardIndirectTax({...input,country:'IN'}));assert.throws(()=>standardIndirectTax({...input,amount:-1}));assert.throws(()=>standardIndirectTax({...input,amount:0.001}));assert.throws(()=>standardIndirectTax({...input,priceBasis:'other'}));
 });
