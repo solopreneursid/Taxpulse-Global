@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity} from '../engine/decision-tools.mjs';
+import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway} from '../engine/decision-tools.mjs';
 const ctc={annualCtc:1800000,employerContributions:100000,nonCashBenefits:200000,employeeContributions:21600,otherPayrollDeductions:2500,residentIndividual:true,ageGroup:'under-60',oldEligibleDeductions:0,newEligibleDeductions:0};
 test('CTC cash component and tax reconciliation',()=>{
  const r=indiaCtc(ctc);assert.equal(r.annualGross,1500000);assert.equal(r.new.incomeTax,97500);assert.equal(r.new.annualCash,1378400);assert.equal(r.taxRulesVerified,false);
@@ -38,4 +38,25 @@ test('India opportunity uses cost-adjusted tax savings not gross savings',()=>{
  const i={...indiaProfile,grossSalary:1500000,extraOldEligibleDeductions:100000,extraNewEligibleDeductions:0,incrementalCashCost:100000};
  const r=indiaTaxOpportunity(i);assert.ok(r.oldTaxReduction>0);assert.equal(r.oldCashEffect,r.oldTaxReduction-100000);assert.equal(r.newCashEffect,-100000);assert.equal(r.taxRulesVerified,false);
  assert.equal(indiaTaxOpportunity({...i,incrementalCashCost:0}).oldCashEffect,r.oldTaxReduction);assert.throws(()=>indiaTaxOpportunity({...i,incrementalCashCost:-1}));
+});
+
+test('global salary cliff scan bounds and known smooth Texas wages',()=>{
+ const profile={country:'US',region:'TX',taxYear:'2026',scopeConfirmed:true};
+ const r=salaryCliffs({profile,startPay:100000,endPay:100020});assert.equal(r.examinedIncrements,20);assert.equal(r.cliffCount,0);assert.equal(r.taxRulesVerified,false);
+ assert.throws(()=>salaryCliffs({profile,startPay:100000,endPay:101001}));assert.throws(()=>salaryCliffs({profile:{...profile,pay:100000},startPay:100000,endPay:100020}));
+});
+for(const [country,region,startPay,extra] of [['GB','RUK',4189,{}],['GB','SCT',3000,{}],['CA','AB',74600,{}],['AU','AU',135000,{}],['IN','IN',1275000,{epfMonthlyWage:0,professionalTaxAnnual:0}],['SG','SG',8000,{}],['DE','DE',5000,{annualTaxableIncome:50000,healthSupplementRate:2.9}],['AE','AE',20000,{monthlyBasicSalary:16000}]])test('scoped global cliff scan '+region,()=>{
+ const r=salaryCliffs({profile:{country,region,taxYear:'2026',scopeConfirmed:true,...extra},startPay,endPay:startPay+10});assert.equal(r.examinedIncrements,10);assert.ok(r.steps.every(s=>s.annualNetChange<0));assert.equal(r.sampleOnly,true);
+});
+test('four-country assessed income opportunities separate taxes from cash cost',()=>{
+ const base={country:'SG',beforeTaxable:80000,afterTaxable:40000,beforeNet:0,afterNet:0,assessment:'individual',incrementalCashCost:1000,scopeConfirmed:true};
+ const r=taxableIncomeOpportunity(base);assert.equal(r.taxReduction,2800);assert.equal(r.cashEffect,1800);
+ for(const country of ['CA','AU','DE'])assert.ok(taxableIncomeOpportunity({...base,country,...(country==='CA'?{beforeNet:80000,afterNet:40000}:{})}).taxReduction>=0);
+ assert.throws(()=>taxableIncomeOpportunity({...base,scopeConfirmed:false}));assert.throws(()=>taxableIncomeOpportunity({...base,afterTaxable:90000}));assert.throws(()=>taxableIncomeOpportunity({...base,beforeNet:80000}));
+});
+test('cash runway respects reserve, exact whole-month arithmetic and unreachable goals',()=>{
+ const base={currency:'INR',monthlyIncome:10000,monthlyExpenses:6000,liquidSavings:10000,reserveFloor:5000,goalAmount:15000,horizonMonths:12};
+ const r=financialRunway(base);assert.equal(r.monthlyBalance,4000);assert.equal(r.monthsToGoal,3);assert.equal(r.projectedSavings,58000);assert.equal(r.wholeMonthsBeforeReserve,null);
+ const deficit=financialRunway({...base,monthlyExpenses:12000});assert.equal(deficit.wholeMonthsBeforeReserve,2);assert.equal(deficit.monthsToGoal,null);assert.equal(deficit.projectedSavings,-14000);
+ assert.throws(()=>financialRunway({...base,horizonMonths:0}));assert.throws(()=>financialRunway({...base,monthlyIncome:-1}));
 });

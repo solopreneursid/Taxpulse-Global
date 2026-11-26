@@ -1,5 +1,5 @@
 // Decision tools use explicit user-supplied assumptions; no statutory eligibility inferred.
-import {compareIndiaRegimes} from './taxable-income.mjs';
+import {compareIndiaRegimes,calculateSalaryRemainder,assessTaxableIncome} from './taxable-income.mjs';
 const currencies=['INR','USD','GBP','CAD','AUD','EUR','SGD','AED'];
 function exact(o,keys){if(!o||typeof o!=='object'||Array.isArray(o)||Object.keys(o).length!==keys.length||keys.some(k=>!Object.hasOwn(o,k)))throw new TypeError('Unsupported input fields');}
 function units(v,scale=100,max=1e9){if(typeof v!=='number'||!Number.isFinite(v)||v<0||v>max||Math.abs(v*scale-Math.round(v*scale))>0.00002)throw new RangeError('Invalid amount or precision');return BigInt(Math.round(v*scale));}
@@ -74,4 +74,46 @@ export function indiaTaxOpportunity(input,ruleContext={}){
  const cost=units(incrementalCashCost),r=indiaDeductionScenario(scenario,ruleContext);
  const oldTax=units(r.oldTaxReduction),newTax=units(r.newTaxReduction);
  return {...sample,currency:'INR',oldTaxReduction:r.oldTaxReduction,newTaxReduction:r.newTaxReduction,incrementalCashCost:out(cost),oldCashEffect:out(oldTax-cost),newCashEffect:out(newTax-cost),before:r.before,after:r.after,warnings:['Enter only additional deductions already confirmed eligible for each regime. Incremental cash cost is the extra outlay needed to obtain those deductions; use zero for a qualifying expense already incurred. Cash effect means tax reduction minus additional cash outlay, not investment return, total wealth change or advice. No eligibility, contribution limits or future benefits are inferred.']};
+}
+
+/** Adjacent whole-unit pay scan using an unchanged, explicitly confirmed salary profile. */
+export function salaryCliffs(input,ruleContext={}){
+ exact(input,['profile','startPay','endPay']);
+ const {profile,startPay,endPay}=input;
+ if(!profile||typeof profile!=='object'||Array.isArray(profile)||Object.hasOwn(profile,'pay')||profile.scopeConfirmed!==true||!Number.isSafeInteger(startPay)||!Number.isSafeInteger(endPay)||startPay<0||endPay>1e9||endPay<=startPay||endPay-startPay>1000)throw new RangeError('Confirm profile and choose 1–1,000 whole-unit increments');
+ const at=pay=>calculateSalaryRemainder({...profile,pay},ruleContext);
+ let previous=at(startPay);at(endPay);
+ const initial=previous,steps=[];let count=0,worst=null;
+ for(let pay=startPay+1;pay<=endPay;pay++){
+  const current=at(pay),grossDelta=units(current.annualGross,100,12e9)-units(previous.annualGross,100,12e9);
+  const taxDelta=units(current.totalModeledDeductions,100,12e9)-units(previous.totalModeledDeductions,100,12e9);
+  if(taxDelta>grossDelta){const step={pay,annualGrossIncrease:out(grossDelta),annualDeductionIncrease:out(taxDelta),annualNetChange:out(grossDelta-taxDelta)};count++;if(steps.length<50)steps.push(step);if(!worst||step.annualNetChange<worst.annualNetChange)worst=step;}
+  previous=current;
+ }
+ return {...sample,currency:initial.currency,payFrequency:initial.payFrequency,startPay,endPay,examinedIncrements:endPay-startPay,cliffCount:count,worst,steps,truncated:count>steps.length,firstAnnualRemainder:initial.annualRemainder,lastAnnualRemainder:previous.annualRemainder,warnings:['Scans only the specified whole-unit interval using the same confirmed salary assumptions for each step. Annualized taxes and modeled employee contributions only. Rounding can cause small downward steps. Other eligibility, benefits, assessed income, basic salary and wage-base changes are not inferred. No claim outside this interval.']};
+}
+/** Compare user-confirmed taxable income scenarios; not a deduction eligibility engine. */
+export function taxableIncomeOpportunity(input,ruleContext={}){
+ exact(input,['country','beforeTaxable','afterTaxable','beforeNet','afterNet','assessment','incrementalCashCost','scopeConfirmed']);
+ if(input.scopeConfirmed!==true||!['CA','AU','DE','SG'].includes(input.country)||!['individual','joint'].includes(input.assessment))throw Error('Confirm supported assessment');
+ const before=units(input.beforeTaxable),after=units(input.afterTaxable),cost=units(input.incrementalCashCost);
+ if(after>before)throw Error('Revised taxable income must not exceed baseline');
+ const ca=input.country==='CA',de=input.country==='DE';
+ if(!de&&input.assessment!=='individual')throw Error('Joint assessment only supported for Germany');
+ if(ca){if(units(input.afterNet)>units(input.beforeNet))throw Error('Revised net income must not exceed baseline');}
+ else if(input.beforeNet!==0||input.afterNet!==0)throw Error('Net income fields are Canada-only');
+ const assess=(taxableIncome,netIncome)=>assessTaxableIncome({country:input.country,taxYear:'2026',taxableIncome,...(ca?{netIncome,fullYearResident:true}:de?{assessment:input.assessment}:{residentEligible:true})},ruleContext);
+ const first=assess(input.beforeTaxable,input.beforeNet),second=assess(input.afterTaxable,input.afterNet),reduction=units(first.incomeTax)-units(second.incomeTax);
+ return {...sample,currency:first.currency,beforeTax:first.incomeTax,afterTax:second.incomeTax,taxReduction:out(reduction),incrementalCashCost:out(cost),cashEffect:out(reduction-cost),sourceUrls:first.sourceUrls,warnings:[...first.warnings,'Only compare already-confirmed assessed amounts. Tax reduction minus incremental cash cost is not investment return or eligibility advice. Canada is federal only; Germany ordinary tariff only; Australia excludes Medicare and Singapore excludes rebates.']};
+}
+/** Deterministic cash planning, with a reserve floor, no speculative investment return. */
+export function financialRunway(input){
+ exact(input,['currency','monthlyIncome','monthlyExpenses','liquidSavings','reserveFloor','goalAmount','horizonMonths']);
+ currency(input.currency);
+ const income=units(input.monthlyIncome),expenses=units(input.monthlyExpenses),savings=units(input.liquidSavings),reserve=units(input.reserveFloor),goal=units(input.goalAmount);
+ if(!Number.isSafeInteger(input.horizonMonths)||input.horizonMonths<1||input.horizonMonths>600)throw Error('Choose a 1–600 month horizon');
+ const balance=income-expenses,available=savings>reserve?savings-reserve:0n,needed=reserve+goal;
+ const monthsToGoal=savings>=needed?0:balance<=0n?null:Number((needed-savings+balance-1n)/balance);
+ const runway=balance<0n?Number(available/(-balance)):null;
+ return {...sample,currency:input.currency,monthlyBalance:out(balance),availableAboveReserve:out(available),projectedSavings:out(savings+balance*BigInt(input.horizonMonths)),monthsToGoal,wholeMonthsBeforeReserve:runway,goalGapNow:out(needed>savings?needed-savings:0n),warnings:['Constant monthly income and costs. Goal is in addition to the selected reserve. Negative projected savings means a modeled funding shortfall, not available credit. No interest, inflation, investment return, taxes, debt restructuring or emergency costs are inferred.']};
 }
