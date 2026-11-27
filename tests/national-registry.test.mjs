@@ -19,7 +19,12 @@ test('national and investment schedules resolve against explicit jurisdiction pe
  assert.equal(gb.version,'GB-2026-investment-assessment-v1');
  assert.throws(()=>resolveNationalRule('SG','national-assessment','2026','2026-01-01'),/No eligible statutory rule/);
  assert.throws(()=>nationalRules('2026',baseline,'IN'),/No eligible statutory rule/);
+
  assert.equal(nationalRules('2026',baseline,'US').taxYear,'2026');
+ const canada=assessTaxableIncome({country:'CA',taxYear:'2026',taxableIncome:100000,netIncome:100000,fullYearResident:true});
+ assert.equal(canada.effectiveRuleVersion,'CA-2026-national-assessment-v1');
+ const disposal=calculateCapitalGain({country:'GB',taxYear:'2026',acquired:'2020-01-01',disposed:'2026-05-01',saleProceeds:10000,adjustedBasis:0,eligibleLosses:0,otherTaxableIncome:0,scopeConfirmed:true});
+ assert.equal(disposal.effectiveRuleVersion,'GB-2026-investment-assessment-v1');
 });
 test('national effective periods cannot be silently changed or omitted',()=>{
  const changed=structuredClone(baseline);
