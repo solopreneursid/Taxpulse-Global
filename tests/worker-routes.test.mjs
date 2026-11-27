@@ -42,8 +42,8 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(html.headers.get('x-frame-options'),'DENY');
  assert.equal(html.headers.get('cross-origin-opener-policy'),'same-origin');
  assert.equal(html.headers.get('cross-origin-resource-policy'),'same-origin');
- assert.deepEqual(catalog.modules,['pit','payroll']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
- for(const module of ['capgains','vat','corporate','property','dtaa']){
+ assert.deepEqual(catalog.modules,['pit','payroll','capgains']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
+ for(const module of ['vat','corporate','property','dtaa']){
   assert.ok(catalog.disabledModules[module]);
   assert.equal((await post(JSON.stringify({...payload,module}))).status,400);
  }
@@ -91,6 +91,26 @@ test('generated Worker routes and validation',async()=>{
   assert.ok(result.warnings.some(w=>w.includes('not payroll processing')));
  }
  assert.equal((await post(JSON.stringify({country:'US',taxYear:'2026',module:'payroll',parameters:{region:'TX',pay:100000}}))).status,400);
+ const capitalGainCases=[
+  ['IN',{acquired:'2020-01-01',disposed:'2026-12-01',saleProceeds:350000,adjustedBasis:100000,eligibleLosses:0,otherTaxableIncome:1500000,assetType:'listed-equity',scopeConfirmed:true},'estimatedGainTax'],
+  ['US',{acquired:'2020-01-01',disposed:'2026-12-01',saleProceeds:20000,adjustedBasis:10000,eligibleLosses:0,otherTaxableIncome:100000,filingStatus:'single',scopeConfirmed:true},'estimatedGainTax'],
+  ['GB',{acquired:'2020-01-01',disposed:'2026-12-01',saleProceeds:62600,adjustedBasis:50000,eligibleLosses:0,otherTaxableIncome:20000,scopeConfirmed:true},'estimatedGainTax'],
+  ['AU',{proceeds:50000,costBase:30000,eligibleCapitalLosses:2000,otherTaxableIncome:100000,acquired:'2024-06-01',disposed:'2026-11-27',scopeConfirmed:true},'modeledIncrementalIncomeTax'],
+  ['CA',{confirmedNetGain:10000,transactionDate:'2026-11-27',scopeConfirmed:true},'includedGain'],
+  ['DE',{confirmedNetGain:10000,transactionDate:'2026-11-27',scopeConfirmed:true},'modeledTax'],
+  ['SG',{confirmedNetGain:10000,transactionDate:'2026-11-27',scopeConfirmed:true},'modeledTax'],
+  ['AE',{confirmedNetGain:10000,transactionDate:'2026-11-27',scopeConfirmed:true},'modeledTax']
+ ];
+ for(const [country,parameters,resultField] of capitalGainCases){
+  const response=await post(JSON.stringify({country,taxYear:'2026',module:'capgains',parameters}));
+  assert.equal(response.status,200,country);
+  const result=await response.json();
+  assert.equal(result.country,country);assert.equal(result.module,'capgains');
+  assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
+  assert.ok(Number.isFinite(result[resultField]),country+' '+resultField);
+  assert.ok(result.sourceUrls.length>0);
+ }
+ assert.equal((await post(JSON.stringify({country:'CA',taxYear:'2026',module:'capgains',parameters:{confirmedNetGain:10000,transactionDate:'2026-11-27',scopeConfirmed:false}}))).status,400);
  const assess=await call('/v1/taxable-income/calculate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'DE',taxYear:'2026',taxableIncome:50000,assessment:'individual'})});
  assert.equal(assess.status,200);assert.equal((await assess.json()).incomeTax,10548);
  assert.equal((await call('/v1/taxable-income/calculate')).status,405);
