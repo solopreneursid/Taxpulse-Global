@@ -50,12 +50,13 @@ export const spec = {
                   "module": {
                     "enum": [
                       "pit",
-                      "payroll"
+                      "payroll",
+                      "capgains"
                     ]
                   },
                   "parameters": {
                     "type": "object",
-                    "description": "For module pit: IN, US and GB parameters use grossSalary and optional preTaxDeductions; US filingStatus is one of single (default), mfj, hoh or mfs, and IN requires residentIndividual. DE requires taxableIncome and assessment (individual or joint); AE requires salaryIncome and employeeWagesOnly=true; CA requires taxableIncome, netIncome and fullYearResident=true; AU and SG require taxableIncome and residentEligible=true. For module payroll: all countries require region, pay and scopeConfirmed=true. Pay is annual for IN, US, CA and AU, and monthly for GB, DE, AE and SG. IN additionally requires epfMonthlyWage and professionalTaxAnnual; DE requires annualTaxableIncome and healthSupplementRate; AE requires monthlyBasicSalary. Supported regions are IN, TX, RUK/SCT, DE, AE, AB, AU and SG respectively. Payroll results are selected salary-remainder scenarios, not payroll processing, withholding instructions or complete payslips. All results are sampleOnly=true and taxRulesVerified=false."
+                    "description": "For module pit: IN, US and GB parameters use grossSalary and optional preTaxDeductions; US filingStatus is one of single (default), mfj, hoh or mfs, and IN requires residentIndividual. DE requires taxableIncome and assessment (individual or joint); AE requires salaryIncome and employeeWagesOnly=true; CA requires taxableIncome, netIncome and fullYearResident=true; AU and SG require taxableIncome and residentEligible=true. For module payroll: all countries require region, pay and scopeConfirmed=true. Pay is annual for IN, US, CA and AU, and monthly for GB, DE, AE and SG. IN additionally requires epfMonthlyWage and professionalTaxAnnual; DE requires annualTaxableIncome and healthSupplementRate; AE requires monthlyBasicSalary. Supported regions are IN, TX, RUK/SCT, DE, AE, AB, AU and SG respectively. Payroll results are selected salary-remainder scenarios, not payroll processing, withholding instructions or complete payslips. For module capgains: IN, US and GB require acquired, disposed, saleProceeds, adjustedBasis, eligibleLosses, otherTaxableIncome and scopeConfirmed=true; IN also requires assetType and US requires filingStatus. AU requires proceeds, costBase, eligibleCapitalLosses, otherTaxableIncome, acquired, disposed and scopeConfirmed=true. CA, DE, SG and AE require confirmedNetGain, transactionDate and scopeConfirmed=true; these return inclusion or narrow tariff/exclusion components rather than complete tax liabilities. All results are sampleOnly=true and taxRulesVerified=false."
                   }
                 },
                 "additionalProperties": false
