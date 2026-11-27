@@ -20,4 +20,5 @@ export async function run(env,fetcher=fetch){
  console.log(JSON.stringify({event:'regulatory-review',checkedAt:report.checkedAt,sources:results.map(s=>({id:s.id,status:s.status,reviewPending:s.reviewPending}))}));
  return report;
 }
+export {RegulatorySequenceAnchor} from '../engine/regulatory-sequence-anchor.mjs';
 export default {scheduled(event,env,ctx){ctx.waitUntil(run(env))},fetch(){return new Response('Not found',{status:404,headers:{'cache-control':'no-store','x-robots-tag':'noindex'}})}};
