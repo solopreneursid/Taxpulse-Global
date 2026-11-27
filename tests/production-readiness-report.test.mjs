@@ -57,7 +57,7 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.equal(p.previewInfrastructure.regulatorySequenceAnchor.anchorInstanceInitialized,false);
  assert.equal(p.previewInfrastructure.regulatorySequenceAnchor.productionReady,false);
  assert.equal(p.recoverySequenceFloor.backupRestoreRegressionTest,true);
- assert.equal(p.recoverySequenceFloor.provisioned,false);
+ assert.equal(p.recoverySequenceFloor.provisioned,true);
  assert.equal(p.recoverySequenceFloor.productionReady,false);
  assert.equal(p.supplementalSourceMonitoring.sourceCount,38);
  assert.equal(p.supplementalSourceMonitoring.schedule,'25 2 * * *');
