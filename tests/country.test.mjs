@@ -22,6 +22,8 @@ test('PIT backend catalog exposes all eight countries but only the implemented m
  const c=catalog();
  assert.deepEqual(c.countries.map(x=>x.code),['IN','US','GB','DE','AE','CA','AU','SG']);
  assert.deepEqual(c.modules,['pit']);
+ assert.equal(c.countries.find(x=>x.code==='DE').source,'https://www.gesetze-im-internet.de/estg/__32a.html');
+ assert.equal(c.countries.find(x=>x.code==='AE').source,'https://u.ae/en/information-and-services/finance-and-investment/taxation');
  assert.equal(c.pitInputBasis.DE,'taxableIncome with individual or eligible joint assessment');
  assert.equal(c.pitInputBasis.AE,'salaryIncome with employeeWagesOnly=true; ordinary employee wages only');
 });
