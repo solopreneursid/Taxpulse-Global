@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "observedOn": "2026-11-27",
+  "environment": "preview",
+  "database": "taxpulse-regulatory-preview",
+  "provider": "Cloudflare D1",
+  "timeTravel": {
+    "bookmarkBefore": "00000013-00000000-00005130-a15daf43e32ecb66a5823064dc2c24ae",
+    "restoreAccepted": true,
+    "previousBookmark": "00000013-ffffffff-00005130-8094003c333dbd391b2db848f1cd007e",
+    "probeTable": "taxpulse_restore_probe_20261127",
+    "probeTableRemovedAfterRestore": true,
+    "head": {
+      "sequence": 0,
+      "state": "empty"
+    },
+    "integrityTriggers": [
+      "regulatory_snapshot_unique_versions",
+      "regulatory_versions_immutable",
+      "regulatory_versions_record"
+    ],
+    "verified": true
+  },
+  "export": {
+    "status": "complete",
+    "format": "d1",
+    "downloadedForImport": false
+  },
+  "limitations": [
+    "This verifies Cloudflare D1 Time Travel restore on the actual preview database, not an exported SQL import into a separate database.",
+    "No production database was modified.",
+    "The D1 head was empty and the publisher schedule was disabled during the drill."
+  ]
+}
