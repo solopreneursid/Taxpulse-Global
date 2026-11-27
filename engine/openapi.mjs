@@ -1754,7 +1754,6 @@ export const spec = {
         }
       }
     },
-    {
       "/v1/treaty/uk-india-credit": {
         "post": {
           "operationId": "calculateUkIndiaTreatyCreditComponent",
@@ -1812,6 +1811,6 @@ export const spec = {
           }
         }
       }
-    },
+      },
   }
 };
