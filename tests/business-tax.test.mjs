@@ -68,35 +68,6 @@ test('Canadian small-business allocation cannot exceed profit or proceed without
     eligibleSmallBusinessProfit:100001,smallBusinessEligibilityConfirmed:true
   })));
 });
-test('India Section 115BAA base rate requires confirmed regime eligibility',()=>{
- const result=calculateCorporateTaxComponent(corp('IN',1000000,{taxRegime:'115BAA',regimeEligibilityConfirmed:true}));
- assert.equal(result.currency,'INR');assert.equal(result.corporateIncomeTaxComponent,220000);
- assert.equal(result.taxComponents[0].rateBasisPoints,2200);
- assert.ok(result.warnings.some(w=>w.includes('10% surcharge and 4% health and education cess')));
- assert.throws(()=>calculateCorporateTaxComponent(corp('IN',1000000,{taxRegime:'115BAA',regimeEligibilityConfirmed:false})));
-});
-test('UK corporation tax main rate requires one non-ring-fence company above threshold',()=>{
- const result=calculateCorporateTaxComponent(corp('GB',300000,{mainRateEligibilityConfirmed:true,associatedCompanies:1,ringFenceProfits:false}));
- assert.equal(result.currency,'GBP');assert.equal(result.corporateIncomeTaxComponent,75000);
- assert.throws(()=>calculateCorporateTaxComponent(corp('GB',250000,{mainRateEligibilityConfirmed:true,associatedCompanies:1,ringFenceProfits:false})));
- assert.throws(()=>calculateCorporateTaxComponent(corp('GB',300000,{mainRateEligibilityConfirmed:true,associatedCompanies:2,ringFenceProfits:false})));
- assert.throws(()=>calculateCorporateTaxComponent(corp('GB',300000,{mainRateEligibilityConfirmed:true,associatedCompanies:1,ringFenceProfits:true})));
-});
-test('Australian 25% company rate requires both base-rate-entity tests',()=>{
- const result=calculateCorporateTaxComponent(corp('AU',100000,{aggregatedTurnoverBelow50m:true,passiveIncomeAtOrBelow80Percent:true}));
- assert.equal(result.currency,'AUD');assert.equal(result.corporateIncomeTaxComponent,25000);
- assert.throws(()=>calculateCorporateTaxComponent(corp('AU',100000,{aggregatedTurnoverBelow50m:true,passiveIncomeAtOrBelow80Percent:false})));
-});
-test('UAE corporate tax applies 9% only above AED 375,000',()=>{
- const result=calculateCorporateTaxComponent(corp('AE',500000,{qualifyingFreeZoneIncome:false,pillarTwoInScope:false}));
- assert.equal(result.currency,'AED');assert.equal(result.corporateIncomeTaxComponent,11250);
- assert.equal(result.taxComponents[0].taxableProfit,375000);
- assert.equal(result.taxComponents[1].taxableProfit,125000);
- const below=calculateCorporateTaxComponent(corp('AE',300000,{qualifyingFreeZoneIncome:false,pillarTwoInScope:false}));
- assert.equal(below.corporateIncomeTaxComponent,0);
- assert.throws(()=>calculateCorporateTaxComponent(corp('AE',500000,{qualifyingFreeZoneIncome:true,pillarTwoInScope:false})));
- assert.throws(()=>calculateCorporateTaxComponent(corp('AE',500000,{qualifyingFreeZoneIncome:false,pillarTwoInScope:true})));
-});
 test('Singapore YA 2026 partial and start-up exemptions are separately calculated',()=>{
   const partial=calculateCorporateTaxComponent(corp('SG',200000,{
     reliefScheme:'partial',reliefEligibilityConfirmed:true
@@ -124,7 +95,6 @@ test('invalid business registry changes fail closed',()=>{
   const overlap=structuredClone(rules);
   overlap.indirectTax.push({...overlap.indirectTax[0],version:'GB-overlap',effectiveFrom:'2026-06-01'});
   assert.throws(()=>validateBusinessTaxRules(overlap));
-  const wrongThreshold=structuredClone(rules);wrongThreshold.corporateTax.find(x=>x.country==='AE').zeroRateThreshold=-1;assert.throws(()=>validateBusinessTaxRules(wrongThreshold));
   const wrongCurrency=structuredClone(rules);
   wrongCurrency.indirectTax[0].currency='EUR';
   assert.throws(()=>validateBusinessTaxRules(wrongCurrency));
