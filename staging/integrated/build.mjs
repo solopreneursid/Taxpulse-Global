@@ -30,6 +30,7 @@ write('country.mjs',country);
 write('us-filing-statuses.mjs',read('engine/us-filing-statuses.mjs'));write('worker.mjs',read('staging/integrated/worker.mjs'));
 
 write('regulatory-dashboard.mjs',read('engine/regulatory-dashboard.mjs'));
+write('regulatory-reconciliation.mjs',read('engine/regulatory-reconciliation.mjs'));
 write('monitor-sources.mjs','export default '+JSON.stringify(JSON.parse(read('rules/monitor-sources.json')))+';\n');
 write('manifest.mjs','export default '+JSON.stringify(JSON.parse(read('rules/manifest.json')))+';\n');
 
@@ -78,5 +79,5 @@ const fingerprintInputs=['national-registry','national-versions','historical-ver
 const fingerprint=createHash('sha256').update(JSON.stringify(fingerprintInputs)).digest('hex');
 write('browser-fingerprint.mjs.txt','export default '+JSON.stringify(fingerprint)+';\n');
 
-const previewInputs=['app.webmanifest.txt','app-icon.svg.txt','sw.js.txt','pwa.mjs.txt','secure-records.mjs.txt','browser-vault.mjs.txt','document-text.mjs.txt','local-tools.mjs.txt','regulatory-dashboard.mjs','monitor-sources.mjs','worker.mjs','simple-index.html.txt','simple.css.txt','simple.mjs.txt','browser-budget.mjs.txt','browser-financial-profile.mjs.txt','browser-decision-tools.mjs.txt','browser-reference-data.mjs.txt','public-reference-candidate.mjs.txt','browser-fingerprint.mjs.txt','browser-manifest.mjs.txt'];
+const previewInputs=['app.webmanifest.txt','app-icon.svg.txt','sw.js.txt','pwa.mjs.txt','secure-records.mjs.txt','browser-vault.mjs.txt','document-text.mjs.txt','local-tools.mjs.txt','regulatory-dashboard.mjs','regulatory-reconciliation.mjs','monitor-sources.mjs','worker.mjs','simple-index.html.txt','simple.css.txt','simple.mjs.txt','browser-budget.mjs.txt','browser-financial-profile.mjs.txt','browser-decision-tools.mjs.txt','browser-reference-data.mjs.txt','public-reference-candidate.mjs.txt','browser-fingerprint.mjs.txt','browser-manifest.mjs.txt'];
 write('preview-revision.txt',createHash('sha256').update(JSON.stringify(previewInputs.map(n=>[n,readFileSync(new URL(n,bundle),'utf8')]))).digest('hex'));

@@ -21,3 +21,6 @@ The recovery regression now includes a local SQLite backup/restore with migratio
 
 ## 2026-11-27 isolated provider drill
 See data/d1-recovery-drill-2026-11-27.json: all four migrations applied to a disposable D1 database; Time Travel restored the saved archive after advancing the head to blocked sequence 2. Review record, event and version ledger survived; trigger rejections and integrity checks verified. Disposable database deleted and existing preview head unchanged. A restore rolls back the database sequence, so the independently pinned runtime floor and new higher-sequence approval must be enforced during real recovery. No live restore or production approval.
+
+## Next preview increment
+The planning archive is input-only and device-local; it accepts at most ten salary profiles and thirty planning scenarios, with strict schema and recalculation checks, authenticated encryption, and an explicit capture/restore operation. It does not certify a tax model or permit real-data use in the unverified preview. Synthetic key rotation tests enforce new distinct keys and an external sequence floor after recovery; no live keys enrolled. Dashboard reconciliation combines fresh edge and signed intake observations without promoting rates. Malformed KV data is treated as unavailable.

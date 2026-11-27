@@ -1,3 +1,5 @@
+import {financialHealthSnapshot,financialRunway,debtRepayment,investmentScenario,retirementScenario} from './decision-tools.mjs';
+import {calculateBudget} from './budget.mjs';
 import {encryptRecord,decryptRecord} from './secure-records.mjs';
 import {calculateSalaryRemainder} from './taxable-income.mjs';
 const own=(o,k)=>Object.hasOwn(o,k);
@@ -50,4 +52,25 @@ export async function importEncryptedProfile(envelope,password,engineFingerprint
  exact(data,['kind','schemaVersion','engineFingerprint','salary']);
  if(data.kind!=='taxpulse-financial-profile'||data.schemaVersion!==1||data.engineFingerprint!==engineFingerprint)throw Error('Incompatible financial profile; use the original engine or enter the assumptions again');
  return createFinancialProfile(data.salary,ruleContext);
+}
+
+const planningCalculators=Object.freeze({'monthly-budget':calculateBudget,'financial-health':financialHealthSnapshot,'financial-runway':financialRunway,'debt-repayment':debtRepayment,'investment-scenario':investmentScenario,'retirement-scenario':retirementScenario});
+/** Versioned input-only archive. Validate every item before making any restored values available. */
+export function validatePlanningArchive(input,ruleContext={}){
+ exact(input,['salaryProfiles','scenarios']);
+ if(!Array.isArray(input.salaryProfiles)||input.salaryProfiles.length>10||!Array.isArray(input.scenarios)||input.scenarios.length>30||input.salaryProfiles.length+input.scenarios.length===0)throw Error('Archive must have 1–10 salary profiles or 1–30 planning scenarios');
+ const salaryProfiles=input.salaryProfiles.map(s=>createFinancialProfile(s,ruleContext).salary);
+ const scenarios=input.scenarios.map(s=>{exact(s,['kind','input']);if(!own(planningCalculators,s.kind))throw Error('Unsupported planning scenario');planningCalculators[s.kind](s.input);return {kind:s.kind,input:structuredClone(s.input)};});
+ return {salaryProfiles,scenarios};
+}
+export async function exportPlanningArchive(input,password,engineFingerprint,ruleContext={}){
+ checkFingerprint(engineFingerprint);
+ const archive=validatePlanningArchive(input,ruleContext);
+ return encryptRecord({kind:'taxpulse-planning-archive',schemaVersion:1,engineFingerprint,...archive},password);
+}
+export async function importPlanningArchive(envelope,password,engineFingerprint,ruleContext={}){
+ checkFingerprint(engineFingerprint);const data=await decryptRecord(envelope,password);
+ exact(data,['kind','schemaVersion','engineFingerprint','salaryProfiles','scenarios']);
+ if(data.kind!=='taxpulse-planning-archive'||data.schemaVersion!==1||data.engineFingerprint!==engineFingerprint)throw Error('Incompatible planning archive');
+ return validatePlanningArchive({salaryProfiles:data.salaryProfiles,scenarios:data.scenarios},ruleContext);
 }

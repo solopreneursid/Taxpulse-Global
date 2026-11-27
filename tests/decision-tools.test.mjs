@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax,residentialSdlt,ukIndiaCredit,debtRepayment} from '../engine/decision-tools.mjs';
+import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax,residentialSdlt,ukIndiaCredit,debtRepayment,notifiedIndiaGst,ukEmployerNi,australiaDiscountGain,investmentScenario,retirementScenario} from '../engine/decision-tools.mjs';
 const ctc={annualCtc:1800000,employerContributions:100000,nonCashBenefits:200000,employeeContributions:21600,otherPayrollDeductions:2500,residentIndividual:true,ageGroup:'under-60',oldEligibleDeductions:0,newEligibleDeductions:0};
 test('CTC cash component and tax reconciliation',()=>{
  const r=indiaCtc(ctc);assert.equal(r.annualGross,1500000);assert.equal(r.new.incomeTax,97500);assert.equal(r.new.annualCash,1378400);assert.equal(r.taxRulesVerified,false);
@@ -129,4 +129,32 @@ test('debt repayment exact cent reconciliation, final partial payment and saving
  const zero=debtRepayment({...i,annualRatePercent:0});assert.equal(zero.base.payoffMonths,2);assert.equal(zero.interestSaved,0);
  const stalled=debtRepayment({...i,monthlyPayment:10,extraPayment:0});assert.equal(stalled.base.status,'payment-does-not-reduce-principal');assert.equal(stalled.interestSaved,null);
  assert.equal(debtRepayment({...i,horizonMonths:1}).base.status,'horizon-ended');assert.throws(()=>debtRepayment({...i,annualRatePercent:101}));assert.throws(()=>debtRepayment({...i,horizonMonths:601}));
+});
+
+test('India historical 115BAA rate includes 10 percent surcharge and 4 percent cess, final ten-rupee rounding',()=>{
+ const i={jurisdiction:'IN-115BAA',taxableProfit:1000000,scopeConfirmed:true};assert.equal(scopedCorporateTax(i).grossCorporateTax,251680);assert.equal(scopedCorporateTax({...i,taxableProfit:1000010}).grossCorporateTax,251680);assert.throws(()=>scopedCorporateTax({...i,taxableProfit:1000001}));
+});
+test('historical notified cement IGST is restricted to explicit class',()=>{
+ const i={classification:'2523-2025-09-22',priceBasis:'exclusive',amount:100,scopeConfirmed:true};assert.equal(notifiedIndiaGst(i).taxAmount,18);assert.equal(notifiedIndiaGst({...i,priceBasis:'inclusive',amount:118}).netAmount,100);assert.throws(()=>notifiedIndiaGst({...i,classification:'2523-2026'}));
+});
+test('UK category A employer secondary NI at monthly threshold',()=>{
+ const i={region:'RUK',monthlyGross:417,scopeConfirmed:true};assert.equal(ukEmployerNi(i).monthlyEmployerNi,0);assert.equal(ukEmployerNi({...i,monthlyGross:418}).monthlyEmployerNi,.15);assert.equal(ukEmployerNi({...i,monthlyGross:1000}).annualEmployerNi,1049.4);assert.throws(()=>ukEmployerNi({...i,scopeConfirmed:false}));
+});
+test('AU confirmed losses before CGT discount and ordinary incremental income tax',()=>{
+ const i={proceeds:50000,costBase:30000,eligibleCapitalLosses:2000,otherTaxableIncome:100000,scopeConfirmed:true};const r=australiaDiscountGain(i);assert.equal(r.grossGain,20000);assert.equal(r.assessableGain,9000);assert.equal(r.modeledIncrementalIncomeTax,2700);assert.throws(()=>australiaDiscountGain({...i,eligibleCapitalLosses:20001}));assert.throws(()=>australiaDiscountGain({...i,scopeConfirmed:false}));
+});
+
+test('investment nominal scenario reconciles exact monthly compounding and zero return',()=>{
+ const i={currency:'INR',initialSavings:1000,monthlyContribution:100,annualReturnPercent:12,horizonMonths:2,inflationPercent:0};
+ const r=investmentScenario(i);assert.equal(r.nominalBalance,1221.1);assert.equal(r.totalContributed,1200);assert.equal(r.modeledGrowth,21.1);assert.equal(r.inflationAdjustedBalance,1221.1);
+ assert.equal(investmentScenario({...i,annualReturnPercent:0}).nominalBalance,1200);
+ assert.equal(investmentScenario({...i,annualReturnPercent:-12,monthlyContribution:0}).nominalBalance,980.1);
+ assert.throws(()=>investmentScenario({...i,annualReturnPercent:101}));
+});
+test('retirement finite drawdown handles final full and partial withdrawal',()=>{
+ const i={currency:'INR',startingBalance:1000,monthlyWithdrawal:300,annualReturnPercent:0,annualSpendingGrowthPercent:0,horizonMonths:12};
+ const r=retirementScenario(i);assert.equal(r.fullyFundedMonths,3);assert.equal(r.firstShortfallMonth,4);assert.equal(r.totalWithdrawn,1000);assert.equal(r.remainingBalance,0);
+ assert.equal(retirementScenario({...i,startingBalance:1200,horizonMonths:4}).firstShortfallMonth,null);
+ assert.equal(retirementScenario({...i,startingBalance:10000,horizonMonths:13,annualSpendingGrowthPercent:10}).totalWithdrawn,3930);
+ assert.throws(()=>retirementScenario({...i,monthlyWithdrawal:0}));assert.throws(()=>retirementScenario({...i,horizonMonths:601}));
 });
