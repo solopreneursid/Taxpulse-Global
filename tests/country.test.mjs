@@ -31,7 +31,7 @@ test('country backend catalog exposes all eight countries and scoped PIT/payroll
  assert.match(c.payrollScope,/no payroll withholding/);
  assert.equal(c.capgainsInputBasis.CA,'confirmedNetGain and transactionDate; calendar 2026 one-half capital-gain inclusion component only');
  assert.equal(c.capgainsInputBasis.AE,'confirmedNetGain and transactionDate; calendar 2026 natural-person personal investment income exclusion only');
- assert.match(c.capgainsScope,/not a complete/i);
+ assert.match(c.capgainsScope,/no complete/i);
 });
 test('extended PIT contracts reject missing residency and unsupported assessments',()=>{
  assert.throws(()=>call('DE','pit',{taxableIncome:50000}),/assessment/);
