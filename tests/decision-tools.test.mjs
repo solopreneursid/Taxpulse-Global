@@ -83,7 +83,7 @@ for(const [country,tax] of [['GB',20],['DE',19],['AU',10],['SG',9],['AE',5],['CA
  assert.equal(deficit.stress.endingLiquidSavings,-1200);
  assert.equal(deficit.stress.firstNegativeMonth,1);
  const large=cashFlowStressScenario({...input,monthlyIncome:1000000000,monthlyExpenses:1000000000,liquidSavings:1000000000,reserveFloor:0,horizonMonths:600,incomeReductionPercent:0,expenseIncreasePercent:500,shockStartMonth:1,shockDurationMonths:600});
- assert.equal(large.stress.endingLiquidSavings,-5000000000000);
+ assert.equal(large.stress.endingLiquidSavings,-2999000000000);
 });
 
 test('standard-rated single-supply source fixture '+country,()=>{
