@@ -12,6 +12,9 @@ const HOSTS = Object.freeze({
   CA: ['canada.ca'],
   US: ['irs.gov', 'comptroller.texas.gov']
 });
+const CURRENCIES = Object.freeze({
+  GB:'GBP',DE:'EUR',AU:'AUD',SG:'SGD',AE:'AED',CA:'CAD',US:'USD'
+});
 const INDIRECT_KEYS = [
   'jurisdiction','country','taxType','version','taxYear','effectiveFrom',
   'effectiveUntil','currency','rateBasisPoints','scope','sourceUrls'
@@ -55,6 +58,7 @@ function validateMetadata(row,dataYear) {
       !validDate(row.effectiveFrom) || !validDate(row.effectiveUntil) ||
       row.effectiveFrom >= row.effectiveUntil ||
       typeof row.currency !== 'string' || !/^[A-Z]{3}$/.test(row.currency) ||
+      row.currency !== CURRENCIES[row.country] ||
       !Number.isSafeInteger(row.rateBasisPoints) || row.rateBasisPoints < 0 ||
       row.rateBasisPoints > 10000 ||
       typeof row.scope !== 'string' || row.scope.trim().length < 20 ||
@@ -122,7 +126,8 @@ export function validateBusinessTaxRules(registry) {
     if (row.jurisdiction !== row.country ||
         row.smallBusinessRateBasisPoints !== null &&
           (!Number.isSafeInteger(row.smallBusinessRateBasisPoints) ||
-           row.smallBusinessRateBasisPoints < 0 || row.smallBusinessRateBasisPoints > 10000)) {
+           row.smallBusinessRateBasisPoints < 0 || row.smallBusinessRateBasisPoints > 10000 ||
+           row.smallBusinessRateBasisPoints > row.rateBasisPoints)) {
       throw new TypeError('Invalid corporate tax rates');
     }
     const singapore = row.country === 'SG';
