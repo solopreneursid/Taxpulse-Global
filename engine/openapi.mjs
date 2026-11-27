@@ -1812,5 +1812,244 @@ export const spec = {
         }
       }
       },
+      "/v1/business/scoped-corporate-tax": {
+        "post": {
+          "operationId": "calculateScopedCorporateTaxComponent",
+          "description": "Selected national corporate tax components on already established taxable profit. Jurisdiction-specific eligibility is supplied by the caller; not a corporate return.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "jurisdiction",
+                    "taxableProfit",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "jurisdiction": {
+                      "enum": [
+                        "GB",
+                        "AE",
+                        "AU-base",
+                        "AU-full",
+                        "US",
+                        "CA-general",
+                        "CA-small",
+                        "DE",
+                        "SG-PTE",
+                        "SG-startup",
+                        "IN-115BAA"
+                      ]
+                    },
+                    "taxableProfit": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Selected corporate tax component and source provenance"
+            },
+            "400": {
+              "description": "Unsupported or unconfirmed corporate scope"
+            }
+          }
+        }
+      },
+      "/v1/property/uk-sdlt": {
+        "post": {
+          "operationId": "calculateUkResidentialSdlt",
+          "description": "England and Northern Ireland ordinary residential freehold SDLT example. Higher rates, non-resident surcharge and other reliefs are excluded.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "consideration",
+                    "buyerScope",
+                    "transactionDate",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "consideration": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000000
+                    },
+                    "buyerScope": {
+                      "enum": [
+                        "ordinary",
+                        "first-time"
+                      ]
+                    },
+                    "transactionDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "UK residential SDLT component"
+            },
+            "400": {
+              "description": "Unsupported property transaction"
+            }
+          }
+        }
+      },
+      "/v1/property/sg-bsd": {
+        "post": {
+          "operationId": "calculateSingaporeBuyerStampDuty",
+          "description": "Singapore buyer's stamp duty for one ordinary pure residential or non-residential acquisition. ABSD, SSD and other charges are excluded.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "purchasePrice",
+                    "marketValue",
+                    "propertyType",
+                    "transactionDate",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "purchasePrice": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "marketValue": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "propertyType": {
+                      "enum": [
+                        "residential",
+                        "nonresidential"
+                      ]
+                    },
+                    "transactionDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Singapore buyer's stamp duty component"
+            },
+            "400": {
+              "description": "Unsupported property transaction"
+            }
+          }
+        }
+      },
+      "/v1/treaty/scoped-credit": {
+        "post": {
+          "operationId": "calculateScopedBilateralTreatyCredit",
+          "description": "Selected US–UK or India–UK one-item foreign tax credit limitation. Eligibility, residence, sourcing and domestic tax bases must be independently established.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "jurisdiction",
+                    "foreignTaxPaid",
+                    "treatyPermittedTax",
+                    "domesticTax",
+                    "worldwideTaxableIncome",
+                    "foreignTaxableIncome",
+                    "domesticTaxOnItem",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "jurisdiction": {
+                      "enum": [
+                        "US-GB",
+                        "IN-GB"
+                      ]
+                    },
+                    "foreignTaxPaid": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "treatyPermittedTax": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "domesticTax": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "worldwideTaxableIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "foreignTaxableIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "domesticTaxOnItem": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Selected treaty credit component"
+            },
+            "400": {
+              "description": "Unsupported or inconsistent treaty scope"
+            }
+          }
+        }
+      },
   }
 };
