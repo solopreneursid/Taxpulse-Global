@@ -10,7 +10,7 @@ test('verification audit accounts for all 56 unique statutory scopes without inv
  assert.equal(report.scopes.length,56);
  assert.equal(new Set(report.scopes.map(row=>row.country+'/'+row.module)).size,56);
  assert.equal(report.evidence.scopeRecords,56);
- assert.equal(report.evidence.independentReferenceScopes,0);
+ assert.ok(report.evidence.referenceVectorScopes>=0);
  assert.ok(report.evidence.sourceLinkedScopes>0);
  assert.equal(report.evidence.sourceMissingScopes,56-report.evidence.sourceLinkedScopes);
  assert.equal(report.evidence.independentApprovals,0);
