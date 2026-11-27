@@ -38,6 +38,17 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.equal(p.recoverySequenceFloor.mirrorBinding,'RULE_SEQUENCE_FLOOR');
  assert.equal(p.recoverySequenceFloor.mirrorKey,'taxpulse:regulatory-sequence-floor');
  assert.equal(p.recoverySequenceFloor.mirrorIsAuthoritative,false);
+ assert.equal(p.recoverySequenceFloor.provisioned,true);
+ assert.equal(p.recoverySequenceFloor.namespaceId,'7aa75871b001477f98c745b50c885f5e');
+ assert.equal(p.recoverySequenceFloor.publisherBindingConfigured,true);
+ assert.equal(p.recoverySequenceFloor.publisherCodeUsesRpc,false);
+ assert.equal(p.recoverySequenceFloor.mirrorValue,'0');
+ assert.equal(p.recoverySequenceFloor.initialized,false);
+ assert.equal(p.previewInfrastructure.regulatorySequenceAnchor.publisherBindingConfigured,true);
+ assert.equal(p.previewInfrastructure.regulatorySequenceAnchor.kvMirrorConfigured,true);
+ assert.equal(p.previewInfrastructure.regulatorySequenceAnchor.routes,0);
+ assert.equal(p.previewInfrastructure.regulatorySequenceAnchor.schedules,0);
+ assert.equal(p.previewInfrastructure.regulatorySequenceAnchor.productionReady,false);
  assert.equal(p.recoverySequenceFloor.backupRestoreRegressionTest,true);
  assert.equal(p.recoverySequenceFloor.provisioned,false);
  assert.equal(p.recoverySequenceFloor.productionReady,false);
