@@ -9,7 +9,7 @@ import {join} from 'node:path';
 import {snapshotBytes} from '../engine/rule-snapshot.mjs';
 import {publishSnapshot,blockSnapshot} from '../engine/rule-publisher.mjs';
 import {runScheduledPublication} from '../engine/scheduled-publication.mjs';
-import {RegulatorySequenceAnchor} from '../engine/regulatory-sequence-anchor.mjs';
+import {initializeSequenceAnchor,readSequenceAnchor,advanceSequenceAnchor,mirrorSequenceFloor,createRegulatorySequenceAnchor} from '../engine/regulatory-sequence-anchor.mjs';
 import {loadRuntimeRules} from '../engine/runtime-rules.mjs';
 const read=p=>JSON.parse(readFileSync(new URL('../rules/'+p,import.meta.url)));
 const regional=read('regional-versions.json'),indiaSalary=read('india-salary-versions.json'),payroll=read('payroll-versions.json');
@@ -19,16 +19,34 @@ const now=new Date('2026-11-25T12:00:00.000Z'),engineFingerprint='a'.repeat(64);
 const hex=b=>Buffer.from(b).toString('hex');
 const digest=async p=>hex(await crypto.subtle.digest('SHA-256',snapshotBytes(p)));
 function createAnchor(initial={schemaVersion:1,sequence:0,digest:null,state:'empty'},mirror=null){
- const storage={value:structuredClone(initial),async get(key){return key==='anchor'?structuredClone(this.value):undefined;},async put(key,value){if(key!=='anchor')throw Error('Unexpected anchor storage key');this.value=structuredClone(value);}};
- const state={storage,async blockConcurrencyWhile(fn){return fn();}};
- const instance=new RegulatorySequenceAnchor(state,{RULE_SEQUENCE_FLOOR:mirror});
- const stub={fetch:(url,init={})=>instance.fetch(new Request(url,init))};
- const binding={idFromName(name){assert.equal(name,'taxpulse-regulatory-head-v1');return 'sequence-anchor-test';},get(id){assert.equal(id,'sequence-anchor-test');return stub;}};
- const client={
-  async getState(){const r=await stub.fetch('https://anchor.test/state');if(!r.ok)throw Error('anchor read failed');return r.json();},
-  async advance(input){const r=await stub.fetch('https://anchor.test/advance',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(input)});const value=await r.json();if(!r.ok)throw Error(value.error);return value;}
+ const db=new DatabaseSync(':memory:');
+ const sql={
+  exec(query,...params){
+   const statement=db.prepare(query);
+   if(/^\s*(?:CREATE|INSERT|DELETE|REPLACE|ALTER|DROP)\b/i.test(query)||(/^\s*UPDATE\b/i.test(query)&&!/\bRETURNING\b/i.test(query))){
+    statement.run(...params);
+    return {toArray:()=>[],one(){throw Error('No row returned');}};
+   }
+   const rows=statement.all(...params);
+   return {toArray:()=>rows,one(){if(rows.length!==1)throw Error('Expected exactly one anchor row');return rows[0];}};
+  }
  };
- return {binding,client,state:()=>structuredClone(storage.value)};
+ initializeSequenceAnchor(sql);
+ if(initial.sequence>0){
+  const result=advanceSequenceAnchor(sql,{sequence:initial.sequence,digest:initial.digest,expectedSequence:0,state:initial.state});
+  if(result.conflict)throw Error('Could not initialize test sequence anchor');
+ }
+ const stub={
+  getState:()=>readSequenceAnchor(sql),
+  async advance(input){
+   const result=advanceSequenceAnchor(sql,input);
+   if(result.conflict)throw Error('sequence_anchor_conflict');
+   await mirrorSequenceFloor(mirror,result.state.sequence);
+   return result.state;
+  }
+ };
+ const binding={idFromName(name){assert.equal(name,'taxpulse-regulatory-head-v1');return 'sequence-anchor-test';},get(id){assert.equal(id,'sequence-anchor-test');return stub;}};
+ return {binding,client:createRegulatorySequenceAnchor(binding),state:()=>readSequenceAnchor(sql),close:()=>db.close()};
 }
 const key=await crypto.subtle.generateKey('Ed25519',true,['sign','verify']);
 const publicKeyHex=hex(await crypto.subtle.exportKey('raw',key.publicKey)),options={publicKeyHex,engineFingerprint,now};
@@ -96,7 +114,7 @@ test('atomic publication, fixture rejection, replay, emergency block and forward
  const archived=sqlite.prepare('SELECT sequence,review_record FROM regulatory_snapshots ORDER BY sequence').all();
  assert.deepEqual(archived.map(row=>JSON.parse(row.review_record)),[one,three].map(p=>({review:p.review,publisherPublicKeyHex:publicKeyHex,reviewerPublicKeyHex})));
  assert.throws(()=>sqlite.exec("UPDATE regulatory_snapshots SET review_record=NULL"),/immutable snapshot archive/);
- }finally{sqlite.close();}
+ }finally{anchor?.close();sqlite.close();}
 });
 
 test('scheduled publisher requires independent approval, rejects tampering and retains active head',async()=>{
@@ -104,7 +122,7 @@ test('scheduled publisher requires independent approval, rejects tampering and r
  try{
   migrate(sqlite);const db=dbAdapter(sqlite);let pending=null,floorValue='0';
   const floorStore={async put(key,value){if(key!=='taxpulse:regulatory-sequence-floor')throw Error('Unexpected floor key');floorValue=value;}};
-  const anchor=createAnchor(undefined,floorStore);
+  anchor=createAnchor(undefined,floorStore);
   const env={RULE_DB:db,RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,
    RULE_INBOX:{async get(){return pending;}},REGULATORY_SEQUENCE_ANCHOR:anchor.binding,RULE_SEQUENCE_FLOOR:floorStore};
   await assert.rejects(runScheduledPublication({...env,RULE_REVIEW_PUBLIC_KEY:publicKeyHex},engineFingerprint,{now}));
@@ -130,7 +148,7 @@ test('scheduled publisher requires independent approval, rejects tampering and r
 });
 
 test('independent sequence anchor detects restored D1 rollback and requires a fresh higher approved snapshot',async()=>{
- const dir=mkdtempSync(join(tmpdir(),'taxpulse-sequence-floor-'));let source,restored;
+ const dir=mkdtempSync(join(tmpdir(),'taxpulse-sequence-floor-'));let source,restored,anchor;
  try{
   source=new DatabaseSync(join(dir,'source.db'));migrate(source);const sourceDb=dbAdapter(source);
   let pending=null,floorValue='0';
@@ -154,5 +172,5 @@ test('independent sequence anchor detects restored D1 rollback and requires a fr
   assert.equal(recoveredHead.sequence,4);assert.equal(recoveredHead.state,'active');
   assert.equal(restored.prepare('SELECT count(*) n FROM regulatory_snapshots').get().n,2);
   assert.equal(restored.prepare('SELECT count(*) n FROM regulatory_events').get().n,3);
- }finally{restored?.close();source?.close();rmSync(dir,{recursive:true,force:true});}
+ }finally{restored?.close();source?.close();anchor?.close();rmSync(dir,{recursive:true,force:true});}
 });
