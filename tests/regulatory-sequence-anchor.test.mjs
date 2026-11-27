@@ -1,69 +1,97 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {RegulatorySequenceAnchor,createRegulatorySequenceAnchor} from '../engine/regulatory-sequence-anchor.mjs';
+import {DatabaseSync} from 'node:sqlite';
+import {
+ initializeSequenceAnchor,
+ readSequenceAnchor,
+ advanceSequenceAnchor,
+ mirrorSequenceFloor,
+ createRegulatorySequenceAnchor,
+ SEQUENCE_FLOOR_MIRROR_KEY
+} from '../engine/regulatory-sequence-anchor.mjs';
 
-class MemoryStorage{
- constructor(){this.values=new Map();}
- async get(key){return this.values.get(key);}
- async put(key,value){this.values.set(key,structuredClone(value));}
+function sqlAdapter(db){
+ return {
+  exec(sql,...params){
+   const statement=db.prepare(sql);
+   if(/^\s*(?:CREATE|INSERT|DELETE|REPLACE|ALTER|DROP)\b/i.test(sql)||(/^\s*UPDATE\b/i.test(sql)&&!/\bRETURNING\b/i.test(sql))){
+    statement.run(...params);
+    return {toArray:()=>[],one(){throw Error('No row returned');}};
+   }
+   const rows=statement.all(...params);
+   return {
+    toArray:()=>rows,
+    one(){
+     if(rows.length!==1)throw Error('Expected exactly one row, got '+rows.length);
+     return rows[0];
+    }
+   };
+  }
+ };
 }
-class MemoryState{
- constructor(){this.storage=new MemoryStorage();}
- async blockConcurrencyWhile(fn){return fn();}
-}
-const request=(path,method='GET',body)=>new Request('https://anchor.test'+path,{method,headers:body?{'content-type':'application/json'}:undefined,body:body?JSON.stringify(body):undefined});
-const digest=n=>String(n).padStart(64,'0');
+const digest=n=>n.toString(16).padStart(64,'0');
 
-test('Durable Object sequence anchor initializes empty and advances monotonically',async()=>{
- const state=new MemoryState(),anchor=new RegulatorySequenceAnchor(state,{});
- let response=await anchor.fetch(request('/state'));
- assert.deepEqual(await response.json(),{schemaVersion:1,sequence:0,digest:null,state:'empty'});
- response=await anchor.fetch(request('/advance','POST',{sequence:1,digest:digest(1),expectedSequence:0,state:'active'}));
- assert.equal(response.status,200);
- assert.deepEqual(await response.json(),{schemaVersion:1,sequence:1,digest:digest(1),state:'active'});
- response=await anchor.fetch(request('/advance','POST',{sequence:2,digest:null,expectedSequence:1,state:'blocked'}));
- assert.equal(response.status,200);
- assert.deepEqual(await response.json(),{schemaVersion:1,sequence:2,digest:null,state:'blocked'});
- response=await anchor.fetch(request('/advance','POST',{sequence:3,digest:digest(3),expectedSequence:2,state:'active'}));
- assert.equal(response.status,200);
- assert.deepEqual(await response.json(),{schemaVersion:1,sequence:3,digest:digest(3),state:'active'});
+test('SQLite sequence anchor initializes with a canonical empty state',()=>{
+ const db=new DatabaseSync(':memory:');
+ try{
+  const sql=sqlAdapter(db);
+  assert.deepEqual(initializeSequenceAnchor(sql),{schemaVersion:1,sequence:0,digest:null,state:'empty'});
+  assert.deepEqual(readSequenceAnchor(sql),{schemaVersion:1,sequence:0,digest:null,state:'empty'});
+ }finally{db.close();}
 });
 
-test('Durable Object anchor rejects stale, conflicting, malformed and concurrent advances',async()=>{
- const anchor=new RegulatorySequenceAnchor(new MemoryState(),{});
- let response=await anchor.fetch(request('/advance','POST',{sequence:1,digest:digest(1),expectedSequence:0,state:'active'}));
- assert.equal(response.status,200);
- response=await anchor.fetch(request('/advance','POST',{sequence:1,digest:digest(1),expectedSequence:0,state:'active'}));
- assert.equal(response.status,409);
- response=await anchor.fetch(request('/advance','POST',{sequence:2,digest:digest(2),expectedSequence:0,state:'active'}));
- assert.equal(response.status,409);
- response=await anchor.fetch(request('/advance','POST',{sequence:2,digest:'bad',expectedSequence:1,state:'active'}));
- assert.equal(response.status,400);
- response=await anchor.fetch(request('/advance','POST',{sequence:2,digest:digest(2),expectedSequence:1,state:'unknown'}));
- assert.equal(response.status,400);
- response=await anchor.fetch(request('/state','POST'));
- assert.equal(response.status,405);
+test('sequence anchor advances monotonically with an atomic compare-and-set',()=>{
+ const db=new DatabaseSync(':memory:');
+ try{
+  const sql=sqlAdapter(db);initializeSequenceAnchor(sql);
+  const first=advanceSequenceAnchor(sql,{sequence:1,digest:digest(1),expectedSequence:0,state:'active'});
+  assert.equal(first.conflict,false);
+  assert.deepEqual(first.state,{schemaVersion:1,sequence:1,digest:digest(1),state:'active'});
+  const stale=advanceSequenceAnchor(sql,{sequence:2,digest:digest(2),expectedSequence:0,state:'active'});
+  assert.equal(stale.conflict,true);
+  assert.deepEqual(stale.state,first.state);
+  const blocked=advanceSequenceAnchor(sql,{sequence:2,digest:null,expectedSequence:1,state:'blocked'});
+  assert.equal(blocked.conflict,false);
+  assert.deepEqual(blocked.state,{schemaVersion:1,sequence:2,digest:null,state:'blocked'});
+ }finally{db.close();}
 });
 
-test('binding client uses one named Durable Object and fails closed on non-2xx',async()=>{
- const calls=[];
- const stub={async fetch(url,init){calls.push({url,init});if(new URL(url).pathname==='/state')return Response.json({schemaVersion:1,sequence:4,digest:digest(4),state:'active'});return Response.json({schemaVersion:1,sequence:5,digest:digest(5),state:'active'});}};
- const namespace={idFromName(name){assert.equal(name,'taxpulse-regulatory-head-v1');return 'id';},get(id){assert.equal(id,'id');return stub;}};
- const client=createRegulatorySequenceAnchor(namespace);
- assert.equal((await client.getState()).sequence,4);
- assert.equal((await client.advance({sequence:5,digest:digest(5),expectedSequence:4,state:'active'})).sequence,5);
- assert.equal(calls.length,2);
- assert.throws(()=>createRegulatorySequenceAnchor(null),/binding required/);
+test('sequence anchor rejects invalid digests, invalid states and non-monotonic advances',()=>{
+ const db=new DatabaseSync(':memory:');
+ try{
+  const sql=sqlAdapter(db);initializeSequenceAnchor(sql);
+  assert.throws(()=>advanceSequenceAnchor(sql,{sequence:1,digest:'not-a-digest',expectedSequence:0,state:'active'}),/Invalid external sequence advance/);
+  assert.throws(()=>advanceSequenceAnchor(sql,{sequence:1,digest:null,expectedSequence:0,state:'active'}),/Invalid external sequence advance/);
+  assert.throws(()=>advanceSequenceAnchor(sql,{sequence:0,digest:null,expectedSequence:0,state:'blocked'}),/Invalid external sequence advance/);
+  assert.throws(()=>advanceSequenceAnchor(sql,{sequence:1,digest:null,expectedSequence:0,state:'unknown'}),/Invalid external sequence advance/);
+ }finally{db.close();}
 });
 
-test('KV sequence-floor mirror is best-effort and never authoritative',async()=>{
- const state=new MemoryState();let mirrored=null;
- const anchor=new RegulatorySequenceAnchor(state,{RULE_SEQUENCE_FLOOR:{async put(key,value){mirrored={key,value};}}});
- const response=await anchor.fetch(request('/advance','POST',{sequence:1,digest:digest(1),expectedSequence:0,state:'active'}));
- assert.equal(response.status,200);
- assert.deepEqual(mirrored,{key:'taxpulse:regulatory-sequence-floor',value:'1'});
- const failing=new RegulatorySequenceAnchor(new MemoryState(),{RULE_SEQUENCE_FLOOR:{async put(){throw Error('KV unavailable');}}});
- const second=await failing.fetch(request('/advance','POST',{sequence:1,digest:digest(1),expectedSequence:0,state:'active'}));
- assert.equal(second.status,200);
- assert.equal((await failing.fetch(request('/state'))).status,200);
+test('KV mirror is best-effort and cannot override the SQLite anchor',async()=>{
+ let mirrored=null;
+ const kv={async put(key,value){mirrored={key,value};}};
+ assert.equal(await mirrorSequenceFloor(kv,7),true);
+ assert.deepEqual(mirrored,{key:SEQUENCE_FLOOR_MIRROR_KEY,value:'7'});
+ assert.equal(await mirrorSequenceFloor({async put(){throw Error('KV unavailable');}},8),false);
+ assert.equal(await mirrorSequenceFloor(null,9),false);
+});
+
+test('RPC client uses Durable Object methods and validates returned state',async()=>{
+ const db=new DatabaseSync(':memory:');
+ try{
+  const sql=sqlAdapter(db);initializeSequenceAnchor(sql);
+  const stub={
+   getState:()=>readSequenceAnchor(sql),
+   advance(input){
+    const result=advanceSequenceAnchor(sql,input);
+    if(result.conflict)throw Error('sequence_anchor_conflict');
+    return result.state;
+   }
+  };
+  const namespace={idFromName(name){assert.equal(name,'taxpulse-regulatory-head-v1');return 'anchor-id';},get(id){assert.equal(id,'anchor-id');return stub;}};
+  const client=createRegulatorySequenceAnchor(namespace);
+  assert.deepEqual(await client.getState(),{schemaVersion:1,sequence:0,digest:null,state:'empty'});
+  assert.deepEqual(await client.advance({sequence:1,digest:digest(1),expectedSequence:0,state:'active'}),{schemaVersion:1,sequence:1,digest:digest(1),state:'active'});
+  await assert.rejects(client.advance({sequence:2,digest:digest(2),expectedSequence:0,state:'active'}),/sequence_anchor_conflict/);
+ }finally{db.close();}
 });
