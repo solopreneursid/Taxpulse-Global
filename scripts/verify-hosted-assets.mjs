@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+const root=new URL('../',import.meta.url);
+const bundle=new URL('staging/integrated/bundle/',root);
+const origin='https://hqventures-taxpulse-integrated-preview.solopreneursid-proy.workers.dev';
+const pin=JSON.parse(readFileSync(new URL('data/hosted-preview-check.json',root),'utf8'));
+execFileSync(process.execPath,[new URL('staging/integrated/build.mjs',root).pathname]);
+const read=name=>readFileSync(new URL(name,bundle));
+const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
+const localRevision=read('preview-revision.txt').toString('utf8');
+assert.equal(localRevision,pin.revision,'Pinned revision must be reproducible from this checkout');
+const worker=read('worker.mjs').toString('utf8');
+const imports=new Map([...worker.matchAll(/^import (a\d+) from '\.\/([^']+\.txt)';$/gm)].map(m=>[m[1],m[2]]));
+const assetBlock=worker.match(/const assets=\{([^\n]+)\};/);
+assert.ok(assetBlock,'Asset map missing');
+const entries=[...assetBlock[1].matchAll(/"([^"]+)":\[(a\d+),"([^"]+)"\]/g)].map(m=>({path:m[1],file:imports.get(m[2]),contentType:m[3]}));
+assert.ok(entries.length>=35&&entries.every(e=>e.file),'Incomplete asset mapping');
+assert.equal(new Set(entries.map(e=>e.path)).size,entries.length);
+assert.equal(entries.length,assetBlock[1].split('],').length,'Unparsed asset map entry');
+entries.push({path:'/sw.js',file:'sw.js.txt',contentType:'application/javascript'});
+const health=async()=>{const r=await fetch(origin+'/health',{redirect:'error',signal:AbortSignal.timeout(20000)});assert.equal(r.status,200);const h=await r.json();assert.equal(h.previewRevision,pin.revision);assert.equal(h.taxRulesVerified,false);assert.equal(h.monetization,'disabled');};
+await health();
+const results=[];
+for(const entry of entries){
+ const expected=read(entry.file),r=await fetch(origin+entry.path,{redirect:'error',signal:AbortSignal.timeout(20000),headers:{'cache-control':'no-cache'}});
+ assert.equal(r.status,200,entry.path);assert.match(r.headers.get('x-robots-tag')||'',/noindex/);assert.ok(r.headers.get('content-type')?.startsWith(entry.contentType),entry.path);
+ const actual=Buffer.from(await r.arrayBuffer());assert.equal(actual.length,expected.length,entry.path+' size');assert.equal(digest(actual),digest(expected),entry.path+' bytes');
+ results.push({path:entry.path,bytes:actual.length,sha256:digest(actual)});
+}
+await health();
+writeFileSync('hosted-asset-integrity.json',JSON.stringify({revision:pin.revision,assets:results,scope:'Public static assets including service worker; dynamic runtime and private Worker modules excluded'},null,2)+'\n');
+console.log('Exact static asset byte parity: '+results.length+' assets for '+pin.revision);

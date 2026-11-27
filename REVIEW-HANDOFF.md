@@ -16,3 +16,5 @@ On a real low-end Android device and an iOS device where available, record model
 
 ## Founder-controlled production authorization
 Do not generate actual release signatures or enroll keys until the underlying release scope and independent approvals are complete. Freeze the exact artifact, verify its digest and commit, pin distinct founder/reviewer keys outside contributor-controlled inputs, then use the offline release-signing workflow. An independent reviewer must approve the exact artifact. Current production manifest remains preview-only and no production deploy workflow is enabled.
+
+The recovery regression now includes a local SQLite backup/restore with migrations 001–004, reviewer-record preservation, blocked-head recovery and replay/duplicate/version-tampering rejection. Synthetic records are structural fixtures, not valid reviewer signatures. A separately authorized D1 Time Travel restore drill is still required; never restore the live preview database for a test.

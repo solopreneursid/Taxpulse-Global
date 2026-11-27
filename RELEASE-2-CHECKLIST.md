@@ -24,3 +24,11 @@ Run `node scripts/production-readiness-report.mjs` for a read-only manifest and 
 
 ## Independent review packet
 See REVIEW-HANDOFF.md. Generate the 56-scope hashed inventory with `node scripts/prepare-review-packet.mjs independent-review-packet.json` or the read-only independent review handoff workflow. Do not treat this artifact as statutory evidence or a signed release authorization.
+
+## Source and hosted verification separation
+Source CI runs regression, dependency audit, local Chromium and reproducible build. The separate hosted workflow is mandatory after every preview deployment and exact pin update; it checks the locally reproduced revision, hashes every public static asset (including service worker), and runs hosted browser tests. This avoids races between old pins and deployments; source CI alone is not evidence of hosted success. No dynamic runtime bytes or private server modules are certified by the static asset check.
+
+## Recovery and commercial rollout boundaries
+CI exercises an isolated backup and restore with the complete review archive schema. D1 provider-level restore remains untested. No SEO indexing, advertisements, affiliate placement, customer data or paid APIs may be enabled while the preview manifest is unverified. See docs/PHASE-59-66-EXECUTION.md for the sequencing and acceptance criteria.
+
+Each successful source CI generates preview-build-evidence.json containing the exact commit, revision, engine fingerprint and SHA-256 hashes for the Worker static-import closure. Compare the actual downloaded Worker module bytes with this evidence before declaring a preview release verified. The independent hosted gate additionally checks the served public assets. Neither evidence artifact is an independent statutory approval or production signature.

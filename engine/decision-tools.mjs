@@ -117,3 +117,53 @@ export function financialRunway(input){
  const runway=balance<0n?Number(available/(-balance)):null;
  return {...sample,currency:input.currency,monthlyBalance:out(balance),availableAboveReserve:out(available),projectedSavings:out(savings+balance*BigInt(input.horizonMonths)),monthsToGoal,wholeMonthsBeforeReserve:runway,goalGapNow:out(needed>savings?needed-savings:0n),warnings:['Constant monthly income and costs. Goal is in addition to the selected reserve. Negative projected savings means a modeled funding shortfall, not available credit. No interest, inflation, investment return, taxes, debt restructuring or emergency costs are inferred.']};
 }
+
+const indirectSchedules=Object.freeze({
+ GB:Object.freeze({currency:'GBP',rate:2000,source:'https://www.gov.uk/vat-rates',scope:'UK standard-rated domestic supply'}),
+ DE:Object.freeze({currency:'EUR',rate:1900,source:'https://www.gesetze-im-internet.de/ustg_1980/__12.html',scope:'Germany ordinary standard-rated domestic supply'}),
+ AU:Object.freeze({currency:'AUD',rate:1000,source:'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/how-gst-works',scope:'Australia standard-rated domestic taxable sale'}),
+ SG:Object.freeze({currency:'SGD',rate:900,source:'https://www.iras.gov.sg/taxes/goods-services-tax-%28gst%29/basics-of-gst/current-gst-rates',scope:'Singapore standard-rated domestic taxable supply'}),
+ AE:Object.freeze({currency:'AED',rate:500,source:'https://mof.gov.ae/en/public-finance/tax/value-added-tax-vat/',scope:'UAE standard-rated domestic taxable supply'}),
+ CA:Object.freeze({currency:'CAD',rate:500,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'Alberta only, confirmed place of supply; federal GST'})
+});
+/** Single ordinary taxable supply, as at the recorded source review date. */
+export function standardIndirectTax(input){
+ exact(input,['country','priceBasis','amount','scopeConfirmed']);
+ if(!Object.hasOwn(indirectSchedules,input.country)||input.scopeConfirmed!==true||!['exclusive','inclusive'].includes(input.priceBasis))throw Error('Confirm standard-rated domestic supply and supported jurisdiction');
+ const s=indirectSchedules[input.country],amount=units(input.amount),rate=BigInt(s.rate);
+ const tax=input.priceBasis==='exclusive'?round(amount*rate,10000n):round(amount*rate,10000n+rate);
+ const net=input.priceBasis==='exclusive'?amount:amount-tax,gross=net+tax;
+ return {...sample,currency:s.currency,ratePercent:s.rate/100,netAmount:out(net),taxAmount:out(tax),grossAmount:out(gross),scope:s.scope,sourceUrls:[s.source],sourceReviewedOn:'2026-11-26',warnings:[s.scope+'. Published standard rate cross-check as of 26 November 2026, not independently approved. Confirm registered seller, tax point, place of supply, standard-rated classification and price basis before using. Single amount rounded to nearest currency cent; not invoice-line rounding, input tax recovery, filing, exemption, zero-rating, reduced rate, reverse charge or cross-border advice.']};
+}
+
+/** Integrated snapshot; user-entered balances and cash flows, no estimated asset valuations. */
+export function financialHealthSnapshot(input){
+ exact(input,['currency','monthlyIncome','monthlyExpenses','liquidSavings','otherAssets','liabilities','monthlyDebtPayments','reserveFloor','goalAmount','horizonMonths']);
+ const {otherAssets,liabilities,monthlyDebtPayments,...plan}=input;
+ const liquid=units(input.liquidSavings),assets=liquid+units(otherAssets),debt=units(liabilities),payments=units(monthlyDebtPayments),expenses=units(input.monthlyExpenses),income=units(input.monthlyIncome);
+ if(payments>expenses)throw Error('Monthly debt payments must already be included in monthly expenses');
+ const runway=financialRunway(plan);
+ return {...sample,currency:input.currency,totalAssets:out(assets),liabilities:out(debt),netWorth:out(assets-debt),monthlyDebtPayments:out(payments),debtServicePercent:income===0n?null:Number(round(payments*10000n,income))/100,monthlyBalance:runway.monthlyBalance,projectedLiquidSavings:runway.projectedSavings,monthsToGoal:runway.monthsToGoal,wholeMonthsBeforeReserve:runway.wholeMonthsBeforeReserve,warnings:[...runway.warnings,'Snapshot of user-entered balances only. Other assets exclude liquid savings. Monthly expenses include debt payments; do not count them twice. Debt-service percentage is based on after-tax cash income, not lender underwriting. Asset and debt balances are not projected, and no credit rating, solvency assessment or recommendation is inferred.']};
+}
+
+/** Ordinary company-tax rate calculation on an already established taxable profit. */
+export function scopedCorporateTax(input){
+ exact(input,['jurisdiction','taxableProfit','scopeConfirmed']);
+ if(input.scopeConfirmed!==true||!['GB','AE','AU-base','AU-full'].includes(input.jurisdiction))throw Error('Confirm ordinary company scope');
+ const p=units(input.taxableProfit);let numerator,currency,source,scope,period;
+ if(input.jurisdiction==='GB'){
+  currency='GBP';source='https://www.gov.uk/guidance/corporation-tax-marginal-relief';period='1 April 2026 to 31 March 2027';
+  scope='UK resident ordinary non-ring-fence trading company, full aligned accounting year, no associated companies, no exempt distributions, augmented profits equal taxable profits, eligible for small profits rate and marginal relief.';
+  numerator=p<=5000000n?p*1900n:p>=25000000n?p*2500n:p*2500n-(25000000n-p)*150n;
+ }else if(input.jurisdiction==='AE'){
+  currency='AED';source='https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/';period='Calendar year 2026';
+  scope='UAE ordinary resident juridical person, full calendar-year tax period; not exempt, free-zone, multinational minimum-tax or small-business relief case.';
+  numerator=(p>37500000n?p-37500000n:0n)*900n;
+ }else{
+  currency='AUD';source='https://www.ato.gov.au/tax-rates-and-codes/company-tax-rate-changes';period='1 July 2026 to 30 June 2027';
+  scope='Australian ordinary resident company, confirmed '+(input.jurisdiction==='AU-base'?'base rate entity eligible for 25%':'not a base rate entity, full 30% rate')+', full aligned income year, no special entity rates.';
+  numerator=p*(input.jurisdiction==='AU-base'?2500n:3000n);
+ }
+ const tax=round(numerator,10000n);
+ return {...sample,currency,taxableProfit:out(p),grossCorporateTax:out(tax),profitAfterModeledTax:out(p-tax),effectiveRatePercent:p===0n?0:Number(round(tax*10000n,p))/100,sourceUrls:[source],sourceReviewedOn:'2026-11-26',taxPeriod:period,scope,warnings:[scope+' '+period+'. Taxable profit must already be independently established, not turnover or accounting profit. Gross modeled rate calculation before other credits, offsets, reliefs, adjustments, withholding, dividend taxes or filing-specific rounding. No eligibility, accounting adjustments, associated-company count, free-zone status or tax residence inferred. No filing or statutory approval.']};
+}
