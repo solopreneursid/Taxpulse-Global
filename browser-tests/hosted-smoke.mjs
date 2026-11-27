@@ -14,7 +14,7 @@ for(const directive of ["connect-src 'none'","form-action 'none'","frame-ancesto
 assert.equal((await fetch(origin+'/tools/not-a-tool',{redirect:'error'})).status,404);
 assert.equal((await fetch(origin+'/v1/salary/remainder',{method:'POST',headers:{origin:'https://untrusted.example','content-type':'application/json'},body:'{}'})).status,403);
 const routes=[['/','tools'],['/salary','category-salary'],['/taxes','category-taxes'],['/career','category-career'],['/abroad','category-abroad'],['/money','category-money'],['/business','business'],['/tax-rules','updates']];
-const tools=['salary-remainder','reverse-salary','india-ctc','my-tax','india-regimes','taxable-income','employee-contributions','regional-tax','investment-tax','time-machine','india-deduction-scenario','salary-offers','salary-negotiation','compensation','compare','international-salary','purchasing-power','relocation-break-even','monthly-budget','business-break-even','india-tax-cliffs','india-tax-opportunity','salary-cliffs','taxable-income-opportunity','financial-runway'];
+const tools=['salary-remainder','reverse-salary','india-ctc','my-tax','india-regimes','taxable-income','employee-contributions','regional-tax','investment-tax','time-machine','india-deduction-scenario','salary-offers','salary-negotiation','compensation','compare','international-salary','purchasing-power','relocation-break-even','monthly-budget','business-break-even','india-tax-cliffs','india-tax-opportunity','salary-cliffs','taxable-income-opportunity','financial-runway','standard-indirect-tax','financial-health','scoped-corporate-tax'];
 const results=[];
 const browser=await chromium.launch({headless:true});try{
  for(const width of [320,390,1440]){
@@ -35,7 +35,7 @@ const browser=await chromium.launch({headless:true});try{
      missingDescriptions:[...document.querySelectorAll('[aria-describedby]')].flatMap(e=>e.getAttribute('aria-describedby').split(/\s+/).filter(id=>!document.getElementById(id)))
     }));
     assert.deepEqual(a,{overflow:false,duplicateIds:[],unlabeled:[],missingDescriptions:[]},path+' accessibility/layout');
-    if(path==='/'){assert.equal(await page.locator('#tools .category-card').count(),6);assert.equal(await page.locator('#tools .tool-link').count(),25);await page.keyboard.press('Tab');assert.equal(await page.evaluate(()=>document.activeElement.classList.contains('skip')),true);await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>document.activeElement.id),'main');}
+    if(path==='/'){assert.equal(await page.locator('#tools .category-card').count(),6);assert.equal(await page.locator('#tools .tool-link').count(),28);await page.keyboard.press('Tab');assert.equal(await page.evaluate(()=>document.activeElement.classList.contains('skip')),true);await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>document.activeElement.id),'main');}
     if(id==='updates'){await page.locator('.regulatory-panel').waitFor({state:'visible',timeout:20000});assert.equal(await page.locator('.regulatory-source').count(),target.sourceCount);}
     if(id==='business-break-even'){
      for(const [k,v] of Object.entries({unitPrice:1000,unitVariableCost:400,monthlyFixedCosts:30000,monthlyUnits:80,targetMonthlySurplus:15000}))await page.locator('#business-break-even-'+k).fill(String(v));
@@ -52,4 +52,4 @@ const browser=await chromium.launch({headless:true});try{
 }finally{await browser.close();}
 const report={revision:target.revision,environment:'GitHub-hosted Chromium; 4x CPU slowdown at 320px; not physical mobile or WCAG certification',results};
 writeFileSync('hosted-verification-report.json',JSON.stringify(report,null,2)+'\n');
-console.log('Hosted checks passed: 6 workspaces, 25 tool routes, 3 widths; exact revision '+target.revision);
+console.log('Hosted checks passed: 6 workspaces, 28 tool routes, 3 widths; exact revision '+target.revision);
