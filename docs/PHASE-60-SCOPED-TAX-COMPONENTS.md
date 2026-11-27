@@ -35,6 +35,10 @@ A separate US employer FICA component now calculates the employer's 6.2% Social 
 
 A generic one-item foreign-tax-credit arithmetic component takes independently established income and four limitation amounts. It floors the proportional domestic-tax cap to minor units and applies the lowest cap. It does not establish treaty entitlement, residence, source, eligible foreign tax or filing position.
 
+## Preview integration
+
+The shared business-tax, employer-payroll and treaty-credit modules are imported by the existing decision-tool workspace where the input scope matches. Their browser modules and versioned rule data are included in the generated static bundle, engine fingerprint and preview revision. The standard indirect-tax form now captures the transaction date and exposes Texas state sales tax as a state-only component. The signed-preview runtime guard continues to block these unsigned components when a signed snapshot is active; they are available only in the bundled preview state.
+
 ## Verification
 
 The tests use synthetic amounts and independently transcribed official rates. They demonstrate arithmetic, validation, effective-period selection and documented exclusions only. They are not independent statutory review, complete statutory coverage, or authorization to reactivate legacy API modules. The 56-scope release gate and production manifest remain unchanged.
