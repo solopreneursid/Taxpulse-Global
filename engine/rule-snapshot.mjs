@@ -14,7 +14,31 @@ const timestamp=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\
 function unchangedHistorical(previous,next,now){
  const today=now.toISOString().slice(0,10);
  const oldRows=previous?.versions||[];
- for(const row of oldRows){const match=next.versions.find(r=>r.version===row.version);if(match&&JSON.stringify(canonical(row))!==JSON.stringify(canonical(match)))throw Error('Immutable version changed');if(row.effectiveUntil<=today&&!match)throw Error('Historical version cannot be replaced');}
+ for(const row of oldRows){
+  const match=next.versions.find(r=>r.version===row.version);
+  if(match&&JSON.stringify(canonical(row))!==JSON.stringify(canonical(match)))throw Error('Immutable version changed');
+  if(!match&&row.effectiveFrom<=today)throw Error('Started or historical version cannot be replaced');
+ }
+}
+function nationalRuleRows(registry){
+ if(!registry||!Array.isArray(registry.effectivePeriods))return [];
+ return registry.effectivePeriods.map(period=>{
+  const table=period.component==='investment-assessment'?'investment':'national';
+  return {
+   ...period,
+   sourceUrls:registry.sources?.[period.jurisdiction]||[],
+   parameters:registry[table]?.[period.jurisdiction]
+  };
+ });
+}
+function unchangedNational(previous,next,now){
+ const today=now.toISOString().slice(0,10);
+ const oldRows=nationalRuleRows(previous),newRows=nationalRuleRows(next);
+ for(const row of oldRows){
+  const match=newRows.find(r=>r.version===row.version);
+  if(match&&JSON.stringify(canonical(row))!==JSON.stringify(canonical(match)))throw Error('Immutable national rule version changed');
+  if(!match&&row.effectiveFrom<=today)throw Error('Started national rule version cannot be replaced');
+ }
 }
 export async function verifyRuleSnapshot(envelope,{publicKeyHex,engineFingerprint,previous=null,minimumSequence=0,now=new Date()}){
  exact(envelope,['payload','digest','signature']);
@@ -27,7 +51,7 @@ export async function verifyRuleSnapshot(envelope,{publicKeyHex,engineFingerprin
  const key=await crypto.subtle.importKey('raw',fromHex(publicKeyHex,32),'Ed25519',false,['verify']);
  if(!await crypto.subtle.verify('Ed25519',key,fromHex(envelope.signature,64),bytes))throw Error('Invalid snapshot signature');
  validateRegionalRegistry(p.regional);validateIndiaSalaryRegistry(p.indiaSalary);validatePayrollRegistry(p.payroll);validateNationalRegistry(p.national);
- unchangedHistorical(previous?.regional,p.regional,now);unchangedHistorical(previous?.indiaSalary,p.indiaSalary,now);unchangedHistorical(previous?.payroll,p.payroll,now);
+ unchangedHistorical(previous?.regional,p.regional,now);unchangedHistorical(previous?.indiaSalary,p.indiaSalary,now);unchangedHistorical(previous?.payroll,p.payroll,now);unchangedNational(previous?.national,p.national,now);
  if(!Array.isArray(p.evidence)||!p.evidence.length||p.evidence.length>200)throw Error('Missing source evidence');
  const versions=[...p.regional.versions,...p.indiaSalary.versions,...p.payroll.versions,...await nationalEvidenceRules(p.national)],ids=new Set(versions.map(r=>r.version));
  if(ids.size!==versions.length)throw Error('Duplicate rule version');
