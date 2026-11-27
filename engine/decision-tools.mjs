@@ -123,6 +123,7 @@ export function financialRunway(input){
  * Shock months are inclusive; the original assumptions resume automatically
  * after the shock. This is a sensitivity analysis, not a forecast.
  */
+const scenarioOut=n=>{if(n>9007199254740991n||n< -9007199254740991n)throw new RangeError('Scenario result exceeds exact numeric range');return Number(n)/100;};
 export function cashFlowStressScenario(input){
  exact(input,['currency','monthlyIncome','monthlyExpenses','liquidSavings','reserveFloor','horizonMonths','incomeReductionPercent','expenseIncreasePercent','shockStartMonth','shockDurationMonths']);
  currency(input.currency);
@@ -143,12 +144,12 @@ export function cashFlowStressScenario(input){
    if(balance<reserve){monthsBelowReserve++;if(firstReserveBreachMonth===null)firstReserveBreachMonth=month;}
    if(balance<0n&&firstNegativeMonth===null)firstNegativeMonth=month;
    if(stressed&&month>shockEnd&&firstReserveBreachMonth!==null&&reserveRestoredMonth===null&&balance>=reserve)reserveRestoredMonth=month;
-   out(balance);out(totalIncome);out(totalExpenses);
+   scenarioOut(balance);scenarioOut(totalIncome);scenarioOut(totalExpenses);
   }
-  return {summary:{endingLiquidSavings:out(balance),minimumLiquidSavings:out(minimum),totalIncome:out(totalIncome),totalExpenses:out(totalExpenses),netCashFlow:out(totalIncome-totalExpenses),firstReserveBreachMonth,monthsBelowReserve,firstNegativeMonth,reserveRestoredMonth},endingMinor:balance,minimumMinor:minimum};
+  return {summary:{endingLiquidSavings:scenarioOut(balance),minimumLiquidSavings:scenarioOut(minimum),totalIncome:scenarioOut(totalIncome),totalExpenses:scenarioOut(totalExpenses),netCashFlow:scenarioOut(totalIncome-totalExpenses),firstReserveBreachMonth,monthsBelowReserve,firstNegativeMonth,reserveRestoredMonth},endingMinor:balance,minimumMinor:minimum};
  };
  const baseline=simulate(false),stress=simulate(true);
- return {...sample,currency:input.currency,horizonMonths:input.horizonMonths,shock:{startMonth:input.shockStartMonth,endMonth:shockEnd,durationMonths:input.shockDurationMonths,incomeReductionPercent:input.incomeReductionPercent,expenseIncreasePercent:input.expenseIncreasePercent},baseline:baseline.summary,stress:stress.summary,endingSavingsImpact:out(stress.endingMinor-baseline.endingMinor),minimumSavingsImpact:out(stress.minimumMinor-baseline.minimumMinor),warnings:['A deterministic cash-flow sensitivity using user-entered after-tax income and total expenses. The shock applies only during the inclusive months shown; baseline assumptions resume afterward. Expenses must include debt payments to avoid double counting. No tax recalculation, credit access, borrowing, inflation, interest, investment return, insurance, emergency reimbursement or probability is inferred. A reserve breach is a planning signal, not a solvency or lending assessment.']};
+ return {...sample,currency:input.currency,horizonMonths:input.horizonMonths,shock:{startMonth:input.shockStartMonth,endMonth:shockEnd,durationMonths:input.shockDurationMonths,incomeReductionPercent:input.incomeReductionPercent,expenseIncreasePercent:input.expenseIncreasePercent},baseline:baseline.summary,stress:stress.summary,endingSavingsImpact:scenarioOut(stress.endingMinor-baseline.endingMinor),minimumSavingsImpact:scenarioOut(stress.minimumMinor-baseline.minimumMinor),warnings:['A deterministic cash-flow sensitivity using user-entered after-tax income and total expenses. The shock applies only during the inclusive months shown; baseline assumptions resume afterward. Expenses must include debt payments to avoid double counting. No tax recalculation, credit access, borrowing, inflation, interest, investment return, insurance, emergency reimbursement or probability is inferred. A reserve breach is a planning signal, not a solvency or lending assessment.']};
 }
 
 
