@@ -66,7 +66,9 @@ export function resolveNationalRule(country,component,taxYear,asOf,registry=data
  return Object.freeze({...rule,parameters:source[key][country],sourceUrls:source.sources[country]});
 }
 
-export function nationalPeriodStart(country,year){return effectivePeriod(country,year).start;}\n\nexport function nationalRules(year,registry=data,country=null,component='national-assessment'){
+export function nationalPeriodStart(country,year){return effectivePeriod(country,year).start;}
+
+export function nationalRules(year,registry=data,country=null,component='national-assessment'){
  const source=registry===data?data:validateNationalRegistry(registry);
  if(year!==source.taxYear)throw RangeError('Unsupported national assessment year');
  if(country!==null){
