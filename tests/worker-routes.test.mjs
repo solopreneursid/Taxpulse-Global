@@ -42,8 +42,8 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(html.headers.get('x-frame-options'),'DENY');
  assert.equal(html.headers.get('cross-origin-opener-policy'),'same-origin');
  assert.equal(html.headers.get('cross-origin-resource-policy'),'same-origin');
- assert.deepEqual(catalog.modules,['pit','payroll','capgains','property']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
- for(const module of ['vat','corporate','dtaa']){
+ assert.deepEqual(catalog.modules,['pit','payroll','capgains','property','dtaa']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
+ for(const module of ['vat','corporate']){
   assert.ok(catalog.disabledModules[module]);
   assert.equal((await post(JSON.stringify({...payload,module}))).status,400);
  }
@@ -131,6 +131,25 @@ test('generated Worker routes and validation',async()=>{
   if(country==='AE')assert.equal(result.chargeType,'registration-fee');
  }
  assert.equal((await post(JSON.stringify({country:'IN',taxYear:'2026',module:'property',parameters:{purchaserCategory:'other',taxableConsideration:1000000,transactionDate:'2026-11-27',scopeConfirmed:true}}))).status,400);
+ const treatyCases=[
+  ['IN',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticTax:10000,worldwideTaxableIncome:100000,foreignTaxableIncome:20000,domesticTaxOnItem:3000,scopeConfirmed:true}],
+  ['US',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticTax:10000,worldwideTaxableIncome:100000,foreignTaxableIncome:20000,domesticTaxOnItem:3000,scopeConfirmed:true}],
+  ['GB',{foreignTaxPaidGbp:3000,treatyEligibleCapGbp:2500,ukTaxWithIncome:12000,ukTaxWithoutIncome:9000,scopeConfirmed:true}],
+  ['CA',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:true}],
+  ['AU',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:true}],
+  ['DE',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:true}],
+  ['SG',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:true}],
+  ['AE',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:true}]
+ ];
+ for(const [country,parameters] of treatyCases){
+  const response=await post(JSON.stringify({country,taxYear:'2026',module:'dtaa',parameters}));
+  assert.equal(response.status,200,country);
+  const result=await response.json();
+  assert.equal(result.country,country);assert.equal(result.taxYear,'2026');assert.equal(result.module,'dtaa');
+  assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
+  assert.ok(Number.isFinite(result.modeledCredit));assert.ok(result.sourceUrls.length>0);
+ }
+ assert.equal((await post(JSON.stringify({country:'CA',taxYear:'2026',module:'dtaa',parameters:{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:false}}))).status,400);
  const assess=await call('/v1/taxable-income/calculate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'DE',taxYear:'2026',taxableIncome:50000,assessment:'individual'})});
  assert.equal(assess.status,200);assert.equal((await assess.json()).incomeTax,10548);
  assert.equal((await call('/v1/taxable-income/calculate')).status,405);
