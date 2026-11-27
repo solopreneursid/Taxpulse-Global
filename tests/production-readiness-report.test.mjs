@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {productionReadinessReport} from '../scripts/production-readiness-report.mjs';
-test('readiness report distinguishes all 56 preview entries from 24 scoped PIT/payroll/capital-gains API entries and no approvals',()=>{
+test('readiness report distinguishes all 56 preview entries from 32 scoped PIT/payroll/capital-gains/property API entries and no approvals',()=>{
  const p=productionReadinessReport();
- assert.equal(p.requiredScopes,56);assert.equal(p.scopedPreviewExamples,56);assert.equal(p.analogousComponents,2);assert.equal(p.legacyBackendCatalogScopes,24);
+ assert.equal(p.requiredScopes,56);assert.equal(p.scopedPreviewExamples,56);assert.equal(p.analogousComponents,2);assert.equal(p.legacyBackendCatalogScopes,32);
  assert.equal(p.missingBackendCountries.length,0);
  assert.equal(Object.keys(p.backendPITInputBasis).length,8);
  assert.equal(p.backendPITInputBasis.DE,'taxableIncome with individual or eligible joint assessment');
@@ -12,7 +12,10 @@ test('readiness report distinguishes all 56 preview entries from 24 scoped PIT/p
  assert.match(p.payrollScope,/no payroll withholding/);
  assert.equal(Object.keys(p.backendCapitalGainsInputBasis).length,8);
  assert.equal(p.backendCapitalGainsInputBasis.CA,'confirmedNetGain and transactionDate; calendar 2026 one-half capital-gain inclusion component only');
- assert.match(p.capitalGainsScope,/no complete asset-class/);assert.equal(p.missingBackendModules.length,4);assert.equal(p.productionAuthorized,false);assert.match(p.gate,/blocked/);
+ assert.match(p.capitalGainsScope,/no complete asset-class/);
+ assert.equal(Object.keys(p.backendPropertyInputBasis).length,8);
+ assert.equal(p.backendPropertyInputBasis.AE,'taxableConsideration and transactionDate; Dubai sale registration fee, not a tax');
+ assert.match(p.propertyScope,/not a full closing-cost/);assert.equal(p.missingBackendModules.length,3);assert.equal(p.productionAuthorized,false);assert.match(p.gate,/blocked/);
  assert.equal(p.scopedTaxComponents.indirectTaxRules.length,12);
  assert.equal(p.scopedTaxComponents.corporateTaxRules.length,4);
  assert.equal(p.scopedTaxComponents.employerPayrollComponents.length,1);
@@ -48,8 +51,8 @@ test('readiness report distinguishes all 56 preview entries from 24 scoped PIT/p
  assert.equal(p.primaryDailyCollector.signedEvidenceDeliveryVerifiedInRun,'45755972060');
  assert.equal(p.primaryDailyCollector.storageReadBackVerified,true);
  assert.ok(p.countries.every(c=>c.scopedPreviewExamples===7&&!c.manifestVerified&&!c.productionEnabled&&c.recordedEvidenceCount===0&&c.remaining.length===7));
- assert.equal(p.countries.find(c=>c.country==='IN').missingBackendModules.length,4);
- assert.equal(p.countries.find(c=>c.country==='CA').missingBackendModules.length,4);
+ assert.equal(p.countries.find(c=>c.country==='IN').missingBackendModules.length,3);
+ assert.equal(p.countries.find(c=>c.country==='CA').missingBackendModules.length,3);
  assert.equal(p.previewInfrastructure.d1Migration005.database,'taxpulse-regulatory-preview');
  assert.equal(p.previewInfrastructure.d1Migration005.applied,true);
  assert.equal(p.previewInfrastructure.d1Migration005.head.sequence,0);

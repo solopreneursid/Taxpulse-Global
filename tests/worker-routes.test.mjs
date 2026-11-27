@@ -42,8 +42,8 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(html.headers.get('x-frame-options'),'DENY');
  assert.equal(html.headers.get('cross-origin-opener-policy'),'same-origin');
  assert.equal(html.headers.get('cross-origin-resource-policy'),'same-origin');
- assert.deepEqual(catalog.modules,['pit','payroll','capgains']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
- for(const module of ['vat','corporate','property','dtaa']){
+ assert.deepEqual(catalog.modules,['pit','payroll','capgains','property']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
+ for(const module of ['vat','corporate','dtaa']){
   assert.ok(catalog.disabledModules[module]);
   assert.equal((await post(JSON.stringify({...payload,module}))).status,400);
  }
@@ -111,6 +111,26 @@ test('generated Worker routes and validation',async()=>{
   assert.ok(result.sourceUrls.length>0);
  }
  assert.equal((await post(JSON.stringify({country:'CA',taxYear:'2026',module:'capgains',parameters:{confirmedNetGain:10000,transactionDate:'2026-11-27',scopeConfirmed:false}}))).status,400);
+ const propertyCases=[
+  ['IN',{purchaserCategory:'male',taxableConsideration:1000000,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
+  ['US',{taxableConsideration:300001,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
+  ['GB',{consideration:295000,buyerScope:'ordinary',transactionDate:'2026-11-27',scopeConfirmed:true},'stampDuty'],
+  ['DE',{taxableConsideration:100000,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
+  ['AE',{taxableConsideration:100000,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
+  ['CA',{taxableConsideration:400000,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
+  ['AU',{taxableConsideration:1350000,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
+  ['SG',{purchasePrice:4500100,marketValue:4500100,propertyType:'residential',transactionDate:'2026-11-27',scopeConfirmed:true},'buyerStampDuty']
+ ];
+ for(const [country,parameters,resultField] of propertyCases){
+  const response=await post(JSON.stringify({country,taxYear:'2026',module:'property',parameters}));
+  assert.equal(response.status,200,country);
+  const result=await response.json();
+  assert.equal(result.country,country);assert.equal(result.taxYear,'2026');assert.equal(result.module,'property');
+  assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
+  assert.ok(Number.isFinite(result[resultField]));assert.ok(result.sourceUrls.length>0);
+  if(country==='AE')assert.equal(result.chargeType,'registration-fee');
+ }
+ assert.equal((await post(JSON.stringify({country:'IN',taxYear:'2026',module:'property',parameters:{purchaserCategory:'other',taxableConsideration:1000000,transactionDate:'2026-11-27',scopeConfirmed:true}}))).status,400);
  const assess=await call('/v1/taxable-income/calculate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'DE',taxYear:'2026',taxableIncome:50000,assessment:'individual'})});
  assert.equal(assess.status,200);assert.equal((await assess.json()).incomeTax,10548);
  assert.equal((await call('/v1/taxable-income/calculate')).status,405);
