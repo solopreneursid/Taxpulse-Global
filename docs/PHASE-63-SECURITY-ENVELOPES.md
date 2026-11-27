@@ -10,6 +10,10 @@ The browser-only record vault uses PBKDF2-HMAC-SHA-256 with 600,000 iterations t
 
 Unsigned integrity receipts accept plain JSON object payloads only. Verification fails closed for malformed envelopes, unexpected fields, missing payloads, invalid digests and serialization/size errors. The receipt continues to declare signed=false, independentlyVerified=false and taxRulesVerified=false. SHA-256 proves integrity against accidental or subsequent modification; it does not prove authorship, statutory correctness or filing eligibility.
 
+## Release authorization and key rotation
+
+Production release authorization requires separate Ed25519 founder and independent-reviewer signatures over the same payload, bound to the exact Git commit, deployment-artifact SHA-256 and production-manifest SHA-256. Approval lifetime is capped at seven days. Replacing either trusted public key invalidates approvals made with the previous key; regression tests cover both roles. No trusted production keys are enrolled. Enrollment must occur only after the independent statutory and security review requirements are met, with private keys kept offline.
+
 ## Verification boundaries
 
 Tests cover tampering, wrong passphrases, invalid parameters, extra envelope fields, non-record payloads and malformed receipts. These are engineering regression checks, not a penetration test, independent security assessment, cryptographic audit or proof of device-level key protection. No secrets, signing keys, production configuration or deployment are changed.
