@@ -2144,5 +2144,72 @@ export const spec = {
           }
         }
       },
+      "/v1/investment/au-discount-gain": {
+        "post": {
+          "operationId": "calculateAustraliaCapitalGainsDiscountComponent",
+          "description": "Australian resident individual capital-gains discount example for FY 2026–27, one asset held more than 12 months. Eligibility and loss treatment are user-confirmed; not a complete CGT assessment.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "proceeds",
+                    "costBase",
+                    "eligibleCapitalLosses",
+                    "otherTaxableIncome",
+                    "acquired",
+                    "disposed",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "proceeds": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "costBase": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "eligibleCapitalLosses": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "otherTaxableIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "acquired": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "disposed": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Australian discounted assessable gain and incremental ordinary income tax component"
+            },
+            "400": {
+              "description": "Unsupported or unconfirmed CGT scope"
+            }
+          }
+        }
+      },
   }
 };
