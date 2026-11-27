@@ -12,9 +12,13 @@ test('cash-flow stress compares a bounded shock against baseline and tracks rese
  assert.equal(r.stress.monthsBelowReserve,6);
  assert.equal(r.stress.firstNegativeMonth,null);
  assert.equal(r.stress.reserveRestoredMonth,9);
+ assert.equal(r.baselineMonthlyPath.length,12);assert.equal(r.stressMonthlyPath.length,12);assert.equal(r.monthlyPathTruncated,false);
+ assert.deepEqual(r.stressMonthlyPath[0],{month:1,shockActive:false,monthlyIncome:5000,monthlyExpenses:4000,netCashFlow:1000,endingLiquidSavings:9000,belowReserve:false,negative:false});
+ assert.deepEqual(r.stressMonthlyPath[1],{month:2,shockActive:true,monthlyIncome:2500,monthlyExpenses:5000,netCashFlow:-2500,endingLiquidSavings:6500,belowReserve:false,negative:false});
+ assert.equal(r.stressMonthlyPath[2].belowReserve,true);assert.equal(r.stressMonthlyPath[2].endingLiquidSavings,4000);
  assert.equal(r.endingSavingsImpact,-10500);
  const noShock=cashFlowStressScenario({...input,incomeReductionPercent:0,expenseIncreasePercent:0});
- assert.deepEqual(noShock.baseline,noShock.stress);
+ assert.deepEqual(noShock.baseline,noShock.stress);assert.deepEqual(noShock.baselineMonthlyPath,noShock.stressMonthlyPath);
  assert.throws(()=>cashFlowStressScenario({...input,shockStartMonth:0}));
  assert.throws(()=>cashFlowStressScenario({...input,shockDurationMonths:12}));
  assert.throws(()=>cashFlowStressScenario({...input,incomeReductionPercent:100.01}));
@@ -24,5 +28,5 @@ test('cash-flow stress compares a bounded shock against baseline and tracks rese
  assert.equal(deficit.stress.endingLiquidSavings,-1200);
  assert.equal(deficit.stress.firstNegativeMonth,1);
  const large=cashFlowStressScenario({...input,monthlyIncome:1000000000,monthlyExpenses:1000000000,liquidSavings:1000000000,reserveFloor:0,horizonMonths:600,incomeReductionPercent:0,expenseIncreasePercent:500,shockStartMonth:1,shockDurationMonths:600});
- assert.equal(large.stress.endingLiquidSavings,-2999000000000);
+ assert.equal(large.stress.endingLiquidSavings,-2999000000000);assert.equal(large.baselineMonthlyPath.length,24);assert.equal(large.stressMonthlyPath.length,24);assert.equal(large.monthlyPathTruncated,true);
 });
