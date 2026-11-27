@@ -69,6 +69,14 @@ for(const [name,content] of [['national-registry',nationalRegistry],['national-v
 const payrollRegistry=read('engine/payroll-registry.mjs').replace("import data from '../rules/payroll-versions.json' with { type: 'json' };","import data from './payroll-versions.mjs';");
 const payrollVersions='export default '+JSON.stringify(JSON.parse(read('rules/payroll-versions.json')))+';\n';
 for(const [name,content] of [['payroll-registry',payrollRegistry],['payroll-versions',payrollVersions]]){write(name+'.mjs',content);write('browser-'+name+'.mjs.txt',content);}
+const businessTaxRegistry=read('engine/business-tax.mjs').replace("import data from '../rules/business-tax-2026.json' with { type: 'json' };","import data from './business-tax-versions.mjs';");
+const businessTaxVersions='export default '+JSON.stringify(JSON.parse(read('rules/business-tax-2026.json'))) + ';\\n';
+for(const [name,content] of [
+ ['business-tax',businessTaxRegistry],
+ ['business-tax-versions',businessTaxVersions],
+ ['employer-payroll',read('engine/employer-payroll.mjs')],
+ ['treaty-credit',read('engine/treaty-credit.mjs')]
+]){write(name+'.mjs',content);write('browser-'+name+'.mjs.txt',content);}
 const indiaRegistry=read('engine/india-salary-registry.mjs').replace("import data from '../rules/india-salary-versions.json' with { type: 'json' };","import data from './india-salary-versions.mjs';");
 const indiaVersions='export default '+JSON.stringify(JSON.parse(read('rules/india-salary-versions.json')))+';\n';
 for(const [name,content] of [['india-salary-registry',indiaRegistry],['india-salary-versions',indiaVersions]]){write(name+'.mjs',content);write('browser-'+name+'.mjs.txt',content);}
@@ -79,9 +87,9 @@ for(const name of ['taxable-income','proof','history','reverse-salary','salary-o
   const content=read('engine/'+name+'.mjs').replace("import data from '../rules/historical-versions.json' with {type:'json'};","import data from './historical-versions.mjs';");
   write(name+'.mjs',content);write('browser-'+name+'.mjs.txt',content);
 }
-const fingerprintInputs=['national-registry','national-versions','historical-versions','payroll-registry','payroll-versions','rule-snapshot','statutory-review','runtime-rules','india-salary-registry','india-salary-versions','regional-registry','regional-versions','statutory-context','country','primitives','us-filing-statuses','IN','US','GB','taxable-income','proof','history','reverse-salary','salary-offers','negotiation','compensation','international'].map(name=>[name,readFileSync(new URL(name+'.mjs',bundle),'utf8')]);
+const fingerprintInputs=['national-registry','national-versions','historical-versions','payroll-registry','payroll-versions','rule-snapshot','statutory-review','runtime-rules','india-salary-registry','india-salary-versions','regional-registry','regional-versions','business-tax','business-tax-versions','employer-payroll','treaty-credit','statutory-context','country','primitives','us-filing-statuses','IN','US','GB','taxable-income','proof','history','reverse-salary','salary-offers','negotiation','compensation','international'].map(name=>[name,readFileSync(new URL(name+'.mjs',bundle),'utf8')]);
 const fingerprint=createHash('sha256').update(JSON.stringify(fingerprintInputs)).digest('hex');
 write('browser-fingerprint.mjs.txt','export default '+JSON.stringify(fingerprint)+';\n');
 
-const previewInputs=['app.webmanifest.txt','app-icon.svg.txt','sw.js.txt','pwa.mjs.txt','secure-records.mjs.txt','browser-vault.mjs.txt','document-text.mjs.txt','local-tools.mjs.txt','regulatory-dashboard.mjs','regulatory-reconciliation.mjs','monitor-sources.mjs','worker.mjs','simple-index.html.txt','simple.css.txt','simple.mjs.txt','browser-budget.mjs.txt','browser-financial-profile.mjs.txt','browser-decision-tools.mjs.txt','browser-reference-data.mjs.txt','public-reference-candidate.mjs.txt','browser-fingerprint.mjs.txt','browser-manifest.mjs.txt'];
+const previewInputs=['app.webmanifest.txt','app-icon.svg.txt','sw.js.txt','pwa.mjs.txt','secure-records.mjs.txt','browser-vault.mjs.txt','document-text.mjs.txt','local-tools.mjs.txt','regulatory-dashboard.mjs','regulatory-reconciliation.mjs','monitor-sources.mjs','worker.mjs','simple-index.html.txt','simple.css.txt','simple.mjs.txt','browser-budget.mjs.txt','browser-financial-profile.mjs.txt','browser-decision-tools.mjs.txt','browser-business-tax.mjs.txt','browser-business-tax-versions.mjs.txt','browser-employer-payroll.mjs.txt','browser-treaty-credit.mjs.txt','browser-reference-data.mjs.txt','public-reference-candidate.mjs.txt','browser-fingerprint.mjs.txt','browser-manifest.mjs.txt'];
 write('preview-revision.txt',createHash('sha256').update(JSON.stringify(previewInputs.map(n=>[n,readFileSync(new URL(n,bundle),'utf8')]))).digest('hex'));
