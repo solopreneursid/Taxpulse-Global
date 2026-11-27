@@ -10,7 +10,7 @@ function activate(db, sequence, regional, payroll = [], nationalPeriods = []) {
 test('database rejects duplicate and missing version IDs atomically', () => {
   const db = new DatabaseSync(':memory:');
   try {
-    for (const file of ['001-regulatory-snapshots.sql','002-regulatory-version-ledger.sql','003-regulatory-unique-versions.sql','004-regulatory-review-archive.sql','005-regulatory-national-version-ledger.sql']) {
+    for (const file of ['001-regulatory-snapshots.sql','002-regulatory-version-ledger.sql','003-regulatory-unique-versions.sql','005-regulatory-national-version-ledger.sql']) {
       db.exec(readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));
     }
     activate(db,1,[{version:'v1',rate:100}]);
