@@ -7,4 +7,6 @@ test('review packet inventories all 56 scopes without manufacturing approvals',(
  assert.match(p.releaseGate,/not authorized/);assert.match(p.commit,/^[a-f0-9]{40}$/);
 });
 
-test('review inventory distinguishes scoped preview components from missing modules and never grants approval',()=>{const p=prepareReviewPacket();assert.equal(p.scopes.filter(s=>s.scopedPreviewStatus==='scoped-example').length,38);assert.equal(p.scopes.filter(s=>s.scopedPreviewStatus==='not-implemented').length,18);assert.ok(p.scopes.every(s=>s.remainingEngineering.length>0&&s.independentReview==='not established by this packet'));});
+test('review inventory distinguishes scoped preview components from missing modules and never grants approval',()=>{const p=prepareReviewPacket();assert.equal(p.scopes.filter(s=>s.scopedPreviewStatus==='scoped-example').length,56);assert.equal(p.scopes.filter(s=>s.scopedPreviewStatus==='not-implemented').length,0);assert.ok(p.scopes.every(s=>s.remainingEngineering.length>0&&s.independentReview==='not established by this packet'));});
+
+test('inventory explicitly separates analogous components and leaves all approvals pending',()=>{const p=prepareReviewPacket();assert.deepEqual(p.scopes.filter(x=>x.coverageKind==='analogous-component').map(x=>x.country+'/'+x.module).sort(),['AE/property','US/vat']);assert.equal(p.scopes.filter(x=>x.coverageKind==='tax-component').length,54);assert.ok(p.scopes.every(x=>!x.productionEnabled&&!x.manifestVerified&&x.recordedEvidenceCount===0));});

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "scope": "Engineering inventory of scoped preview examples; not complete statutory coverage, and not an approval or release gate input.",
+  "scope": "Engineering inventory of scoped examples and explicitly identified analogous transaction charges. Not comprehensive statutory coverage or a release gate input.",
   "scopes": [
     {
       "country": "IN",
@@ -8,7 +8,8 @@
       "status": "scoped-example",
       "scope": "Resident ordinary salary old/new regime; explicit deductions",
       "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "IN",
@@ -16,7 +17,8 @@
       "status": "scoped-example",
       "scope": "Illustrative employee EPF and supplied professional tax",
       "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "IN",
@@ -24,7 +26,8 @@
       "status": "scoped-example",
       "scope": "Selected equity, property and VDA disposals",
       "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "IN",
@@ -32,7 +35,8 @@
       "status": "scoped-example",
       "scope": "Historical HSN 2523 IGST only",
       "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "IN",
@@ -40,23 +44,26 @@
       "status": "scoped-example",
       "scope": "Historical AY 2026–27 confirmed 115BAA election",
       "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "IN",
       "module": "property",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Delhi sole purchaser stamp and transfer duty only",
       "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "IN",
       "module": "dtaa",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "India-side UK treaty Article 24 historical FY 2025–26 confirmed credit limits",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "US",
@@ -64,7 +71,8 @@
       "status": "scoped-example",
       "scope": "Ordinary federal tax, limited state components",
       "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "US",
@@ -72,7 +80,8 @@
       "status": "scoped-example",
       "scope": "Employee FICA and annual employer FICA",
       "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "US",
@@ -80,15 +89,17 @@
       "status": "scoped-example",
       "scope": "Selected regular federal investment disposals",
       "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "US",
       "module": "vat",
-      "status": "not-implemented",
-      "scope": null,
-      "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
-      "independentApproval": false
+      "status": "scoped-example",
+      "scope": "Texas state-only sales tax component; US has no federal VAT",
+      "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules; review whether a different statutory scope or a formally authorized jurisdictional non-applicability policy is required. An analogous charge cannot satisfy statutory approval.",
+      "independentApproval": false,
+      "coverageKind": "analogous-component"
     },
     {
       "country": "US",
@@ -96,23 +107,26 @@
       "status": "scoped-example",
       "scope": "Regular federal C corporation component",
       "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "US",
       "module": "property",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "NY State base residential transfer tax outside NYC below USD 1m",
       "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "US",
       "module": "dtaa",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "US-side UK treaty Article 24 confirmed adjusted ordinary credit limit",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "GB",
@@ -120,7 +134,8 @@
       "status": "scoped-example",
       "scope": "Ordinary RUK/SCT income; separate dividend component",
       "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "GB",
@@ -128,7 +143,8 @@
       "status": "scoped-example",
       "scope": "Category A employee and ordinary employer NI",
       "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "GB",
@@ -136,7 +152,8 @@
       "status": "scoped-example",
       "scope": "Selected shares, property and crypto disposals",
       "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "GB",
@@ -144,7 +161,8 @@
       "status": "scoped-example",
       "scope": "Single ordinary standard-rated domestic supply",
       "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "GB",
@@ -152,7 +170,8 @@
       "status": "scoped-example",
       "scope": "Ordinary corporation tax and scoped marginal relief",
       "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "GB",
@@ -160,7 +179,8 @@
       "status": "scoped-example",
       "scope": "England/Northern Ireland residential SDLT",
       "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "GB",
@@ -168,7 +188,8 @@
       "status": "scoped-example",
       "scope": "UK-side credit cap for single eligible Indian-source income item",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "CA",
@@ -176,7 +197,8 @@
       "status": "scoped-example",
       "scope": "Federal assessment; scoped regional rates",
       "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "CA",
@@ -184,15 +206,17 @@
       "status": "scoped-example",
       "scope": "CPP/CPP2/EI outside Quebec; scoped Alberta salary",
       "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "CA",
       "module": "capgains",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Ordinary individual one-half net capital gain inclusion component, no tax calculated",
       "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "CA",
@@ -200,7 +224,8 @@
       "status": "scoped-example",
       "scope": "Alberta GST and five HST provinces",
       "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "CA",
@@ -208,23 +233,26 @@
       "status": "scoped-example",
       "scope": "Confirmed federal general or small-business component",
       "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "CA",
       "module": "property",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Ontario provincial one/two single-family residence LTT",
       "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "CA",
       "module": "dtaa",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Historical Canada-side UK treaty federal nonbusiness credit cap",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "AU",
@@ -232,7 +260,8 @@
       "status": "scoped-example",
       "scope": "Resident ordinary income and LITO",
       "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "AU",
@@ -240,7 +269,8 @@
       "status": "scoped-example",
       "scope": "Scoped salary remainder, not employer superannuation",
       "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "AU",
@@ -248,7 +278,8 @@
       "status": "scoped-example",
       "scope": "Confirmed ordinary eligible discounted capital gain",
       "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "AU",
@@ -256,7 +287,8 @@
       "status": "scoped-example",
       "scope": "Single ordinary standard-rated supply",
       "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "AU",
@@ -264,23 +296,26 @@
       "status": "scoped-example",
       "scope": "Confirmed base or full ordinary company rate",
       "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "AU",
       "module": "property",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "NSW FY2026–27 ordinary nonresidential transfer duty, multiples of AUD100",
       "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "AU",
       "module": "dtaa",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Historical Australia-side UK treaty FITO with supplied difference and 1000 minimum limit",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "DE",
@@ -288,7 +323,8 @@
       "status": "scoped-example",
       "scope": "Ordinary tariff and joint splitting",
       "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "DE",
@@ -296,15 +332,17 @@
       "status": "scoped-example",
       "scope": "Scoped monthly social contributions",
       "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "DE",
       "module": "capgains",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Confirmed ordinary private share gain 25% tariff component only",
       "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "DE",
@@ -312,7 +350,8 @@
       "status": "scoped-example",
       "scope": "Single ordinary standard-rated supply",
       "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "DE",
@@ -320,23 +359,26 @@
       "status": "scoped-example",
       "scope": "Corporate income tax component only",
       "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "DE",
       "module": "property",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Berlin direct ordinary taxable transfer component",
       "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "DE",
       "module": "dtaa",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Germany-side UK directors fee credit, section 34c confirmed limit",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "SG",
@@ -344,7 +386,8 @@
       "status": "scoped-example",
       "scope": "Ordinary resident assessed income",
       "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "SG",
@@ -352,15 +395,17 @@
       "status": "scoped-example",
       "scope": "Scoped employee CPF",
       "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "SG",
       "module": "capgains",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Confirmed personal investment share disposal local income-tax treatment",
       "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "SG",
@@ -368,7 +413,8 @@
       "status": "scoped-example",
       "scope": "Single ordinary standard-rated supply",
       "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "SG",
@@ -376,7 +422,8 @@
       "status": "scoped-example",
       "scope": "YA 2026 partial/start-up exemption before rebates",
       "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "SG",
@@ -384,15 +431,17 @@
       "status": "scoped-example",
       "scope": "Ordinary pure residential or non-residential BSD only",
       "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "SG",
       "module": "dtaa",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Singapore-side UK treaty direct company credit cap",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "AE",
@@ -400,7 +449,8 @@
       "status": "scoped-example",
       "scope": "Ordinary wage-only no personal income tax",
       "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "AE",
@@ -408,15 +458,17 @@
       "status": "scoped-example",
       "scope": "Scoped non-GCC employee ILOE",
       "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "AE",
       "module": "capgains",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Confirmed personal investment income corporate-tax exclusion",
       "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "AE",
@@ -424,7 +476,8 @@
       "status": "scoped-example",
       "scope": "Single ordinary standard-rated supply",
       "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "AE",
@@ -432,23 +485,26 @@
       "status": "scoped-example",
       "scope": "Ordinary corporate tax above threshold",
       "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     },
     {
       "country": "AE",
       "module": "property",
-      "status": "not-implemented",
-      "scope": null,
-      "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
-      "independentApproval": false
+      "status": "scoped-example",
+      "scope": "Dubai statutory combined sale registration fee (not tax)",
+      "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges; review whether a different statutory scope or a formally authorized jurisdictional non-applicability policy is required. An analogous charge cannot satisfy statutory approval.",
+      "independentApproval": false,
+      "coverageKind": "analogous-component"
     },
     {
       "country": "AE",
       "module": "dtaa",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "UAE-side UK treaty ordinary corporate credit cap",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
-      "independentApproval": false
+      "independentApproval": false,
+      "coverageKind": "tax-component"
     }
   ]
 }
