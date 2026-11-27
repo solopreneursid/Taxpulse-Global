@@ -27,6 +27,11 @@ function anniversaryClamped(value){
  const lastDay=new Date(Date.UTC(targetYear,month,0)).getUTCDate();
  return [targetYear,String(month).padStart(2,'0'),String(Math.min(day,lastDay)).padStart(2,'0')].join('-');
 }
+function addOneDay(value){
+ const date=new Date(value+'T00:00:00.000Z');
+ date.setUTCDate(date.getUTCDate()+1);
+ return date.toISOString().slice(0,10);
+}
 const sample={sampleOnly:true,taxRulesVerified:false};
 export function indiaCtc(input,ruleContext={}){
  exact(input,['annualCtc','employerContributions','nonCashBenefits','employeeContributions','otherPayrollDeductions','residentIndividual','ageGroup','oldEligibleDeductions','newEligibleDeductions']);
@@ -339,14 +344,15 @@ export function australiaDiscountGain(input){
  const acquired=isoDate(input.acquired,'Acquisition date');
  const disposed=isoDate(input.disposed,'Disposal date');
  if(disposed<'2026-07-01'||disposed>='2027-07-01')throw Error('Disposal must fall in Australian FY 2026–27');
- const eligibleAfter=anniversaryClamped(acquired);
- if(disposed<=eligibleAfter)throw Error('The disposal date must be after the 12-month anniversary; acquisition and CGT-event days are excluded');
+ const anniversary=anniversaryClamped(acquired);
+ const earliestEligibleDisposalDate=addOneDay(anniversary);
+ if(disposed<earliestEligibleDisposalDate)throw Error('The disposal date must be after the 12-month anniversary; acquisition and CGT-event days are excluded');
  if(input.scopeConfirmed!==true)throw Error('Confirm ordinary discount-eligible gain and loss treatment');
  const proceeds=units(input.proceeds),cost=units(input.costBase),loss=units(input.eligibleCapitalLosses),other=units(input.otherTaxableIncome);
  if(proceeds<cost||loss>proceeds-cost)throw Error('Only positive gains and applicable losses up to the gain supported');
  const gain=proceeds-cost,net=gain-loss,discounted=round(net,2n),calculate=taxableIncome=>assessTaxableIncome({country:'AU',taxYear:'2026',taxableIncome,residentEligible:true});
  const before=calculate(out(other)),after=calculate(out(other+discounted));
- return {...sample,currency:'AUD',acquired,disposed,minimumEligibleDisposalDate:eligibleAfter,holdingPeriodEligible:true,taxPeriod:'FY 2026–27',ruleEffectiveFrom:'2026-07-01',grossGain:out(gain),gainAfterLosses:out(net),assessableGain:out(discounted),modeledIncrementalIncomeTax:out(units(after.incomeTax)-units(before.incomeTax)),sourceUrls:['https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/calculating-your-cgt/cgt-discount','https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/capital-gains-tax-reform'],warnings:['FY 2026–27 only, ordinary eligible Australian resident individual throughout ownership, one asset held at least 12 months, eligible losses already established and applied before 50% discount. No main residence, small-business, affordable-housing, indexation, foreign-resident or rollover case. Incremental ordinary income tax including modeled LITO only; excludes Medicare, offsets, filing rounding and later CGT reforms.']};
+ return {...sample,currency:'AUD',acquired,disposed,earliestEligibleDisposalDate,holdingPeriodEligible:true,taxPeriod:'FY 2026–27',ruleEffectiveFrom:'2026-07-01',grossGain:out(gain),gainAfterLosses:out(net),assessableGain:out(discounted),modeledIncrementalIncomeTax:out(units(after.incomeTax)-units(before.incomeTax)),sourceUrls:['https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/calculating-your-cgt/cgt-discount','https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/capital-gains-tax-reform'],warnings:['FY 2026–27 only, ordinary eligible Australian resident individual throughout ownership, one asset held at least 12 months, eligible losses already established and applied before 50% discount. No main residence, small-business, affordable-housing, indexation, foreign-resident or rollover case. Incremental ordinary income tax including modeled LITO only; excludes Medicare, offsets, filing rounding and later CGT reforms.']};
 }
 
 function signedRate(v,min,max){if(typeof v!=='number'||!Number.isFinite(v)||v<min||v>max||Math.abs(v*100-Math.round(v*100))>0.00002)throw RangeError('Invalid rate');return BigInt(Math.round(v*100));}
