@@ -1,5 +1,8 @@
 // Decision tools use explicit user-supplied assumptions; no statutory eligibility inferred.
 import {compareIndiaRegimes,calculateSalaryRemainder,assessTaxableIncome} from './taxable-income.mjs';
+import {calculateIndirectTax,calculateCorporateTaxComponent} from './business-tax.mjs';
+import {calculateUsEmployerFica} from './employer-payroll.mjs';
+import {calculateTreatyCreditComponent} from './treaty-credit.mjs';
 const currencies=['INR','USD','GBP','CAD','AUD','EUR','SGD','AED'];
 function exact(o,keys){if(!o||typeof o!=='object'||Array.isArray(o)||Object.keys(o).length!==keys.length||keys.some(k=>!Object.hasOwn(o,k)))throw new TypeError('Unsupported input fields');}
 function units(v,scale=100,max=1e9){if(typeof v!=='number'||!Number.isFinite(v)||v<0||v>max||Math.abs(v*scale-Math.round(v*scale))>0.00002)throw new RangeError('Invalid amount or precision');return BigInt(Math.round(v*scale));}
@@ -153,27 +156,21 @@ export function cashFlowStressScenario(input){
 }
 
 
-const indirectSchedules=Object.freeze({
- 'CA-ON':Object.freeze({currency:'CAD',rate:1300,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'Ontario — confirmed ordinary HST place of supply'}),
- 'CA-NS':Object.freeze({currency:'CAD',rate:1400,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'Nova Scotia — confirmed ordinary HST place of supply'}),
- 'CA-NB':Object.freeze({currency:'CAD',rate:1500,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'New Brunswick — confirmed ordinary HST place of supply'}),
- 'CA-NL':Object.freeze({currency:'CAD',rate:1500,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'Newfoundland and Labrador — confirmed ordinary HST place of supply'}),
- 'CA-PE':Object.freeze({currency:'CAD',rate:1500,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'Prince Edward Island — confirmed ordinary HST place of supply'}),
- GB:Object.freeze({currency:'GBP',rate:2000,source:'https://www.gov.uk/vat-rates',scope:'UK standard-rated domestic supply'}),
- DE:Object.freeze({currency:'EUR',rate:1900,source:'https://www.gesetze-im-internet.de/ustg_1980/__12.html',scope:'Germany ordinary standard-rated domestic supply'}),
- AU:Object.freeze({currency:'AUD',rate:1000,source:'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/how-gst-works',scope:'Australia standard-rated domestic taxable sale'}),
- SG:Object.freeze({currency:'SGD',rate:900,source:'https://www.iras.gov.sg/taxes/goods-services-tax-%28gst%29/basics-of-gst/current-gst-rates',scope:'Singapore standard-rated domestic taxable supply'}),
- AE:Object.freeze({currency:'AED',rate:500,source:'https://mof.gov.ae/en/public-finance/tax/value-added-tax-vat/',scope:'UAE standard-rated domestic taxable supply'}),
- CA:Object.freeze({currency:'CAD',rate:500,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'Alberta only, confirmed place of supply; federal GST'})
-});
-/** Single ordinary taxable supply, as at the recorded source review date. */
+/** Versioned 2026 standard-rate component; caller confirms registration and classification. */
 export function standardIndirectTax(input){
- exact(input,['country','priceBasis','amount','scopeConfirmed']);
- if(!Object.hasOwn(indirectSchedules,input.country)||input.scopeConfirmed!==true||!['exclusive','inclusive'].includes(input.priceBasis))throw Error('Confirm standard-rated domestic supply and supported jurisdiction');
- const s=indirectSchedules[input.country],amount=units(input.amount),rate=BigInt(s.rate);
- const tax=input.priceBasis==='exclusive'?round(amount*rate,10000n):round(amount*rate,10000n+rate);
- const net=input.priceBasis==='exclusive'?amount:amount-tax,gross=net+tax;
- return {...sample,currency:s.currency,ratePercent:s.rate/100,netAmount:out(net),taxAmount:out(tax),grossAmount:out(gross),scope:s.scope,sourceUrls:[s.source],sourceReviewedOn:input.country.startsWith('CA-')?'2026-11-27':'2026-11-26',warnings:[s.scope+'. Published standard rate cross-check in November 2026, not independently approved. Confirm registered seller, tax point, place of supply, standard-rated classification and price basis before using. Single amount rounded to nearest currency cent; not invoice-line rounding, input tax recovery, filing, exemption, zero-rating, reduced rate, reverse charge or cross-border advice.']};
+ exact(input,['country','priceBasis','amount','transactionDate','scopeConfirmed']);
+ if(input.scopeConfirmed!==true)throw Error('Confirm registered seller, place of supply, standard-rate classification and date');
+ const jurisdiction=input.country==='CA'?'CA-AB':input.country;
+ const country=jurisdiction.startsWith('CA-')?'CA':jurisdiction.startsWith('US-')?'US':jurisdiction;
+ const result=calculateIndirectTax({
+  country,jurisdiction,taxYear:'2026',transactionDate:input.transactionDate,
+  amount:input.amount,mode:input.priceBasis,sellerRegistered:true,
+  standardRatedSupply:true,scopeConfirmed:true
+ });
+ return {...sample,currency:result.currency,ratePercent:result.rate*100,
+  netAmount:result.taxableAmount,taxAmount:result.taxAmount,grossAmount:result.grossAmount,
+  scope:result.warnings[0],sourceUrls:result.sourceUrls,sourceReviewedOn:'2026-11-27',
+  warnings:result.warnings};
 }
 
 /** Integrated snapshot; user-entered balances and cash flows, no estimated asset valuations. */
@@ -190,6 +187,32 @@ export function financialHealthSnapshot(input){
 export function scopedCorporateTax(input){
  exact(input,['jurisdiction','taxableProfit','scopeConfirmed']);
  if(input.scopeConfirmed!==true||!['GB','AE','AU-base','AU-full','US','CA-general','CA-small','DE','SG-PTE','SG-startup','IN-115BAA'].includes(input.jurisdiction))throw Error('Confirm ordinary company scope');
+ if(['US','CA-general','CA-small','DE','SG-PTE','SG-startup'].includes(input.jurisdiction)){
+  const country=input.jurisdiction.startsWith('CA-')?'CA':
+    input.jurisdiction.startsWith('SG-')?'SG':input.jurisdiction;
+  const profit=units(input.taxableProfit);
+  if(input.jurisdiction==='CA-small'&&profit>50000000n)throw Error('Confirmed eligible profit cannot exceed CAD 500,000 in this example');
+  const parameters=country==='CA'
+    ? {eligibleSmallBusinessProfit:input.jurisdiction==='CA-small'?input.taxableProfit:0,
+       smallBusinessEligibilityConfirmed:input.jurisdiction==='CA-small'}
+    : country==='SG'
+      ? {reliefScheme:input.jurisdiction==='SG-PTE'?'partial':'startup',
+         reliefEligibilityConfirmed:true}
+      : {};
+  const component=calculateCorporateTaxComponent({
+    country,taxYear:'2026',taxableProfit:input.taxableProfit,
+    scopeConfirmed:true,...parameters
+  });
+  const tax=units(component.corporateIncomeTaxComponent);
+  const taxPeriod=country==='SG'?'YA 2026 (basis period ordinarily 2025)':
+    country==='DE'?'Assessment year 2026':'Calendar year 2026';
+  return {...sample,currency:component.currency,taxableProfit:component.taxableProfit,
+    grossCorporateTax:component.corporateIncomeTaxComponent,
+    profitAfterModeledTax:out(profit-tax),
+    effectiveRatePercent:profit===0n?0:Number(round(tax*10000n,profit))/100,
+    sourceUrls:component.sourceUrls,sourceReviewedOn:'2026-11-27',
+    taxPeriod,scope:component.warnings[0],warnings:component.warnings};
+ }
  const p=units(input.taxableProfit);let numerator,currency,source,scope,period;
  if(input.jurisdiction==='GB'){
   currency='GBP';source='https://www.gov.uk/guidance/corporation-tax-marginal-relief';period='1 April 2026 to 31 March 2027';
@@ -328,8 +351,17 @@ export function retirementScenario(input){
 export function usEmployerFica(input){
  exact(input,['annualWages','scopeConfirmed']);
  if(input.scopeConfirmed!==true)throw Error('Confirm ordinary covered wages');
- const wages=units(input.annualWages),social=round((wages<18450000n?wages:18450000n)*620n,10000n),medicare=round(wages*145n,10000n);
- return {...sample,currency:'USD',annualWages:out(wages),employerSocialSecurity:out(social),employerMedicare:out(medicare),employerFica:out(social+medicare),wagesPlusEmployerFica:out(wages+social+medicare),sourceUrls:['https://www.irs.gov/publications/p15','https://www.irs.gov/taxtopics/tc751'],warnings:['Calendar 2026; one ordinary employer, all supplied wages covered by Social Security and Medicare, no successor employer, special employment or wage-base adjustments. Annual aggregate employer share only, not paycheck rounding or actual total employment cost; excludes FUTA, state payroll taxes, benefits and employee-only Additional Medicare Tax.']};
+ const result=calculateUsEmployerFica({
+  country:'US',taxYear:'2026',coveredWages:input.annualWages,
+  singleEmployer:true,scopeConfirmed:true
+ });
+ const wages=units(result.coveredWages),tax=units(result.employerFicaTotal);
+ return {...sample,currency:'USD',annualWages:result.coveredWages,
+  employerSocialSecurity:result.socialSecurityEmployerTax,
+  employerMedicare:result.medicareEmployerTax,
+  employerFica:result.employerFicaTotal,
+  wagesPlusEmployerFica:out(wages+tax),
+  sourceUrls:result.sourceUrls,warnings:result.warnings};
 }
 /** Singapore BSD only; higher of consideration and independently established market value. */
 export function singaporeBuyerDuty(input){
@@ -394,13 +426,32 @@ export function texasStateSalesTax(input){
 export function scopedTreatyCredit(input){
  exact(input,['jurisdiction','foreignTaxPaid','treatyPermittedTax','domesticTax','worldwideTaxableIncome','foreignTaxableIncome','domesticTaxOnItem','scopeConfirmed']);
  if(input.scopeConfirmed!==true||!['US-GB','IN-GB'].includes(input.jurisdiction))throw Error('Confirm treaty and adjusted income and tax bases');
- const paid=units(input.foreignTaxPaid),permitted=units(input.treatyPermittedTax),domestic=units(input.domesticTax),world=units(input.worldwideTaxableIncome),foreign=units(input.foreignTaxableIncome),item=units(input.domesticTaxOnItem);
- if(world===0n||foreign>world||item>domestic)throw Error('Invalid confirmed income or tax bases');
- const limit=domestic*foreign/world,credit=[paid,permitted,limit,item].reduce((a,b)=>a<b?a:b);
  const us=input.jurisdiction==='US-GB';
- return {...sample,currency:us?'USD':'INR',proportionalLimit:out(limit),modeledCredit:out(credit),domesticTaxAfterCredit:out(domestic-credit),foreignTaxNotCredited:out(paid-credit),sourceUrls:us?['https://www.gov.uk/government/publications/usa-tax-treaties/2001-uk-usa-double-taxation-convention-as-amended-by-the-2002-protocol-in-force','https://www.irs.gov/individuals/international-taxpayers/foreign-tax-credit-how-to-figure-the-credit']:['https://www.gov.uk/government/publications/india-tax-treaties/2020-uk-india-synthesised-text-of-the-multilateral-instrument-and-the-1993-double-taxation-convention-in-force','https://www.incometax.gov.in/iec/foportal/help/statutory-forms/popular-form/form67-um'],warnings:[(us?'US-side UK treaty Article 24, calendar 2026, one ordinary general-category income item; adjusted US limitation numerator, denominator and tax already established; no re-sourcing, special categories, exclusions, carryovers or AMT.':'India-side UK treaty Article 24(2), historical FY 2025–26 / AY 2026–27 only; one eligible UK-source income item, confirmed resident, Rule 128 credit limits already established. No tax sparing, disputed tax, multiple sources, carryovers or later law.')+' Credit limited to paid tax, treaty-permitted tax, proportional limit (floored to minor unit) and independently established domestic tax on item. All amounts in domestic currency, no conversion or eligibility inferred. Conservative illustration, not a claim or filing determination.']};
+ const domestic=units(input.domesticTax),world=units(input.worldwideTaxableIncome);
+ const foreign=units(input.foreignTaxableIncome),item=units(input.domesticTaxOnItem);
+ if(world===0n||foreign>world||item>domestic)throw Error('Invalid confirmed income or tax bases');
+ const result=calculateTreatyCreditComponent({
+  currency:us?'USD':'INR',worldwideIncome:input.worldwideTaxableIncome,
+  foreignSourceIncome:input.foreignTaxableIncome,
+  domesticTaxOnWorldwideIncome:input.domesticTax,
+  foreignTaxPaid:input.foreignTaxPaid,treatyLimit:input.treatyPermittedTax,
+  taxOnForeignItem:input.domesticTaxOnItem,scopeConfirmed:true
+ });
+ const sources=us
+  ? ['https://www.gov.uk/government/publications/usa-tax-treaties/2001-uk-usa-double-taxation-convention-as-amended-by-the-2002-protocol-in-force','https://www.irs.gov/individuals/international-taxpayers/foreign-tax-credit-how-to-figure-the-credit']
+  : ['https://www.gov.uk/government/publications/india-tax-treaties/2020-uk-india-synthesised-text-of-the-multilateral-instrument-and-the-1993-double-taxation-convention-in-force','https://www.incometax.gov.in/iec/foportal/help/statutory-forms/popular-form/form67-um'];
+ const scope=us
+  ? 'US-side UK treaty Article 24, calendar 2026, one ordinary general-category income item; adjusted limitation numerator, denominator and domestic tax already established.'
+  : 'India-side UK treaty Article 24(2), historical FY 2025–26 / AY 2026–27 only; one eligible UK-source income item and Rule 128 credit limits already established.';
+ return {...sample,currency:result.currency,
+  proportionalLimit:result.proportionalDomesticTaxLimit,
+  modeledCredit:result.allowedCredit,
+  domesticTaxAfterCredit:out(domestic-units(result.allowedCredit)),
+  foreignTaxNotCredited:result.unusedForeignTax,
+  sourceUrls:sources,
+  warnings:[scope,...result.warnings,
+   'No treaty eligibility, residence, source, re-sourcing, special categories, carryovers, tax sparing, multiple income items, exchange conversion or filing position is inferred. This is not a tax-credit claim or filing determination.']};
 }
-
 /** Explicitly confirmed treaty credit calculation, without inferring the assessed domestic limit. */
 const confirmedCreditScopes=Object.freeze({
  'CA-GB':Object.freeze({currency:'CAD',period:'Calendar 2025 (historical)',scope:'Canadian resident individual, UK treaty Article 21, one ordinary non-business item, confirmed federal foreign tax credit limit under domestic law. Excludes provincial credit, deduction, exempt income and special limits.',sources:['https://www.canada.ca/en/department-finance/programs/tax-policy/tax-treaties/country/united-kingdom-convention-consolidated-1978-1980-1985.html','https://www.canada.ca/en/revenue-agency/services/tax/individuals/topics/about-your-tax-return/tax-return/completing-a-tax-return/deductions-credits-expenses/line-40500-federal-foreign-tax-credit.html']}),
