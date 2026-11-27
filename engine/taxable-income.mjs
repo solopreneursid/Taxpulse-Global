@@ -457,7 +457,7 @@ function extendedSalaryRemainder(input,ruleContext={}){
   currency='SGD';period='Income earned in calendar year 2026; YA 2027';payFrequency='monthly';gross=pay*12n;
   const r=calculateEmployeeContributions({country:'SG',taxYear:'2026',income:cgOut(pay),ageBand:'55-or-under',scopeConfirmed:true},ruleContext);
   const cpf=cgMoney(r.totalEmployeeContribution)*12n;
-  const sg=resolveNationalRule('SG','national-assessment',input.taxYear,nationalPeriodStart('SG',input.taxYear),ruleContext.national).parameters;
+  const sg=resolveNationalRule('SG','salary-assessment',input.taxYear,nationalPeriodStart('SG',input.taxYear,'salary-assessment'),ruleContext.national).parameters;
   const earned=minBig(gross,BigInt(sg.earnedIncomeRelief)*100n);
   taxable=maxBig(0n,gross-cpf-earned);
   // IRAS resident schedule YA 2024 onward; no speculative YA 2027 rebate.
