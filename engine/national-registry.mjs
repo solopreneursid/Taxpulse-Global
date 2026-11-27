@@ -86,6 +86,12 @@ export async function nationalEvidenceRules(registry){
  return registry.effectivePeriods.map(period=>{
   const table=period.component==='investment-assessment'?'investment':'national';
   if(!Object.hasOwn(registry[table],period.jurisdiction))throw Error('Missing national rule parameters');
-  return {version:period.version,jurisdiction:period.jurisdiction,taxYear:period.taxYear,component:period.component,sourceUrls:registry.sources[period.jurisdiction],effectiveFrom:period.effectiveFrom,effectiveUntil:period.effectiveUntil};
+  return {
+   version:period.version,jurisdiction:period.jurisdiction,taxYear:period.taxYear,
+   component:period.component,sourceUrls:registry.sources[period.jurisdiction],
+   effectiveFrom:period.effectiveFrom,effectiveUntil:period.effectiveUntil,
+   status:period.status,legalStatus:period.legalStatus,
+   parameters:registry[table][period.jurisdiction]
+  };
  });
 }
