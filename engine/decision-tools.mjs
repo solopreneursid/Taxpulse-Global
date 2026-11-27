@@ -154,7 +154,7 @@ export function financialHealthSnapshot(input){
 /** Ordinary company-tax rate calculation on an already established taxable profit. */
 export function scopedCorporateTax(input){
  exact(input,['jurisdiction','taxableProfit','scopeConfirmed']);
- if(input.scopeConfirmed!==true||!['GB','AE','AU-base','AU-full','US','CA-general','CA-small','DE','SG-PTE','SG-startup'].includes(input.jurisdiction))throw Error('Confirm ordinary company scope');
+ if(input.scopeConfirmed!==true||!['GB','AE','AU-base','AU-full','US','CA-general','CA-small','DE','SG-PTE','SG-startup','IN-115BAA'].includes(input.jurisdiction))throw Error('Confirm ordinary company scope');
  const p=units(input.taxableProfit);let numerator,currency,source,scope,period;
  if(input.jurisdiction==='GB'){
   currency='GBP';source='https://www.gov.uk/guidance/corporation-tax-marginal-relief';period='1 April 2026 to 31 March 2027';
@@ -164,6 +164,11 @@ export function scopedCorporateTax(input){
   currency='AED';source='https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/';period='Calendar year 2026';
   scope='UAE ordinary resident juridical person, full calendar-year tax period; not exempt, free-zone, multinational minimum-tax or small-business relief case.';
   numerator=(p>37500000n?p-37500000n:0n)*900n;
+ }else if(input.jurisdiction==='IN-115BAA'){
+  currency='INR';source='https://www.incometax.gov.in/iec/foportal/help/company/return-applicable';period='FY 2025–26 / AY 2026–27 (historical)';
+  if(p%1000n!==0n)throw Error('Enter taxable income already rounded to a multiple of INR 10');
+  scope='Domestic company with valid section 115BAA election, entire rounded total income subject to ordinary 22% rate; 10% surcharge and 4% cess, no MAT. Excludes special-rate income, credit, interest, and filing adjustments.';
+  numerator=p*25168n;
  }else if(input.jurisdiction==='US'){
   currency='USD';source='https://www.irs.gov/instructions/i1120';period='Calendar year 2026';
   scope='US domestic ordinary C corporation, regular federal income tax only; excludes state and local taxes, corporate alternative minimum tax, credits, special taxes and adjustments.';
@@ -189,7 +194,7 @@ export function scopedCorporateTax(input){
   scope='Australian ordinary resident company, confirmed '+(input.jurisdiction==='AU-base'?'base rate entity eligible for 25%':'not a base rate entity, full 30% rate')+', full aligned income year, no special entity rates.';
   numerator=p*(input.jurisdiction==='AU-base'?2500n:3000n);
  }
- const tax=round(numerator,input.jurisdiction.startsWith('SG-')?40000n:10000n);
+ const tax=input.jurisdiction==='IN-115BAA'?round(numerator,100000000n)*1000n:round(numerator,input.jurisdiction.startsWith('SG-')?40000n:10000n);
  return {...sample,currency,taxableProfit:out(p),grossCorporateTax:out(tax),profitAfterModeledTax:out(p-tax),effectiveRatePercent:p===0n?0:Number(round(tax*10000n,p))/100,sourceUrls:[source],sourceReviewedOn:['GB','AE','AU-base','AU-full'].includes(input.jurisdiction)?'2026-11-26':'2026-11-27',taxPeriod:period,scope,warnings:[scope+' '+period+'. Taxable profit must already be independently established, not turnover or accounting profit. Gross modeled rate calculation before other credits, offsets, reliefs, adjustments, withholding, dividend taxes or filing-specific rounding. No eligibility, accounting adjustments, associated-company count, free-zone status or tax residence inferred. No filing or statutory approval.']};
 }
 
@@ -237,4 +242,27 @@ export function debtRepayment(input){
  };
  const base=simulate(payment),accelerated=simulate(payment+extra),both=base.status==='paid'&&accelerated.status==='paid';
  return {...sample,currency:input.currency,base,accelerated,interestSaved:both?out(units(base.interest,100,1e12)-units(accelerated.interest,100,1e12)):null,monthsSaved:both?base.payoffMonths-accelerated.payoffMonths:null,warnings:['Fixed nominal annual interest divided into 12 monthly periods; monthly interest rounded to nearest minor unit, payment at period end. No fees, rate changes, penalty, daily accrual, new borrowing or lender-specific rounding. If payment does not reduce principal the schedule stops before that payment; unpaid balances are not projected beyond the stop or horizon. Interest and months saved shown only if both plans pay off within the selected horizon. Example, not a lender quote.']};
+}
+
+/** Historical example of one explicitly confirmed notified inter-state GST classification. */
+export function notifiedIndiaGst(input){
+ exact(input,['classification','priceBasis','amount','scopeConfirmed']);
+ if(input.classification!=='2523-2025-09-22'||!['exclusive','inclusive'].includes(input.priceBasis)||input.scopeConfirmed!==true)throw Error('Confirm the specified historical classification');
+ const amount=units(input.amount),rate=1800n,tax=input.priceBasis==='exclusive'?round(amount*rate,10000n):round(amount*rate,11800n),net=input.priceBasis==='exclusive'?amount:amount-tax;
+ return {...sample,currency:'INR',ratePercent:18,netAmount:out(net),taxAmount:out(tax),grossAmount:out(net+tax),sourceUrls:['https://www.pib.gov.in/PressReleasePage.aspx?PRID=2163671&lang=2&reg=3','https://courier.cbic.gov.in/advisory/2025/NOTIFICATION%20NO.%209_2025-INTEGRATED%20TAX%20%28RATE%29%20-1759486719.pdf'],warnings:['Historical example as at 22 September 2025 only: HSN 2523 hydraulic cement, confirmed ordinary domestic inter-state taxable supply subject to 18% IGST, registered supplier, forward charge. No classification inference, cess, reverse charge, exemption, transitional supply, tax credit, later amendments or invoice/return rounding determination.']};
+}
+export function ukEmployerNi(input,ruleContext={}){
+ exact(input,['region','monthlyGross','scopeConfirmed']);
+ if(!['RUK','SCT'].includes(input.region)||input.scopeConfirmed!==true||!Number.isSafeInteger(input.monthlyGross)||input.monthlyGross<0)throw Error('Confirm category A scope and whole monthly pounds');
+ const salary=calculateSalaryRemainder({country:'GB',region:input.region,taxYear:'2026',pay:input.monthlyGross,scopeConfirmed:true},ruleContext),pay=units(input.monthlyGross),threshold=41700n,ni=round((pay>threshold?pay-threshold:0n)*1500n,10000n);
+ return {...sample,currency:'GBP',monthlyGross:out(pay),monthlyEmployerNi:out(ni),annualEmployerNi:out(ni*12n),annualEmploymentCost:out((pay+ni)*12n),annualEmployeeRemainder:salary.annualRemainder,sourceUrls:['https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027'],warnings:['2026–27; 12 equal monthly payments to an ordinary category A employee, not a director. Employer NI 15% above GBP 417 per month. No employment allowance, special categories, freeports, investment zones, employer pension, benefits, levy, or other costs. Employee remainder is the existing limited salary model.']};
+}
+export function australiaDiscountGain(input){
+ exact(input,['proceeds','costBase','eligibleCapitalLosses','otherTaxableIncome','scopeConfirmed']);
+ if(input.scopeConfirmed!==true)throw Error('Confirm ordinary discount-eligible gain and loss treatment');
+ const proceeds=units(input.proceeds),cost=units(input.costBase),loss=units(input.eligibleCapitalLosses),other=units(input.otherTaxableIncome);
+ if(proceeds<cost||loss>proceeds-cost)throw Error('Only positive gains and applicable losses up to the gain supported');
+ const gain=proceeds-cost,net=gain-loss,discounted=round(net,2n),calculate=taxableIncome=>assessTaxableIncome({country:'AU',taxYear:'2026',taxableIncome,residentEligible:true});
+ const before=calculate(out(other)),after=calculate(out(other+discounted));
+ return {...sample,currency:'AUD',grossGain:out(gain),gainAfterLosses:out(net),assessableGain:out(discounted),modeledIncrementalIncomeTax:out(units(after.incomeTax)-units(before.incomeTax)),sourceUrls:['https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/calculating-your-cgt/cgt-discount','https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/capital-gains-tax-reform'],warnings:['FY 2026–27 only, ordinary eligible Australian resident individual throughout ownership, one asset held at least 12 months, eligible losses already established and applied before 50% discount. No main residence, small-business, affordable-housing, indexation, foreign-resident or rollover case. Incremental ordinary income tax including modeled LITO only; excludes Medicare, offsets, filing rounding and later CGT reforms.']};
 }
