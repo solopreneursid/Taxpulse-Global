@@ -44,7 +44,7 @@ export async function publishSnapshot(db,envelope,fixtures,{publicKeyHex,engineF
  await verifyPublicationFixtures(snapshot,envelope.payload.evidence,fixtures);
  if(sequenceFloorStore){
   const raw=await sequenceFloorStore.get('taxpulse:regulatory-sequence-floor','text');
-  if(raw===null||!/^(0|[1-9]\\d*)$/.test(raw))throw Error('Durable regulatory sequence floor is not initialized');
+  if(raw===null||!/^(0|[1-9]\d*)$/.test(raw))throw Error('Durable regulatory sequence floor is not initialized');
   const floor=Number(raw);
   if(!Number.isSafeInteger(floor)||head.sequence>floor||snapshot.sequence<=floor)throw Error('Snapshot does not advance the durable regulatory sequence floor');
   // Advance the independent floor before touching D1. A failed D1 write leaves
@@ -61,7 +61,7 @@ export async function blockSnapshot(db,expectedSequence,sequenceFloorStore=null)
  if(!Number.isSafeInteger(expectedSequence)||expectedSequence<1)throw Error('Invalid sequence');
  if(sequenceFloorStore){
   const raw=await sequenceFloorStore.get('taxpulse:regulatory-sequence-floor','text');
-  if(raw===null||!/^(0|[1-9]\\d*)$/.test(raw))throw Error('Durable regulatory sequence floor is not initialized');
+  if(raw===null||!/^(0|[1-9]\d*)$/.test(raw))throw Error('Durable regulatory sequence floor is not initialized');
   const floor=Number(raw);
   if(!Number.isSafeInteger(floor)||expectedSequence>floor)throw Error('Database sequence exceeds durable recovery floor');
   if(expectedSequence+1>floor)await sequenceFloorStore.put('taxpulse:regulatory-sequence-floor',String(expectedSequence+1));
