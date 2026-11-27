@@ -10,7 +10,9 @@ test('verification audit accounts for all 56 unique statutory scopes without inv
  assert.equal(report.scopes.length,56);
  assert.equal(new Set(report.scopes.map(row=>row.country+'/'+row.module)).size,56);
  assert.equal(report.evidence.scopeRecords,56);
- assert.equal(report.evidence.recordedApprovalEvidence,0);
+ assert.equal(report.evidence.independentReferenceScopes,0);
+ assert.ok(report.evidence.sourceLinkedScopes>0);
+ assert.equal(report.evidence.sourceMissingScopes,56-report.evidence.sourceLinkedScopes);
  assert.equal(report.evidence.independentApprovals,0);
  assert.equal(report.evidence.unverifiedScopes,56);
  assert.equal(report.evidence.productionEnabledScopes,0);
@@ -20,7 +22,9 @@ test('verification audit accounts for all 56 unique statutory scopes without inv
 
 test('payroll audit exposes unsupported jurisdictions instead of claiming eight-country completeness',()=>{
  const report=buildVerificationAudit();
- assert.deepEqual(report.payroll.missingJurisdictions,['DE','AE']);
+ assert.deepEqual(report.payroll.missingVersionedContributionRegistryJurisdictions,['DE','AE']);
+ assert.deepEqual(report.payroll.separateSalaryModelJurisdictions,['DE','AE']);
+ assert.equal(report.payroll.separateSalaryModelsTested,true);
  assert.equal(report.payroll.status,'partial-preview-only');
  assert.equal(report.payroll.productionEnabled,false);
  assert.equal(report.payroll.jurisdictions.length,6);
