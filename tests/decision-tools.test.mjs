@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax,residentialSdlt,ukIndiaCredit,debtRepayment,notifiedIndiaGst,ukEmployerNi,australiaDiscountGain,investmentScenario,retirementScenario} from '../engine/decision-tools.mjs';
+import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax,residentialSdlt,ukIndiaCredit,debtRepayment,notifiedIndiaGst,ukEmployerNi,australiaDiscountGain,investmentScenario,retirementScenario,usEmployerFica,singaporeBuyerDuty,ukDividendTax} from '../engine/decision-tools.mjs';
 const ctc={annualCtc:1800000,employerContributions:100000,nonCashBenefits:200000,employeeContributions:21600,otherPayrollDeductions:2500,residentIndividual:true,ageGroup:'under-60',oldEligibleDeductions:0,newEligibleDeductions:0};
 test('CTC cash component and tax reconciliation',()=>{
  const r=indiaCtc(ctc);assert.equal(r.annualGross,1500000);assert.equal(r.new.incomeTax,97500);assert.equal(r.new.annualCash,1378400);assert.equal(r.taxRulesVerified,false);
@@ -157,4 +157,21 @@ test('retirement finite drawdown handles final full and partial withdrawal',()=>
  assert.equal(retirementScenario({...i,startingBalance:1200,horizonMonths:4}).firstShortfallMonth,null);
  assert.equal(retirementScenario({...i,startingBalance:10000,horizonMonths:13,annualSpendingGrowthPercent:10}).totalWithdrawn,3930);
  assert.throws(()=>retirementScenario({...i,monthlyWithdrawal:0}));assert.throws(()=>retirementScenario({...i,horizonMonths:601}));
+});
+
+test('2026 employer FICA caps Social Security, not employer Medicare',()=>{
+ const i={annualWages:184500,scopeConfirmed:true};assert.equal(usEmployerFica(i).employerSocialSecurity,11439);assert.equal(usEmployerFica(i).employerMedicare,2675.25);
+ const r=usEmployerFica({...i,annualWages:200000});assert.equal(r.employerFica,14339);assert.equal(r.wagesPlusEmployerFica,214339);assert.equal(usEmployerFica({...i,annualWages:0}).employerFica,0);assert.throws(()=>usEmployerFica({...i,scopeConfirmed:false}));
+});
+test('Singapore BSD official example, higher value and minimum duty',()=>{
+ const i={purchasePrice:4500100,marketValue:4500100,propertyType:'residential',scopeConfirmed:true};assert.equal(singaporeBuyerDuty(i).buyerStampDuty,209606);
+ assert.equal(singaporeBuyerDuty({...i,propertyType:'nonresidential'}).buyerStampDuty,194605);
+ assert.equal(singaporeBuyerDuty({...i,purchasePrice:100000,marketValue:180000}).buyerStampDuty,1800);
+ assert.equal(singaporeBuyerDuty({...i,purchasePrice:1,marketValue:1}).buyerStampDuty,1);assert.throws(()=>singaporeBuyerDuty({...i,purchasePrice:0,marketValue:0}));assert.throws(()=>singaporeBuyerDuty({...i,propertyType:'mixed'}));
+});
+test('UK dividends use allowance within rate bands, including crossing the boundary',()=>{
+ const i={otherTaxableIncome:17000,taxableDividends:3000,scopeConfirmed:true};assert.equal(ukDividendTax(i).modeledDividendTax,268.75);
+ assert.equal(ukDividendTax({...i,otherTaxableIncome:37000,taxableDividends:1000}).modeledDividendTax,128.75);
+ assert.equal(ukDividendTax({...i,otherTaxableIncome:125140,taxableDividends:1500}).modeledDividendTax,393.5);
+ assert.equal(ukDividendTax({...i,taxableDividends:500}).modeledDividendTax,0);assert.throws(()=>ukDividendTax({...i,scopeConfirmed:false}));
 });
