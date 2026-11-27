@@ -80,6 +80,12 @@ The deterministic cash-flow stress scenario now returns a month-by-month baselin
 
 The scenario remains a sensitivity calculation using user-entered after-tax monthly income and total expenses. It does not recalculate tax, model intra-month timing, inflation, interest, investment returns, borrowing, credit access, insurance, reimbursement or event probability. The additional path is derived output; the encrypted planning archive continues to store validated scenario inputs and recalculates outputs locally. No production or release-gate change.
 
+## Preview API integration expansion — 27 November 2026
+
+The Worker now exposes POST-only, OpenAPI-documented routes for the existing scoped calculation components: indirect tax; standard and scoped corporate tax; historical notified India GST; selected property transfer charges including UK SDLT and Singapore BSD; core and scoped investment gains including Australian FY 2026–27 CGT discount; generic, selected bilateral and UK–India treaty-credit components; and US employer FICA plus UK employer NI. Route tests cover positive examples, HTTP method restrictions and the OpenAPI path map. All these new routes remain in bundled preview only; the active signed-preview gate continues to reject tax components that are not synchronized with the signed snapshot.
+
+Salary-remainder scenarios now have regression coverage for all eight countries in bundled preview. Signed-preview access remains limited to US, GB, CA, AU and SG. The payroll work is still not a complete eight-country payroll system: employer contributions are only modeled for selected US and UK cases; statutory payroll, employer contributions, withholding and filing coverage remain incomplete elsewhere. Corporate, indirect, property, investment and treaty endpoints are narrow component calculations, not complete returns or filing positions. No tax rules are marked verified.
+
 ## Independent D1 rollback floor — 27 November 2026
 
 The scheduled publisher now requires a separate KV binding named `RULE_SEQUENCE_FLOOR`, storing the monotonic key `taxpulse:regulatory-sequence-floor`. The key is independent of D1 backup/restore. Publication advances this floor before the D1 compare-and-swap; emergency blocking advances it before the D1 head update. A restored active D1 head below the floor is blocked. Recovery accepts only a newly publisher-signed and independently reviewed snapshot with a sequence above the floor. The floor is never lowered.
