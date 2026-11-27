@@ -1809,7 +1809,6 @@ export const spec = {
             }
           }
         }
-      }
       },
       "/v1/business/scoped-corporate-tax": {
         "post": {
