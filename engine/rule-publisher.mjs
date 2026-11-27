@@ -38,7 +38,7 @@ export async function verifyPublicationFixtures(snapshot,evidence,fixtures){
 export async function publishSnapshot(db,envelope,fixtures,{publicKeyHex,engineFingerprint,review,reviewerPublicKeyHex,reviewerId,now=new Date()}){
  await verifyStatutoryReview(envelope,review,{publicKeyHex,reviewerPublicKeyHex,reviewerId,now});
  const head=await readRuleHead(db);
- const previous=head.envelope?JSON.parse(head.envelope).payload:{regional:{versions:regionalRules()},indiaSalary:{versions:[resolveIndiaSalaryRule('2026')]},payroll:{versions:payrollRules()}};
+ const previous=head.envelope?JSON.parse(head.envelope).payload:null;
  const snapshot=await verifyRuleSnapshot(envelope,{publicKeyHex,engineFingerprint,minimumSequence:head.sequence,previous,now});
  verifyCoverage(snapshot);
  await verifyPublicationFixtures(snapshot,envelope.payload.evidence,fixtures);
