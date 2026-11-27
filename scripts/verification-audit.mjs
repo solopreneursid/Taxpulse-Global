@@ -3,6 +3,8 @@ import {pathToFileURL} from 'node:url';
 import {catalog} from '../engine/country.mjs';
 import {payrollRules} from '../engine/payroll-registry.mjs';
 import {assertProductionReady} from '../engine/release-gate.mjs';
+import {calculateSalaryRemainder} from '../engine/taxable-income.mjs';
+import {buildStatutoryEvidenceRegistry} from './build-statutory-evidence-registry.mjs';
 
 const root=new URL('../',import.meta.url);
 const readJson=path=>JSON.parse(readFileSync(new URL(path,root),'utf8'));
@@ -26,12 +28,19 @@ export function buildVerificationAudit(){
  const backend=catalog();
  const payroll=payrollRules();
  const payrollJurisdictions=[...new Set(payroll.map(r=>r.jurisdiction))].sort();
+ const sourceRegistry=buildStatutoryEvidenceRegistry();
+ const salaryModels={
+  DE:calculateSalaryRemainder({country:'DE',region:'DE',taxYear:'2026',pay:5000,annualTaxableIncome:50000,healthSupplementRate:2.9,scopeConfirmed:true}),
+  AE:calculateSalaryRemainder({country:'AE',region:'AE',taxYear:'2026',pay:20000,monthlyBasicSalary:16000,scopeConfirmed:true})
+ };
  const evidence=REQUIRED_COUNTRIES.flatMap(country=>{
   const entry=manifest.countries?.[country];
   if(!entry)throw Error('Missing manifest country: '+country);
   return REQUIRED_MODULES.map(module=>{
    const recorded=(Array.isArray(entry.evidence)?entry.evidence:[]).filter(item=>item?.module===module);
-   return {country,module,verification:entry.verification,productionEnabled:entry.productionEnabled===true,recordedEvidenceCount:recorded.length,independentApproval:recorded.some(item=>item?.independentApproval===true)};
+   const sourceEntry=sourceRegistry.entries.find(item=>item.scopeId===country+':'+module);
+   if(!sourceEntry)throw Error('Missing generated source registry scope: '+country+':'+module);
+   return {country,module,verification:entry.verification,productionEnabled:entry.productionEnabled===true,manifestEvidenceRecordCount:recorded.length,sourceStatus:sourceEntry.sourceStatus,sourceReferenceCount:sourceEntry.sourceReferences.length,testStatus:sourceEntry.testStatus,testFileCount:sourceEntry.testFiles.length,knownGaps:sourceEntry.knownGaps,independentApproval:sourceEntry.independentApprovalStatus==='approved'};
   });
  });
  let releaseGate;
@@ -59,10 +68,12 @@ export function buildVerificationAudit(){
   payroll:{
    registryVersionCount:payroll.length,
    jurisdictions:payrollJurisdictions,
-   missingJurisdictions:REQUIRED_COUNTRIES.filter(country=>!payrollJurisdictions.includes(country)),
+   missingVersionedContributionRegistryJurisdictions:REQUIRED_COUNTRIES.filter(country=>!payrollJurisdictions.includes(country)),
+   separateSalaryModelJurisdictions:Object.keys(salaryModels),
+   separateSalaryModelsTested:Object.values(salaryModels).every(result=>result&&result.taxRulesVerified===false),
    status:'partial-preview-only',
    productionEnabled:false,
-   note:'A payroll registry entry is not a complete payroll engine. The current registry has no DE or AE payroll component and all entries remain legally unverified.'
+   note:'The versioned contribution registry covers six jurisdictions. DE and AE have separate narrow salary models with tests, but neither the registry nor those models establish complete payroll coverage; all remain preview-only and legally unverified.'
   },
   backend:{
    countries:backend.countries.map(row=>row.code).sort(),
@@ -72,9 +83,14 @@ export function buildVerificationAudit(){
    sampleOnly:backend.sampleOnly===true
   },
   evidence:{
+   registryDigestSha256:sourceRegistry.registryDigestSha256,
    scopeRecords:evidence.length,
-   recordedApprovalEvidence:evidence.reduce((n,row)=>n+row.recordedEvidenceCount,0),
-   independentApprovals:evidence.filter(row=>row.independentApproval).length,
+   manifestEvidenceRecords:evidence.reduce((n,row)=>n+row.manifestEvidenceRecordCount,0),
+   sourceLinkedScopes:sourceRegistry.summary.sourceLinkedScopes,
+   sourceMissingScopes:sourceRegistry.summary.sourceMissingScopes,
+   moduleTestReferencedScopes:sourceRegistry.summary.moduleTestReferencedScopes,
+   independentReferenceScopes:sourceRegistry.summary.independentReferenceScopes,
+   independentApprovals:sourceRegistry.summary.independentlyApprovedScopes,
    unverifiedScopes:evidence.filter(row=>row.verification!=='verified').length,
    productionEnabledScopes:evidence.filter(row=>row.productionEnabled).length
   },
