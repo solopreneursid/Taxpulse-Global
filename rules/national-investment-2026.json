@@ -323,6 +323,16 @@
       "effectiveUntil": "2027-04-01",
       "status": "preview",
       "legalStatus": "unverified"
+    },
+    {
+      "jurisdiction": "SG",
+      "component": "salary-assessment",
+      "taxYear": "2026",
+      "version": "SG-2026-salary-assessment-v1",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": "2027-01-01",
+      "status": "preview",
+      "legalStatus": "unverified"
     }
   ]
 }
