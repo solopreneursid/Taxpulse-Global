@@ -53,8 +53,8 @@
     {
       "country": "IN",
       "module": "dtaa",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "India-side UK treaty Article 24 historical FY 2025–26 confirmed credit limits",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
       "independentApproval": false
     },
@@ -85,8 +85,8 @@
     {
       "country": "US",
       "module": "vat",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Texas state-only sales tax component; US has no federal VAT",
       "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
       "independentApproval": false
     },
@@ -109,8 +109,8 @@
     {
       "country": "US",
       "module": "dtaa",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "US-side UK treaty Article 24 confirmed adjusted ordinary credit limit",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
       "independentApproval": false
     },
@@ -189,8 +189,8 @@
     {
       "country": "CA",
       "module": "capgains",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Ordinary individual one-half net capital gain inclusion component, no tax calculated",
       "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
       "independentApproval": false
     },
@@ -213,8 +213,8 @@
     {
       "country": "CA",
       "module": "property",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Ontario provincial one/two single-family residence LTT",
       "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
       "independentApproval": false
     },
@@ -301,8 +301,8 @@
     {
       "country": "DE",
       "module": "capgains",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Confirmed ordinary private share gain 25% tariff component only",
       "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
       "independentApproval": false
     },
@@ -325,8 +325,8 @@
     {
       "country": "DE",
       "module": "property",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Berlin direct ordinary taxable transfer component",
       "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
       "independentApproval": false
     },
@@ -357,8 +357,8 @@
     {
       "country": "SG",
       "module": "capgains",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Confirmed personal investment share disposal local income-tax treatment",
       "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
       "independentApproval": false
     },
@@ -413,8 +413,8 @@
     {
       "country": "AE",
       "module": "capgains",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Confirmed personal investment income corporate-tax exclusion",
       "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
       "independentApproval": false
     },

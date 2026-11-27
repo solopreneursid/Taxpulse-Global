@@ -59,9 +59,9 @@ try {
    assert.equal(await page.evaluate(()=>document.activeElement.classList.contains('skip')),true);
    await page.keyboard.press('Enter');
    assert.equal(await page.evaluate(()=>document.activeElement.id),'main');
-   assert.equal(await page.locator('#tools .tool-link').count(),39);
+   assert.equal(await page.locator('#tools .tool-link').count(),43);
    assert.equal(await page.locator('#tools .category-card').count(),6);
-   for(const [category,count] of Object.entries({"salary":5,"taxes":16,"career":4,"abroad":4,"money":6,"business":4})){const id=category==='business'?'business':'category-'+category;assert.equal(await page.locator('#'+id+' a[href^="/tools/"]').count(),count);assert.match(await page.locator('#tools .category-card.category-'+category+' small').textContent(),new RegExp('^'+count+' example tools?'));}
+   for(const [category,count] of Object.entries({"salary":5,"taxes":18,"career":4,"abroad":5,"money":6,"business":5})){const id=category==='business'?'business':'category-'+category;assert.equal(await page.locator('#'+id+' a[href^="/tools/"]').count(),count);assert.match(await page.locator('#tools .category-card.category-'+category+' small').textContent(),new RegExp('^'+count+' example tools?'));}
    assert.deepEqual(await page.locator('main > section.card:visible').evaluateAll(es=>es.map(e=>e.id)),['tools']);
    await page.locator('.nav a[href="/salary"]').click();
    await page.locator('#category-salary').waitFor();
@@ -75,7 +75,7 @@ try {
    assert.ok(await page.locator('#tools .category-card').first().evaluate(e=>e.getBoundingClientRect().height>=44));
    await page.locator('#tools summary').click();
    await page.locator('#tool-search').fill('investment');
-   assert.deepEqual((await page.locator('#tools .tool-link:visible').evaluateAll(es=>es.map(e=>e.getAttribute('href')))).sort(),['/tools/investment-scenario','/tools/investment-tax']);
+   assert.deepEqual((await page.locator('#tools .tool-link:visible').evaluateAll(es=>es.map(e=>e.getAttribute('href')))).sort(),['/tools/investment-scenario','/tools/investment-tax','/tools/scoped-investment-gain']);
    await page.locator('#tool-search').fill('');
    await page.locator('#tools summary').click();
    await page.locator('.nav a[href="/business"]').click();
@@ -134,6 +134,10 @@ try {
    await page.goto(origin+'/tools/us-employer-fica');await page.locator('#us-employer-fica-annualWages').fill('200000');await page.locator('#us-employer-fica-scopeConfirmed').check();await page.locator('#us-employer-fica-form button[type=submit]').click();await page.locator('#us-employer-fica-result').waitFor();assert.match(await page.locator('#us-employer-fica-breakdown').innerText(),/USD\s*14,339/);
    await page.goto(origin+'/tools/sg-buyer-duty');await page.locator('#sg-buyer-duty-purchasePrice').fill('4500100');await page.locator('#sg-buyer-duty-marketValue').fill('4500100');await page.locator('#sg-buyer-duty-scopeConfirmed').check();await page.locator('#sg-buyer-duty-form button[type=submit]').click();await page.locator('#sg-buyer-duty-result').waitFor();assert.match(await page.locator('#sg-buyer-duty-breakdown').innerText(),/SGD\s*209,606/);
    await page.goto(origin+'/tools/uk-dividend-tax');await page.locator('#uk-dividend-tax-otherTaxableIncome').fill('17000');await page.locator('#uk-dividend-tax-taxableDividends').fill('3000');await page.locator('#uk-dividend-tax-scopeConfirmed').check();await page.locator('#uk-dividend-tax-form button[type=submit]').click();await page.locator('#uk-dividend-tax-result').waitFor();assert.match(await page.locator('#uk-dividend-tax-breakdown').innerText(),/GBP\s*268.75/);
+   await page.goto(origin+'/tools/scoped-investment-gain');await page.locator('#scoped-investment-gain-confirmedNetGain').fill('10000');await page.locator('#scoped-investment-gain-scopeConfirmed').check();await page.locator('#scoped-investment-gain-form button[type=submit]').click();await page.locator('#scoped-investment-gain-result').waitFor();assert.match(await page.locator('#scoped-investment-gain-breakdown').innerText(),/CAD\s*5,000/);
+   await page.goto(origin+'/tools/scoped-transfer-tax');await page.locator('#scoped-transfer-tax-taxableConsideration').fill('400000');await page.locator('#scoped-transfer-tax-scopeConfirmed').check();await page.locator('#scoped-transfer-tax-form button[type=submit]').click();await page.locator('#scoped-transfer-tax-result').waitFor();assert.match(await page.locator('#scoped-transfer-tax-breakdown').innerText(),/CAD\s*4,475/);
+   await page.goto(origin+'/tools/texas-state-sales-tax');await page.locator('#texas-state-sales-tax-exclusiveAmount').fill('100');await page.locator('#texas-state-sales-tax-scopeConfirmed').check();await page.locator('#texas-state-sales-tax-form button[type=submit]').click();await page.locator('#texas-state-sales-tax-result').waitFor();assert.match(await page.locator('#texas-state-sales-tax-breakdown').innerText(),/USD\s*6.25/);
+   await page.goto(origin+'/tools/scoped-treaty-credit');for(const [k,v] of Object.entries({foreignTaxPaid:3000,treatyPermittedTax:2500,domesticTax:10000,worldwideTaxableIncome:100000,foreignTaxableIncome:20000,domesticTaxOnItem:3000}))await page.locator('#scoped-treaty-credit-'+k).fill(String(v));await page.locator('#scoped-treaty-credit-scopeConfirmed').check();await page.locator('#scoped-treaty-credit-form button[type=submit]').click();await page.locator('#scoped-treaty-credit-result').waitFor();assert.match(await page.locator('#scoped-treaty-credit-breakdown').innerText(),/USD\s*2,000/);
    await page.goto(origin+'/tools/financial-health');
    for(const [k,v] of Object.entries({monthlyIncome:10000,monthlyExpenses:6000,liquidSavings:10000,otherAssets:40000,liabilities:20000,monthlyDebtPayments:2000,reserveFloor:5000,goalAmount:15000,horizonMonths:12}))await page.locator('#financial-health-'+k).fill(String(v));
    await page.locator('#financial-health-form button[type=submit]').click();await page.locator('#financial-health-result').waitFor();assert.match(await page.locator('#financial-health-breakdown').innerText(),/Current net worth\s*INR\s*30,000/);

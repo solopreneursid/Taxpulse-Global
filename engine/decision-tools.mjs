@@ -323,3 +323,41 @@ export function ukDividendTax(input){
  const tax=round(numerator,10000n);
  return {...sample,currency:'GBP',taxableDividends:out(dividends),dividendAllowance:out(allowance),dividendsAboveAllowance:out(dividends-allowance),modeledDividendTax:out(tax),sourceUrls:['https://www.gov.uk/tax-on-dividends','https://www.legislation.gov.uk/ukpga/2026/11/part/1/crossheading/income-tax-charge-rates-and-allowances/made'],warnings:['UK 2026–27 ordinary individual, other income and dividends after the final applicable Personal Allowance allocation. No savings income, band extensions, reliefs, special rates, ISA or foreign tax. All eligible annual dividends included, dividend allowance consumes bands. Component only: not total income tax, Personal Allowance determination or return rounding.']};
 }
+
+/** Compare only explicitly confirmed personal investment components, not total tax. */
+export function scopedInvestmentGain(input){
+ exact(input,['jurisdiction','confirmedNetGain','scopeConfirmed']);
+ if(input.scopeConfirmed!==true||!['CA','DE','SG','AE'].includes(input.jurisdiction))throw Error('Confirm established positive gain and classification');
+ const gain=units(input.confirmedNetGain);let included=null,tax=null,currency,source,scope;
+ if(input.jurisdiction==='CA'){currency='CAD';included=round(gain,2n);source='https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-38.html';scope='Canada calendar 2026, ordinary individual net positive capital gain after confirmed eligible current-year losses, one-half inclusion; no exemption, reserve, carryover or special asset. Inclusion component only; no income tax calculated.';}
+ else if(input.jurisdiction==='DE'){currency='EUR';included=gain;tax=round(gain*2500n,10000n);source='https://www.gesetze-im-internet.de/estg/__32d.html';scope='Germany 2026, ordinary private share disposal income subject to section 32d standard 25% separate tariff; entered gain already taxable after applicable allowance and loss treatment. Excludes church tax, solidarity surcharge, foreign credits, preferential assessment and special participation rules.';}
+ else if(input.jurisdiction==='SG'){currency='SGD';included=0n;tax=0n;source='https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/what-is-taxable-what-is-not/gains-from-sale-of-property-shares-and-financial-instruments';scope='Singapore individual, confirmed personal investment share disposal, not trading or business income. Local income tax on this gain only, not stamp duty or foreign tax.';}
+ else {currency='AED';included=0n;tax=0n;source='https://tax.gov.ae/en/taxes/corporate.tax/corporate.tax.topics/basis.of.taxation.natural.person.aspx';scope='UAE natural person, confirmed Personal Investment Income excluded from corporate tax; not licensed business or commercial activity. Corporate tax component only, not other taxes or duties.';}
+ return {...sample,currency,confirmedNetGain:out(gain),includedGain:included===null?null:out(included),modeledTax:tax===null?null:out(tax),scope,sourceUrls:[source],warnings:[scope+' Source cross-check 27 November 2026. No residence, exemption or investment classification inferred. No total payable tax or filing determination.']};
+}
+/** Selected ordinary property transaction components, no valuation inference. */
+export function scopedTransferTax(input){
+ exact(input,['jurisdiction','taxableConsideration','scopeConfirmed']);
+ if(input.scopeConfirmed!==true||!['DE-BE','CA-ON'].includes(input.jurisdiction))throw Error('Confirm applicable location and taxable consideration');
+ const p=units(input.taxableConsideration);if(p===0n)throw Error('Positive consideration required');
+ let tax,currency,source,scope;
+ if(input.jurisdiction==='DE-BE'){if(p<250000n)throw Error('Small-value exemption not modeled; use at least EUR 2,500 and confirm no exemption');currency='EUR';tax=round(p*600n,10000n);source='https://service.berlin.de/dienstleistung/325323/';scope='Berlin ordinary taxable direct property acquisition, 6% on established consideration; excludes exemptions, share deals, special valuation and fees.';}
+ else {currency='CAD';source='https://www.ontario.ca/document/land-transfer-tax/calculating-land-transfer-tax';scope='Ontario ordinary direct acquisition containing one or two single-family residences, provincial LTT only, agreements and transfers under rates effective January 2017; no refund, rebate, non-resident speculation tax or municipal LTT.';let total=0n,lower=0n;for(const [upper,rate] of [[5500000n,50n],[25000000n,100n],[40000000n,150n],[200000000n,200n],[100000000000n,250n]]){const v=p<=lower?0n:(p<upper?p:upper)-lower;total+=v*rate;lower=upper;}tax=round(total,10000n);}
+ return {...sample,currency,taxableConsideration:out(p),transferTax:out(tax),considerationPlusTax:out(p+tax),scope,sourceUrls:[source],warnings:[scope+' Cross-checked 27 November 2026. Nearest minor-unit arithmetic only, not assessment rounding or total closing costs.']};
+}
+export function texasStateSalesTax(input){
+ exact(input,['exclusiveAmount','scopeConfirmed']);
+ if(input.scopeConfirmed!==true)throw Error('Confirm Texas state-taxable sale and exclusions');
+ const amount=units(input.exclusiveAmount),tax=round(amount*625n,10000n);
+ return {...sample,currency:'USD',exclusiveAmount:out(amount),stateTax:out(tax),amountPlusStateTax:out(amount+tax),sourceUrls:['https://comptroller.texas.gov/taxes/sales/faq/local.php'],warnings:['Texas state sales tax component 6.25%, source cross-check 27 November 2026. Confirm ordinary taxable retail sale, registered seller and correct state sourcing. Local sales taxes (up to 2%) are excluded, as are exemptions and special rounding. This is not VAT or total sales tax.']};
+}
+/** Treaty-limited ordinary credit components; adjusted bases must be independently established. */
+export function scopedTreatyCredit(input){
+ exact(input,['jurisdiction','foreignTaxPaid','treatyPermittedTax','domesticTax','worldwideTaxableIncome','foreignTaxableIncome','domesticTaxOnItem','scopeConfirmed']);
+ if(input.scopeConfirmed!==true||!['US-GB','IN-GB'].includes(input.jurisdiction))throw Error('Confirm treaty and adjusted income and tax bases');
+ const paid=units(input.foreignTaxPaid),permitted=units(input.treatyPermittedTax),domestic=units(input.domesticTax),world=units(input.worldwideTaxableIncome),foreign=units(input.foreignTaxableIncome),item=units(input.domesticTaxOnItem);
+ if(world===0n||foreign>world||item>domestic)throw Error('Invalid confirmed income or tax bases');
+ const limit=domestic*foreign/world,credit=[paid,permitted,limit,item].reduce((a,b)=>a<b?a:b);
+ const us=input.jurisdiction==='US-GB';
+ return {...sample,currency:us?'USD':'INR',proportionalLimit:out(limit),modeledCredit:out(credit),domesticTaxAfterCredit:out(domestic-credit),foreignTaxNotCredited:out(paid-credit),sourceUrls:us?['https://www.gov.uk/government/publications/usa-tax-treaties/2001-uk-usa-double-taxation-convention-as-amended-by-the-2002-protocol-in-force','https://www.irs.gov/individuals/international-taxpayers/foreign-tax-credit-how-to-figure-the-credit']:['https://www.gov.uk/government/publications/india-tax-treaties/2020-uk-india-synthesised-text-of-the-multilateral-instrument-and-the-1993-double-taxation-convention-in-force','https://www.incometax.gov.in/iec/foportal/help/statutory-forms/popular-form/form67-um'],warnings:[(us?'US-side UK treaty Article 24, calendar 2026, one ordinary general-category income item; adjusted US limitation numerator, denominator and tax already established; no re-sourcing, special categories, exclusions, carryovers or AMT.':'India-side UK treaty Article 24(2), historical FY 2025–26 / AY 2026–27 only; one eligible UK-source income item, confirmed resident, Rule 128 credit limits already established. No tax sparing, disputed tax, multiple sources, carryovers or later law.')+' Credit limited to paid tax, treaty-permitted tax, proportional limit (floored to minor unit) and independently established domestic tax on item. All amounts in domestic currency, no conversion or eligibility inferred. Conservative illustration, not a claim or filing determination.']};
+}

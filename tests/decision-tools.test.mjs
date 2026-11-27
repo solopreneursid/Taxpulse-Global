@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax,residentialSdlt,ukIndiaCredit,debtRepayment,notifiedIndiaGst,ukEmployerNi,australiaDiscountGain,investmentScenario,retirementScenario,usEmployerFica,singaporeBuyerDuty,ukDividendTax} from '../engine/decision-tools.mjs';
+import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax,residentialSdlt,ukIndiaCredit,debtRepayment,notifiedIndiaGst,ukEmployerNi,australiaDiscountGain,investmentScenario,retirementScenario,usEmployerFica,singaporeBuyerDuty,ukDividendTax,scopedInvestmentGain,scopedTransferTax,texasStateSalesTax,scopedTreatyCredit} from '../engine/decision-tools.mjs';
 const ctc={annualCtc:1800000,employerContributions:100000,nonCashBenefits:200000,employeeContributions:21600,otherPayrollDeductions:2500,residentIndividual:true,ageGroup:'under-60',oldEligibleDeductions:0,newEligibleDeductions:0};
 test('CTC cash component and tax reconciliation',()=>{
  const r=indiaCtc(ctc);assert.equal(r.annualGross,1500000);assert.equal(r.new.incomeTax,97500);assert.equal(r.new.annualCash,1378400);assert.equal(r.taxRulesVerified,false);
@@ -174,4 +174,18 @@ test('UK dividends use allowance within rate bands, including crossing the bound
  assert.equal(ukDividendTax({...i,otherTaxableIncome:37000,taxableDividends:1000}).modeledDividendTax,128.75);
  assert.equal(ukDividendTax({...i,otherTaxableIncome:125140,taxableDividends:1500}).modeledDividendTax,393.5);
  assert.equal(ukDividendTax({...i,taxableDividends:500}).modeledDividendTax,0);assert.throws(()=>ukDividendTax({...i,scopeConfirmed:false}));
+});
+
+test('confirmed personal investment components preserve jurisdiction boundaries',()=>{
+ const i={jurisdiction:'CA',confirmedNetGain:10000,scopeConfirmed:true};assert.equal(scopedInvestmentGain(i).includedGain,5000);assert.equal(scopedInvestmentGain(i).modeledTax,null);
+ assert.equal(scopedInvestmentGain({...i,jurisdiction:'DE'}).modeledTax,2500);
+ for(const jurisdiction of ['SG','AE'])assert.equal(scopedInvestmentGain({...i,jurisdiction}).modeledTax,0);
+ assert.throws(()=>scopedInvestmentGain({...i,scopeConfirmed:false}));assert.throws(()=>scopedInvestmentGain({...i,confirmedNetGain:-1}));
+});
+test('Ontario and Berlin scoped transfer tax boundaries',()=>{
+ const i={jurisdiction:'CA-ON',taxableConsideration:400000,scopeConfirmed:true};assert.equal(scopedTransferTax(i).transferTax,4475);assert.equal(scopedTransferTax({...i,taxableConsideration:55000}).transferTax,275);assert.equal(scopedTransferTax({...i,taxableConsideration:250000}).transferTax,2225);assert.equal(scopedTransferTax({...i,taxableConsideration:2000000}).transferTax,36475);assert.equal(scopedTransferTax({...i,taxableConsideration:2100000}).transferTax,38975);assert.equal(scopedTransferTax({...i,jurisdiction:'DE-BE',taxableConsideration:100000}).transferTax,6000);assert.throws(()=>scopedTransferTax({...i,jurisdiction:'DE-BE',taxableConsideration:2499}));assert.throws(()=>scopedTransferTax({...i,scopeConfirmed:false}));
+});
+test('Texas state sales tax only',()=>{assert.equal(texasStateSalesTax({exclusiveAmount:100,scopeConfirmed:true}).stateTax,6.25);assert.throws(()=>texasStateSalesTax({exclusiveAmount:100,scopeConfirmed:false}));});
+test('treaty credit components enforce all confirmed caps',()=>{
+ const i={jurisdiction:'US-GB',foreignTaxPaid:3000,treatyPermittedTax:2500,domesticTax:10000,worldwideTaxableIncome:100000,foreignTaxableIncome:20000,domesticTaxOnItem:3000,scopeConfirmed:true};assert.equal(scopedTreatyCredit(i).modeledCredit,2000);assert.equal(scopedTreatyCredit({...i,jurisdiction:'IN-GB',domesticTaxOnItem:1500}).modeledCredit,1500);assert.equal(scopedTreatyCredit({...i,foreignTaxPaid:500}).modeledCredit,500);assert.throws(()=>scopedTreatyCredit({...i,foreignTaxableIncome:100001}));assert.throws(()=>scopedTreatyCredit({...i,worldwideTaxableIncome:0}));assert.throws(()=>scopedTreatyCredit({...i,scopeConfirmed:false}));
 });
