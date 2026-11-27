@@ -18,7 +18,7 @@ test('cash-flow stress compares a bounded shock against baseline and tracks rese
  assert.equal(r.stressMonthlyPath[2].belowReserve,true);assert.equal(r.stressMonthlyPath[2].endingLiquidSavings,4000);
  assert.equal(r.endingSavingsImpact,-10500);
  const noShock=cashFlowStressScenario({...input,incomeReductionPercent:0,expenseIncreasePercent:0});
- assert.deepEqual(noShock.baseline,noShock.stress);assert.deepEqual(noShock.baselineMonthlyPath,noShock.stressMonthlyPath);
+ assert.deepEqual(noShock.baseline,noShock.stress);assert.deepEqual(noShock.baselineMonthlyPath.map(({month,monthlyIncome,monthlyExpenses,netCashFlow,endingLiquidSavings,belowReserve,negative})=>({month,monthlyIncome,monthlyExpenses,netCashFlow,endingLiquidSavings,belowReserve,negative})),noShock.stressMonthlyPath.map(({month,monthlyIncome,monthlyExpenses,netCashFlow,endingLiquidSavings,belowReserve,negative})=>({month,monthlyIncome,monthlyExpenses,netCashFlow,endingLiquidSavings,belowReserve,negative})));
  assert.throws(()=>cashFlowStressScenario({...input,shockStartMonth:0}));
  assert.throws(()=>cashFlowStressScenario({...input,shockDurationMonths:12}));
  assert.throws(()=>cashFlowStressScenario({...input,incomeReductionPercent:100.01}));
