@@ -1,0 +1,10 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {runRegulatoryMonitor} from '../engine/regulatory-edge.mjs';
+const sources=JSON.parse(await readFile(new URL('../rules/supplemental-monitor-sources.json',import.meta.url),'utf8'));
+let report;
+await runRegulatoryMonitor({REGULATORY_STATE:{get:async()=>null,put:async(key,value)=>{if(key!=='latest')throw Error('Unexpected key');report=JSON.parse(value);}}},sources);
+if(!report||report.sources.length!==sources.length||report.automaticRuleChanges!==false)throw Error('Invalid supplemental report');
+const reachable=report.sources.filter(s=>s.status!=='fetch_failed').length;
+await writeFile('supplemental-source-observations.json',JSON.stringify({...report,scope:'Supplemental source reachability and content digests, baseline-only; no drift determination or activation'},null,2)+'\n',{flag:'wx'});
+console.log(JSON.stringify({checkedAt:report.checkedAt,configured:sources.length,reachable,unavailable:report.sources.filter(s=>s.status==='fetch_failed').map(s=>({id:s.id,failure:s.failure})),automaticRuleChanges:false}));
+if(!reachable)throw Error('No supplemental source reachable');

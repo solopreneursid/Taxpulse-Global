@@ -6,3 +6,5 @@ test('review packet inventories all 56 scopes without manufacturing approvals',(
  assert.ok(p.inventory.length>40);assert.ok(p.inventory.every(x=>/^[a-f0-9]{64}$/.test(x.sha256)));
  assert.match(p.releaseGate,/not authorized/);assert.match(p.commit,/^[a-f0-9]{40}$/);
 });
+
+test('review inventory distinguishes scoped preview components from missing modules and never grants approval',()=>{const p=prepareReviewPacket();assert.equal(p.scopes.filter(s=>s.scopedPreviewStatus==='scoped-example').length,38);assert.equal(p.scopes.filter(s=>s.scopedPreviewStatus==='not-implemented').length,18);assert.ok(p.scopes.every(s=>s.remainingEngineering.length>0&&s.independentReview==='not established by this packet'));});

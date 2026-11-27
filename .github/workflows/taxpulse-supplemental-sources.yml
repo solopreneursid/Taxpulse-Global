@@ -1,0 +1,31 @@
+name: TaxPulse supplemental statutory source observations
+on:
+  pull_request:
+    paths:
+      - 'rules/supplemental-monitor-sources.json'
+      - 'scripts/probe-supplemental-sources.mjs'
+      - '.github/workflows/taxpulse-supplemental-sources.yml'
+  schedule:
+    - cron: '25 2 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/probe-supplemental-sources.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: supplemental-source-observations
+          path: supplemental-source-observations.json
+          if-no-files-found: warn
+          retention-days: 30
