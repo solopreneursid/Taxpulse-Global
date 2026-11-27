@@ -1,6 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {countryCalculate,catalog} from '../engine/country.mjs';import {readFileSync} from 'node:fs';
 const call=(country,module,parameters)=>countryCalculate({country,module,taxYear:'2026',parameters});
-for(const country of ['IN','US','GB']){const m=JSON.parse(readFileSync(new URL('../rules/2026/'+country+'.json',import.meta.url))).modules;const cases={pit:{grossSalary:100000,...(country==='IN'?{residentIndividual:true}:{})},payroll:country==='IN'?{region:'IN',pay:1000000,epfMonthlyWage:15000,professionalTaxAnnual:2500,scopeConfirmed:true}:country==='US'?{region:'TX',pay:100000,scopeConfirmed:true}:{region:'RUK',pay:5000,scopeConfirmed:true},capgains:country==='IN'?{acquired:'2020-01-01',disposed:'2026-12-01',saleProceeds:350000,adjustedBasis:100000,eligibleLosses:0,otherTaxableIncome:1500000,assetType:'listed-equity',scopeConfirmed:true}:country==='US'?{acquired:'2020-01-01',disposed:'2026-12-01',saleProceeds:20000,adjustedBasis:10000,eligibleLosses:0,otherTaxableIncome:100000,filingStatus:'single',scopeConfirmed:true}:{acquired:'2020-01-01',disposed:'2026-12-01',saleProceeds:62600,adjustedBasis:50000,eligibleLosses:0,otherTaxableIncome:20000,scopeConfirmed:true},vat:{amount:100,slabId:m.vat_gst.slabs[0].id,mode:'exclusive'},corporate:{revenue:100000,expenses:0,regimeId:m.corporate_tax.regimes[0].id},property:{propertyValue:100000,regionId:m.property_transfer_tax.regions[0].id,nonResident:false},dtaa:{grossPayment:1000,residenceCountry:Object.keys(m.withholding_dtaa.treaties)[0],incomeType:'dividends',residenceMarginalRate:.3,claimTreatyRelief:true}};for(const [module,parameters] of Object.entries(cases))test(country+' '+module+' sample',()=>{if(module==='payroll'){const r=call(country,module,parameters);assert.equal(r.module,'payroll');assert.equal(r.sampleOnly,true);assert.equal(r.taxRulesVerified,false);assert.ok(Number.isFinite(r.annualRemainder));assert.ok(r.warnings.some(w=>w.includes('not payroll processing')));return;}if(module==='capgains'){const r=call(country,module,parameters);assert.equal(r.module,'capgains');assert.equal(r.country,country);assert.equal(r.taxYear,'2026');assert.equal(r.sampleOnly,true);assert.equal(r.taxRulesVerified,false);assert.ok(r.warnings.some(w=>w.includes('not a complete capital-gains return')));assert.ok(Number.isFinite(r.estimatedGainTax));return;}if(module!=='pit'){assert.throws(()=>call(country,module,parameters),/Legacy .*disabled/);return;}const r=call(country,module,parameters);assert.equal(r.taxRulesVerified,false);assert.ok(r.result);assert.ok(r.warnings.length>=2);assert.ok(!JSON.stringify(r.result).includes('NaN'))})}
+for(const country of ['IN','US','GB']){const m=JSON.parse(readFileSync(new URL('../rules/2026/'+country+'.json',import.meta.url))).modules;const cases={pit:{grossSalary:100000,...(country==='IN'?{residentIndividual:true}:{})},payroll:country==='IN'?{region:'IN',pay:1000000,epfMonthlyWage:15000,professionalTaxAnnual:2500,scopeConfirmed:true}:country==='US'?{region:'TX',pay:100000,scopeConfirmed:true}:{region:'RUK',pay:5000,scopeConfirmed:true},capgains:country==='IN'?{acquired:'2020-01-01',disposed:'2026-12-01',saleProceeds:350000,adjustedBasis:100000,eligibleLosses:0,otherTaxableIncome:1500000,assetType:'listed-equity',scopeConfirmed:true}:country==='US'?{acquired:'2020-01-01',disposed:'2026-12-01',saleProceeds:20000,adjustedBasis:10000,eligibleLosses:0,otherTaxableIncome:100000,filingStatus:'single',scopeConfirmed:true}:{acquired:'2020-01-01',disposed:'2026-12-01',saleProceeds:62600,adjustedBasis:50000,eligibleLosses:0,otherTaxableIncome:20000,scopeConfirmed:true},vat:{amount:100,slabId:m.vat_gst.slabs[0].id,mode:'exclusive'},corporate:{revenue:100000,expenses:0,regimeId:m.corporate_tax.regimes[0].id},property:country==='IN'?{purchaserCategory:'male',taxableConsideration:1000000,transactionDate:'2026-11-27',scopeConfirmed:true}:country==='US'?{taxableConsideration:300001,transactionDate:'2026-11-27',scopeConfirmed:true}:{consideration:295000,buyerScope:'ordinary',transactionDate:'2026-11-27',scopeConfirmed:true},dtaa:{grossPayment:1000,residenceCountry:Object.keys(m.withholding_dtaa.treaties)[0],incomeType:'dividends',residenceMarginalRate:.3,claimTreatyRelief:true}};for(const [module,parameters] of Object.entries(cases))test(country+' '+module+' sample',()=>{if(module==='payroll'){const r=call(country,module,parameters);assert.equal(r.module,'payroll');assert.equal(r.sampleOnly,true);assert.equal(r.taxRulesVerified,false);assert.ok(Number.isFinite(r.annualRemainder));assert.ok(r.warnings.some(w=>w.includes('not payroll processing')));return;}if(module==='capgains'){const r=call(country,module,parameters);assert.equal(r.module,'capgains');assert.equal(r.country,country);assert.equal(r.taxYear,'2026');assert.equal(r.sampleOnly,true);assert.equal(r.taxRulesVerified,false);assert.ok(r.warnings.some(w=>w.includes('not a complete capital-gains return')));assert.ok(Number.isFinite(r.estimatedGainTax));return;}if(module==='property'){const r=call(country,module,parameters);assert.equal(r.module,'property');assert.equal(r.country,country);assert.equal(r.taxYear,'2026');assert.equal(r.sampleOnly,true);assert.equal(r.taxRulesVerified,false);assert.ok(r.sourceUrls.length>0);assert.ok(r.warnings.some(w=>w.includes('not a complete closing-cost')));assert.ok(Number.isFinite(country==='GB'?r.stampDuty:r.transferTax));return;}if(module!=='pit'){assert.throws(()=>call(country,module,parameters),/Legacy .*disabled/);return;}const r=call(country,module,parameters);assert.equal(r.taxRulesVerified,false);assert.ok(r.result);assert.ok(r.warnings.length>=2);assert.ok(!JSON.stringify(r.result).includes('NaN'))})}
 test('legacy VAT refuses to infer statutory rate',()=>assert.throws(()=>call('IN','vat',{amount:100,slabId:'standard_18',mode:'exclusive'}),/Legacy vat disabled/));
 test('unsupported country, year and invalid input fail closed',()=>{assert.throws(()=>call('DE','pit',{grossSalary:100}));assert.throws(()=>call('IN','pit',{grossSalary:-1}));assert.throws(()=>countryCalculate({country:'IN',taxYear:'2027',module:'pit',parameters:{grossSalary:100}}));assert.throws(()=>call('IN','vat',{amount:100,slabId:'unknown',mode:'exclusive'}));assert.equal(catalog().taxRulesVerified,false)});
 
@@ -21,7 +21,7 @@ for(const [country,parameters,currency,basis] of extendedPIT)test(country+' scop
 test('country backend catalog exposes all eight countries and scoped PIT/payroll modules',()=>{
  const c=catalog();
  assert.deepEqual(c.countries.map(x=>x.code),['IN','US','GB','DE','AE','CA','AU','SG']);
- assert.deepEqual(c.modules,['pit','payroll','capgains']);
+ assert.deepEqual(c.modules,['pit','payroll','capgains','property']);
  assert.equal(c.countries.find(x=>x.code==='DE').source,'https://www.gesetze-im-internet.de/estg/__32a.html');
  assert.equal(c.countries.find(x=>x.code==='AE').source,'https://u.ae/en/information-and-services/finance-and-investment/taxation');
  assert.equal(c.pitInputBasis.DE,'taxableIncome with individual or eligible joint assessment');
@@ -32,6 +32,9 @@ test('country backend catalog exposes all eight countries and scoped PIT/payroll
  assert.equal(c.capgainsInputBasis.CA,'confirmedNetGain and transactionDate; calendar 2026 one-half capital-gain inclusion component only');
  assert.equal(c.capgainsInputBasis.AE,'confirmedNetGain and transactionDate; calendar 2026 natural-person personal investment income exclusion only');
  assert.match(c.capgainsScope,/no complete/i);
+ assert.equal(c.propertyInputBasis.IN,'taxableConsideration, transactionDate and purchaserCategory male/female; Delhi sole-purchaser ordinary sale deed');
+ assert.equal(c.propertyInputBasis.AE,'taxableConsideration and transactionDate; Dubai sale registration fee, not a tax');
+ assert.match(c.propertyScope,/not a full closing-cost/);
 });
 test('extended PIT contracts reject missing residency and unsupported assessments',()=>{
  assert.throws(()=>call('DE','pit',{taxableIncome:50000}),/assessment/);
@@ -83,4 +86,25 @@ test('capital-gains dispatch rejects missing scope and duplicated context',()=>{
  assert.throws(()=>call('CA','capgains',{confirmedNetGain:10000,transactionDate:'2026-11-27',scopeConfirmed:false}));
  assert.throws(()=>call('CA','capgains',{confirmedNetGain:10000,transactionDate:'2027-01-01',scopeConfirmed:true}));
  assert.throws(()=>countryCalculate({country:'CA',taxYear:'2026',module:'capgains',parameters:{country:'CA',confirmedNetGain:10000,transactionDate:'2026-11-27',scopeConfirmed:true}}),/top-level request context/);
+});
+
+const extendedProperty=[
+ ['DE',{taxableConsideration:100000,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
+ ['AE',{taxableConsideration:100000,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
+ ['CA',{taxableConsideration:400000,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
+ ['AU',{taxableConsideration:1350000,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
+ ['SG',{purchasePrice:4500100,marketValue:4500100,propertyType:'residential',transactionDate:'2026-11-27',scopeConfirmed:true},'buyerStampDuty']
+];
+for(const [country,parameters,resultField] of extendedProperty)test(country+' scoped property backend',()=>{
+ const r=call(country,'property',parameters);
+ assert.equal(r.module,'property');assert.equal(r.country,country);assert.equal(r.taxYear,'2026');
+ assert.equal(r.sampleOnly,true);assert.equal(r.taxRulesVerified,false);
+ assert.ok(Number.isFinite(r[resultField]));assert.ok(r.sourceUrls.length>0);
+ if(country==='AE')assert.equal(r.chargeType,'registration-fee');
+});
+test('property dispatch rejects unsupported purchaser categories and dates',()=>{
+ assert.throws(()=>call('IN','property',{taxableConsideration:1000000,transactionDate:'2026-11-27',scopeConfirmed:true}));
+ assert.throws(()=>call('IN','property',{purchaserCategory:'other',taxableConsideration:1000000,transactionDate:'2026-11-27',scopeConfirmed:true}));
+ assert.throws(()=>call('SG','property',{purchasePrice:100000,marketValue:100000,propertyType:'mixed',transactionDate:'2026-11-27',scopeConfirmed:true}));
+ assert.throws(()=>call('GB','property',{consideration:295000,buyerScope:'ordinary',transactionDate:'2027-01-01',scopeConfirmed:true}));
 });
