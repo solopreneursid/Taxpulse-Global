@@ -162,11 +162,7 @@ function collectSourceRecords(paths,country){
  }
  return [...byUrl.values()].sort((a,b)=>a.url.localeCompare(b.url));
 }
-function countrySpecificTests(paths,country){
- const aliases=COUNTRY_ALIASES[country]||[];
- const pattern=new RegExp(`(?:['"]${country}['"]|\\b${country}\\b|${aliases.join('|')})`,'i');
- return paths.filter(path=>pattern.test(readText(path)));
-}
+
 export function buildStatutoryEvidenceRegistry(){
  const inventoryPath='rules/scoped-coverage.json';
  const inventory=readJson(inventoryPath);
@@ -176,7 +172,6 @@ export function buildStatutoryEvidenceRegistry(){
   const sourcePaths=sourceFilesFor(scope.country,scope.module,evidenceFiles);
   const sourceReferences=collectSourceRecords(sourcePaths,scope.country);
   const testFiles=unique((MODULE_TEST_FILES[scope.module]||[]).filter(exists));
-  const countryTestFiles=countrySpecificTests(testFiles,scope.country);
   const independentReferenceFiles=scope.module==='pit'
    ?sourcePaths.filter(path=>path.includes('pit-independent-vectors'))
    :[];
@@ -194,9 +189,8 @@ export function buildStatutoryEvidenceRegistry(){
    sourceReferences,
    sourceMetadataFiles,
    implementationFiles,
-   testStatus:countryTestFiles.length?'country-specific-test-file-references':testFiles.length?'module-test-file-references-only':'no-test-file-reference-recorded',
+   testStatus:testFiles.length?'module-test-file-references-only':'no-test-file-reference-recorded',
    testFiles,
-   countrySpecificTestFiles:countryTestFiles,
    independentReferenceStatus:independentReferenceFiles.length?'independent-reference-vector-file-recorded':'independent-reference-vectors-not-recorded',
    independentReferenceFiles,
    independentApprovalStatus:'not-established',
@@ -210,7 +204,6 @@ export function buildStatutoryEvidenceRegistry(){
   modules:unique(entries.map(entry=>entry.module)).length,
   sourceLinkedScopes:entries.filter(entry=>entry.sourceReferences.length>0).length,
   sourceMissingScopes:entries.filter(entry=>entry.sourceReferences.length===0).length,
-  countrySpecificTestReferencedScopes:entries.filter(entry=>entry.countrySpecificTestFiles.length>0).length,
   moduleTestReferencedScopes:entries.filter(entry=>entry.testFiles.length>0).length,
   independentReferenceScopes:entries.filter(entry=>entry.independentReferenceFiles.length>0).length,
   independentlyApprovedScopes:entries.filter(entry=>entry.independentApprovalStatus==='approved').length,
