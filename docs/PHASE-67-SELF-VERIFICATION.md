@@ -29,7 +29,11 @@ On 2026-11-27, the preview D1 head was queried directly and confirmed empty at s
 
 Evidence is recorded in `data/sequence-floor-provisioning-2026-11-27.json`.
 
-The publisher schedule remains disabled. No signed rule package exists, no publisher/reviewer key is enrolled, and no rule was published. The preview calculator Worker was not changed.
+The repository's current publisher implementation uses a SQLite-backed Cloudflare Durable Object (`REGULATORY_SEQUENCE_ANCHOR`) as the authoritative monotonic sequence anchor. The KV namespace is only a non-authoritative diagnostic mirror; KV eventual consistency is not accepted as the anti-rollback authority. The `RULE_SEQUENCE_FLOOR` mirror binding is present, but the deployed publisher still needs the Durable Object namespace binding and class migration before its current source implementation is active. The publisher schedule remains disabled. No signed rule package exists, no publisher/reviewer key is enrolled, and no rule was published. The preview calculator Worker was not changed.
+
+## Cloudflare D1 provider restoration
+
+A real Time Travel restore was executed against the preview D1 database. A bookmark was recorded, a uniquely named temporary probe table was created and populated, and the database was restored to the bookmark. Read-back confirmed the probe table was absent, the regulatory head remained sequence 0/state `empty`, and all three migration-005 integrity triggers remained present. Evidence is in `data/d1-provider-restore-drill-2026-11-27.json`. An SQL export also completed, but its signed download URL could not be fetched from the connector execution environment, so a separate-database SQL import was not claimed.
 
 ## Verification boundaries
 
