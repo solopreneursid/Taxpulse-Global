@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax,residentialSdlt,ukIndiaCredit,debtRepayment,notifiedIndiaGst,ukEmployerNi,australiaDiscountGain,investmentScenario,retirementScenario,usEmployerFica,singaporeBuyerDuty,ukDividendTax,scopedInvestmentGain,scopedTransferTax,texasStateSalesTax,scopedTreatyCredit,confirmedTreatyCredit} from '../engine/decision-tools.mjs';
+import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,cashFlowStressScenario,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax,residentialSdlt,ukIndiaCredit,debtRepayment,notifiedIndiaGst,ukEmployerNi,australiaDiscountGain,investmentScenario,retirementScenario,usEmployerFica,singaporeBuyerDuty,ukDividendTax,scopedInvestmentGain,scopedTransferTax,texasStateSalesTax,scopedTreatyCredit,confirmedTreatyCredit} from '../engine/decision-tools.mjs';
 const ctc={annualCtc:1800000,employerContributions:100000,nonCashBenefits:200000,employeeContributions:21600,otherPayrollDeductions:2500,residentIndividual:true,ageGroup:'under-60',oldEligibleDeductions:0,newEligibleDeductions:0};
 test('CTC cash component and tax reconciliation',()=>{
  const r=indiaCtc(ctc);assert.equal(r.annualGross,1500000);assert.equal(r.new.incomeTax,97500);assert.equal(r.new.annualCash,1378400);assert.equal(r.taxRulesVerified,false);
@@ -61,7 +61,27 @@ test('cash runway respects reserve, exact whole-month arithmetic and unreachable
  assert.throws(()=>financialRunway({...base,horizonMonths:0}));assert.throws(()=>financialRunway({...base,monthlyIncome:-1}));
 });
 
-for(const [country,tax] of [['GB',20],['DE',19],['AU',10],['SG',9],['AE',5],['CA',5]])test('standard-rated single-supply source fixture '+country,()=>{
+for(const [country,tax] of [['GB',20],['DE',19],['AU',10],['SG',9],['AE',5],['CA',5]])test('cash-flow stress compares a bounded shock against baseline and tracks reserve recovery',()=>{
+ const input={currency:'USD',monthlyIncome:5000,monthlyExpenses:4000,liquidSavings:8000,reserveFloor:6000,horizonMonths:12,incomeReductionPercent:50,expenseIncreasePercent:25,shockStartMonth:2,shockDurationMonths:3};
+ const r=cashFlowStressScenario(input);
+ assert.equal(r.baseline.endingLiquidSavings,20000);
+ assert.equal(r.stress.endingLiquidSavings,6500);
+ assert.equal(r.baseline.firstReserveBreachMonth,null);
+ assert.equal(r.stress.firstReserveBreachMonth,3);
+ assert.equal(r.stress.monthsBelowReserve,6);
+ assert.equal(r.stress.firstNegativeMonth,null);
+ assert.equal(r.stress.reserveRestoredMonth,9);
+ assert.equal(r.endingSavingsImpact,-13500);
+ const noShock=cashFlowStressScenario({...input,incomeReductionPercent:0,expenseIncreasePercent:0});
+ assert.deepEqual(noShock.baseline,noShock.stress);
+ assert.throws(()=>cashFlowStressScenario({...input,shockStartMonth:0}));
+ assert.throws(()=>cashFlowStressScenario({...input,shockDurationMonths:12}));
+ assert.throws(()=>cashFlowStressScenario({...input,incomeReductionPercent:100.01}));
+ assert.throws(()=>cashFlowStressScenario({...input,expenseIncreasePercent:500.01}));
+ assert.throws(()=>cashFlowStressScenario({...input,unexpected:1}));
+});
+
+test('standard-rated single-supply source fixture '+country,()=>{
  const input={country,priceBasis:'exclusive',amount:100,scopeConfirmed:true};
  const r=standardIndirectTax(input);assert.equal(r.taxAmount,tax);assert.equal(r.grossAmount,100+tax);assert.equal(r.taxRulesVerified,false);
  assert.equal(standardIndirectTax({...input,priceBasis:'inclusive',amount:100+tax}).netAmount,100);
