@@ -1,0 +1,28 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {cashFlowStressScenario} from '../engine/decision-tools.mjs';
+
+test('cash-flow stress compares a bounded shock against baseline and tracks reserve recovery',()=>{
+ const input={currency:'USD',monthlyIncome:5000,monthlyExpenses:4000,liquidSavings:8000,reserveFloor:6000,horizonMonths:12,incomeReductionPercent:50,expenseIncreasePercent:25,shockStartMonth:2,shockDurationMonths:3};
+ const r=cashFlowStressScenario(input);
+ assert.equal(r.baseline.endingLiquidSavings,20000);
+ assert.equal(r.stress.endingLiquidSavings,9500);
+ assert.equal(r.baseline.firstReserveBreachMonth,null);
+ assert.equal(r.stress.firstReserveBreachMonth,3);
+ assert.equal(r.stress.monthsBelowReserve,6);
+ assert.equal(r.stress.firstNegativeMonth,null);
+ assert.equal(r.stress.reserveRestoredMonth,9);
+ assert.equal(r.endingSavingsImpact,-10500);
+ const noShock=cashFlowStressScenario({...input,incomeReductionPercent:0,expenseIncreasePercent:0});
+ assert.deepEqual(noShock.baseline,noShock.stress);
+ assert.throws(()=>cashFlowStressScenario({...input,shockStartMonth:0}));
+ assert.throws(()=>cashFlowStressScenario({...input,shockDurationMonths:12}));
+ assert.throws(()=>cashFlowStressScenario({...input,incomeReductionPercent:100.01}));
+ assert.throws(()=>cashFlowStressScenario({...input,expenseIncreasePercent:500.01}));
+ assert.throws(()=>cashFlowStressScenario({...input,unexpected:1}));
+ const deficit=cashFlowStressScenario({...input,monthlyIncome:0,monthlyExpenses:100,liquidSavings:0,reserveFloor:0,horizonMonths:12,incomeReductionPercent:0,expenseIncreasePercent:0,shockStartMonth:1,shockDurationMonths:1});
+ assert.equal(deficit.stress.endingLiquidSavings,-1200);
+ assert.equal(deficit.stress.firstNegativeMonth,1);
+ const large=cashFlowStressScenario({...input,monthlyIncome:1000000000,monthlyExpenses:1000000000,liquidSavings:1000000000,reserveFloor:0,horizonMonths:600,incomeReductionPercent:0,expenseIncreasePercent:500,shockStartMonth:1,shockDurationMonths:600});
+ assert.equal(large.stress.endingLiquidSavings,-2999000000000);
+});
