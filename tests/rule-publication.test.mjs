@@ -115,6 +115,6 @@ test('independent sequence floor detects restored D1 rollback and requires a hig
   const recovered=await runScheduledPublication(restoredEnv,engineFingerprint,{now});
   assert.equal(recovered.sequence,3);
   assert.equal(floorValue,'3');
-  assert.deepEqual(restored.prepare('SELECT sequence,state FROM regulatory_head').get(),{sequence:3,state:'active'});
+  const recoveredHead=restored.prepare('SELECT sequence,state FROM regulatory_head').get();assert.equal(recoveredHead.sequence,3);assert.equal(recoveredHead.state,'active');
  }finally{restored?.close();source?.close();rmSync(dir,{recursive:true,force:true});}
 });
