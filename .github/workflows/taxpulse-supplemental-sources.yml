@@ -4,12 +4,15 @@ on:
     paths:
       - 'rules/supplemental-monitor-sources.json'
       - 'scripts/probe-supplemental-sources.mjs'
+      - 'scripts/supplemental-baseline.mjs'
+      - 'tests/supplemental-baseline.test.mjs'
       - '.github/workflows/taxpulse-supplemental-sources.yml'
   schedule:
     - cron: '25 2 * * 1'
   workflow_dispatch:
 permissions:
   contents: read
+  actions: read
 jobs:
   observe:
     runs-on: ubuntu-latest
@@ -21,6 +24,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Retrieve previous successful main observation
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          prior_id="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow taxpulse-supplemental-sources.yml --branch main --status success --limit 20 --json databaseId,event --jq '[.[] | select(.event == "schedule" or .event == "workflow_dispatch")][0].databaseId // empty')"
+          if [[ -z "$prior_id" ]]; then
+            echo "No previous successful scheduled or manual main observation; collect a new baseline."
+            exit 0
+          fi
+          [[ "$prior_id" =~ ^[0-9]+$ ]]
+          [[ "$prior_id" != "$GITHUB_RUN_ID" ]]
+          mkdir -p "$RUNNER_TEMP/taxpulse-supplemental-prior"
+          if gh run download "$prior_id" --repo "$GITHUB_REPOSITORY" --name supplemental-source-observations --dir "$RUNNER_TEMP/taxpulse-supplemental-prior"; then
+            echo "SUPPLEMENTAL_PREVIOUS_FILE=$RUNNER_TEMP/taxpulse-supplemental-prior/supplemental-source-observations.json" >> "$GITHUB_ENV"
+          else
+            echo "::warning::Previous observation unavailable or expired; current report will establish a new baseline."
+          fi
       - run: node scripts/probe-supplemental-sources.mjs
       - uses: actions/upload-artifact@v4
         if: always()

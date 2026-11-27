@@ -1,8 +1,14 @@
 import {readFileSync} from 'node:fs';
+import {pathToFileURL} from 'node:url';
 import {catalog} from '../engine/country.mjs';
 import {assertProductionReady} from '../engine/release-gate.mjs';
-const manifest=JSON.parse(readFileSync(new URL('../rules/manifest.json',import.meta.url),'utf8'));
-const supported=catalog(),countries=new Set(supported.countries.map(c=>c.code)),modules=new Set(supported.modules),required=['pit','payroll','capgains','vat','corporate','property','dtaa'];
-const rows=['IN','US','GB','CA','AU','DE','SG','AE'].map(country=>{const r=manifest.countries?.[country];return {country,backendCountry:countries.has(country),manifestVerified:r?.verification==='verified',productionEnabled:r?.productionEnabled===true,recordedEvidenceCount:Array.isArray(r?.evidence)?r.evidence.length:0,missingBackendModules:required.filter(m=>!modules.has(m))};});
-let gate;try{assertProductionReady(manifest);gate='unexpectedly-passed-without-authorization';process.exitCode=1;}catch(e){gate='blocked: '+e.message;}
-console.log(JSON.stringify({releaseMode:manifest.releaseMode,gate,countries:rows,independentAssessment:'not established by this report',trustedKeys:'not inspected',productionAuthorized:false},null,2));
+import {prepareReviewPacket} from './prepare-review-packet.mjs';
+export function productionReadinessReport(){
+ const manifest=JSON.parse(readFileSync(new URL('../rules/manifest.json',import.meta.url),'utf8')),packet=prepareReviewPacket(),backend=catalog();
+ let gate;try{assertProductionReady(manifest);throw Error('unexpected approval without authorization');}catch(e){if(e.message==='unexpected approval without authorization')throw e;gate='blocked: '+e.message;}
+ const countries=[...new Set(packet.scopes.map(s=>s.country))],modules=[...new Set(packet.scopes.map(s=>s.module))];
+ const backendCountries=new Set(backend.countries.map(c=>c.code)),backendModules=new Set(backend.modules);
+ const rows=countries.map(country=>{const scopes=packet.scopes.filter(s=>s.country===country);return {country,backendCountry:backendCountries.has(country),manifestVerified:manifest.countries[country].verification==='verified',productionEnabled:manifest.countries[country].productionEnabled===true,recordedEvidenceCount:manifest.countries[country].evidence.length,scopedPreviewExamples:scopes.filter(s=>s.scopedPreviewStatus==='scoped-example').length,missingBackendModules:scopes.filter(s=>!s.backendCatalogPresent).map(s=>s.module),remaining:scopes.map(({module,coverageKind,scopedPreviewDescription,remainingEngineering})=>({module,coverageKind,scopedPreviewDescription,remainingEngineering}))};});
+ return {schemaVersion:1,commit:packet.commit,releaseMode:manifest.releaseMode,gate,requiredScopes:packet.scopes.length,scopedPreviewExamples:packet.scopes.filter(s=>s.scopedPreviewStatus==='scoped-example').length,analogousComponents:packet.scopes.filter(s=>s.coverageKind==='analogous-component').length,legacyBackendCatalogScopes:packet.scopes.filter(s=>s.backendCatalogPresent).length,missingBackendCountries:countries.filter(c=>!backendCountries.has(c)),missingBackendModules:modules.filter(m=>!backendModules.has(m)),countries:rows,independentStatutoryApproval:'not established by this report',independentSecurityAssessment:'not established by this report',physicalDeviceAcceptance:'not established by this report',trustedKeys:'not inspected',productionAuthorized:false,notes:['A scoped calculator is not a complete statutory API.','Legacy backend catalog presence is not verification or actual complete statutory coverage.','Do not treat analogous charges as satisfying statutory module requirements.','No production or monetization activation is authorized by this report.']};
+}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)console.log(JSON.stringify(productionReadinessReport(),null,2));

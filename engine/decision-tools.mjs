@@ -114,8 +114,8 @@ export function financialRunway(input){
  if(!Number.isSafeInteger(input.horizonMonths)||input.horizonMonths<1||input.horizonMonths>600)throw Error('Choose a 1–600 month horizon');
  const balance=income-expenses,available=savings>reserve?savings-reserve:0n,needed=reserve+goal;
  const monthsToGoal=savings>=needed?0:balance<=0n?null:Number((needed-savings+balance-1n)/balance);
- const runway=balance<0n?Number(available/(-balance)):null;
- return {...sample,currency:input.currency,monthlyBalance:out(balance),availableAboveReserve:out(available),projectedSavings:out(savings+balance*BigInt(input.horizonMonths)),monthsToGoal,wholeMonthsBeforeReserve:runway,goalGapNow:out(needed>savings?needed-savings:0n),warnings:['Constant monthly income and costs. Goal is in addition to the selected reserve. Negative projected savings means a modeled funding shortfall, not available credit. No interest, inflation, investment return, taxes, debt restructuring or emergency costs are inferred.']};
+ const runway=savings<reserve?0:balance<0n?Number(available/(-balance)):null;
+ return {...sample,currency:input.currency,monthlyBalance:out(balance),availableAboveReserve:out(available),projectedSavings:out(savings+balance*BigInt(input.horizonMonths)),monthsToGoal,wholeMonthsBeforeReserve:runway,goalGapNow:out(needed>savings?needed-savings:0n),warnings:['Constant monthly income and costs. Goal is in addition to the selected reserve. A starting balance below the protected reserve is an immediate breach even when monthly cash flow is positive. Negative projected savings means a modeled funding shortfall, not available credit. No interest, inflation, investment return, taxes, debt restructuring or emergency costs are inferred.']};
 }
 
 const indirectSchedules=Object.freeze({

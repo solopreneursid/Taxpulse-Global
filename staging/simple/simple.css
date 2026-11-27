@@ -94,3 +94,5 @@ a{color:#2447a4}a:hover{color:#173278}
 /* Text enlargement and long labels must not force page-wide horizontal scroll. */
 .fields>*,.tool-grid>*,.category-grid>*,.breakdown>*{min-width:0;overflow-wrap:anywhere}.fields input,.fields select,details input,details select{min-width:0;max-width:100%}input,select,textarea{font-size:1rem}.primary,.secondary{max-width:100%;white-space:normal;overflow-wrap:anywhere}.table-scroll:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid #2447a4;outline-offset:3px}
 @media screen{#planning-report-entries article{border-top:1px solid #cbd7e7;padding:12px 0;min-width:0}#planning-report-entries h4{margin:0 0 8px;overflow-wrap:anywhere}}
+
+.decision-sources li,.decision-sources a{overflow-wrap:anywhere;word-break:break-word}.decision-sources li{margin:.45rem 0}
