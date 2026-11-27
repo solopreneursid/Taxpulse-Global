@@ -110,7 +110,7 @@ test('independent sequence floor detects restored D1 rollback and requires a hig
   const detected=await runScheduledPublication(restoredEnv,engineFingerprint,{now});
   assert.deepEqual(detected,{state:'rollback_detected',databaseSequence:1,durableSequenceFloor:2,blockedSequence:2});
   const blocked=restored.prepare('SELECT sequence,state FROM regulatory_head').get();
-  assert.deepEqual(blocked,{sequence:2,state:'blocked'});
+  assert.equal(blocked.sequence,2);assert.equal(blocked.state,'blocked');
   assert.equal(floorValue,'2');
   const recovered=await runScheduledPublication(restoredEnv,engineFingerprint,{now});
   assert.equal(recovered.sequence,3);
