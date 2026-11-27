@@ -266,3 +266,25 @@ export function australiaDiscountGain(input){
  const before=calculate(out(other)),after=calculate(out(other+discounted));
  return {...sample,currency:'AUD',grossGain:out(gain),gainAfterLosses:out(net),assessableGain:out(discounted),modeledIncrementalIncomeTax:out(units(after.incomeTax)-units(before.incomeTax)),sourceUrls:['https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/calculating-your-cgt/cgt-discount','https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/capital-gains-tax-reform'],warnings:['FY 2026–27 only, ordinary eligible Australian resident individual throughout ownership, one asset held at least 12 months, eligible losses already established and applied before 50% discount. No main residence, small-business, affordable-housing, indexation, foreign-resident or rollover case. Incremental ordinary income tax including modeled LITO only; excludes Medicare, offsets, filing rounding and later CGT reforms.']};
 }
+
+function signedRate(v,min,max){if(typeof v!=='number'||!Number.isFinite(v)||v<min||v>max||Math.abs(v*100-Math.round(v*100))>0.00002)throw RangeError('Invalid rate');return BigInt(Math.round(v*100));}
+function months(v,max=600){if(!Number.isSafeInteger(v)||v<1||v>max)throw RangeError('Invalid horizon');return v;}
+/** Nominal fixed annual rate divided by 12; cash flows at month end. */
+export function investmentScenario(input){
+ exact(input,['currency','initialSavings','monthlyContribution','annualReturnPercent','horizonMonths','inflationPercent']);
+ currency(input.currency);const initial=units(input.initialSavings),contribution=units(input.monthlyContribution),rate=signedRate(input.annualReturnPercent,-99,100),inflation=signedRate(input.inflationPercent,0,25),n=months(input.horizonMonths);
+ let balance=initial;
+ for(let month=0;month<n;month++){balance+=round(balance*rate,120000n)+contribution;out(balance);}
+ const invested=initial+contribution*BigInt(n),real=Number(balance)/100/Math.pow(1+Number(inflation)/10000,n/12);
+ if(!Number.isFinite(real))throw RangeError('Unsupported result');
+ return {...sample,currency:input.currency,nominalBalance:out(balance),totalContributed:out(invested),modeledGrowth:out(balance-invested),inflationAdjustedBalance:Math.round(real*100)/100,warnings:['Hypothetical constant nominal annual return divided by 12; rounded monthly growth and end-of-month contributions. Inflation uses annual compounding. Returns are assumptions, not forecasts or guarantees. Excludes taxes, fees, market volatility and changes to contributions.']};
+}
+/** A finite retirement drawdown plan, not a safe withdrawal rate recommendation. */
+export function retirementScenario(input){
+ exact(input,['currency','startingBalance','monthlyWithdrawal','annualReturnPercent','annualSpendingGrowthPercent','horizonMonths']);
+ currency(input.currency);const initial=units(input.startingBalance),withdraw=units(input.monthlyWithdrawal),rate=signedRate(input.annualReturnPercent,-99,100),growth=signedRate(input.annualSpendingGrowthPercent,0,25),n=months(input.horizonMonths);
+ if(withdraw===0n)throw RangeError('Positive withdrawal required');
+ let balance=initial,total=0n,fullyFundedMonths=0,firstShortfallMonth=null,spending=withdraw;
+ for(let m=1;m<=n;m++){if(m>1&&(m-1)%12===0)spending+=round(spending*growth,10000n);balance+=round(balance*rate,120000n);out(balance);if(balance<spending){firstShortfallMonth=m;total+=balance;balance=0n;break;}balance-=spending;total+=spending;fullyFundedMonths++;}
+ return {...sample,currency:input.currency,fullyFundedMonths,firstShortfallMonth,remainingBalance:out(balance),totalWithdrawn:out(total),warnings:['Finite hypothetical drawdown; nominal annual return divided by 12, monthly rounded growth and end-of-month withdrawals, spending increases at each annual anniversary. Stops at first funding shortfall after partial withdrawal. No pensions, taxes, fees, longevity estimate, volatility, guaranteed returns or advice on a safe withdrawal rate.']};
+}
