@@ -1,4 +1,4 @@
-# Eight-country personal-income-tax and scoped salary-remainder backend
+# Eight-country PIT, salary-remainder and capital-gains backend scope
 
 Status: preview-only, sample-only and unverified. This is not a complete gross-to-net salary engine or filing calculation.
 
@@ -36,8 +36,25 @@ The legacy `countryCalculate` endpoint also exposes `module: "payroll"` for all 
 
 These are narrow, assumption-bound salary-remainder scenarios. They do not provide payroll runs, pay-period withholding instructions, employer payroll, benefits administration, statutory filing or complete payslips. Germany requires a user-established annual taxable-income amount; UAE models the stated expatriate employee ILOE premium; India requires a user-confirmed EPF wage and professional-tax amount. Output remains sample-only and unverified.
 
+## Scoped capital-gains API
+
+The legacy `countryCalculate` endpoint exposes `module: "capgains"` for all eight countries by routing to the existing date-bound calculators:
+
+| Country | Input contract | Output boundary |
+|---|---|---|
+| India | Acquisition/disposal dates, proceeds, adjusted basis, eligible losses, other taxable income and asset type | Selected resident-individual listed-equity, property or crypto disposal calculation |
+| United States | Acquisition/disposal dates, proceeds, adjusted basis, eligible losses, other taxable income and filing status | Selected ordinary/preferential federal rate comparison for one investment lot |
+| United Kingdom | Acquisition/disposal dates, proceeds, adjusted basis, eligible losses and other taxable income | Selected individual annual-exempt-amount and basic-rate calculation |
+| Australia | Proceeds, cost base, eligible losses, other taxable income and acquisition/disposal dates | FY 2026–27 resident 50% discount-eligible gain and modeled incremental income tax |
+| Canada | Confirmed net gain and calendar-2026 transaction date | One-half inclusion component only; no tax calculation |
+| Germany | Confirmed net gain and calendar-2026 transaction date | Ordinary private-share 25% tariff component only |
+| Singapore | Confirmed net gain and calendar-2026 transaction date | Zero local tax only for caller-confirmed personal investment shares, not trading |
+| UAE | Confirmed net gain and calendar-2026 transaction date | Personal-investment-income exclusion component for a natural person only |
+
+The API requires `scopeConfirmed: true` for each jurisdiction. Country-specific asset classification, holding periods, loss treatment, residency and income assumptions remain explicit. Canada returns an inclusion amount rather than a tax liability. Singapore and UAE zero-tax outputs depend on caller-confirmed investment classification; the engine does not infer that a disposal is not trading or business activity. All results remain sample-only and unverified.
+
 ## Release boundary
 
-All results remain `sampleOnly: true` and `taxRulesVerified: false`. The country manifest remains unverified and production-disabled. The backend exposes PIT plus a scoped salary-remainder calculation for all eight countries. Capital gains, indirect tax, corporate tax, property tax and treaty-relief modules remain unavailable in the legacy country API. The 56-scope release gate is unchanged and still blocks production.
+All results remain `sampleOnly: true` and `taxRulesVerified: false`. The country manifest remains unverified and production-disabled. The backend exposes PIT, scoped salary remainder and scoped capital-gains components for all eight countries. Indirect tax, corporate tax, property tax and treaty-relief modules remain unavailable in the legacy country API. The 56-scope release gate is unchanged and still blocks production.
 
 Independent statutory review must validate source law, effective periods, eligibility, reliefs, rounding and independently computed fixtures before any scope can be marked verified.
