@@ -1,7 +1,56 @@
 -- Extend the append-only rule ledger to effective-dated national and investment rules.
--- Apply after 004 with the publisher disabled. Inspect any conflicting historical
--- version IDs before applying: a conflict intentionally aborts the migration.
+-- Apply after 004 with the preview publisher disabled. A conflicting historical
+-- version ID must abort; this migration must never rewrite an existing definition.
 
+-- Reinstall the guards from migrations 001-004 as well. Some existing preview
+-- databases have the schema columns/tables but are missing the earlier triggers.
+CREATE TRIGGER IF NOT EXISTS regulatory_head_monotonic
+BEFORE UPDATE ON regulatory_head
+WHEN NEW.sequence<=OLD.sequence
+BEGIN SELECT RAISE(ABORT,'non-monotonic sequence'); END;
+
+CREATE TRIGGER IF NOT EXISTS regulatory_ledger_no_update
+BEFORE UPDATE ON regulatory_version_ledger
+BEGIN SELECT RAISE(ABORT,'immutable version ledger'); END;
+
+CREATE TRIGGER IF NOT EXISTS regulatory_ledger_no_delete
+BEFORE DELETE ON regulatory_version_ledger
+BEGIN SELECT RAISE(ABORT,'immutable version ledger'); END;
+
+CREATE TRIGGER IF NOT EXISTS regulatory_snapshot_no_update
+BEFORE UPDATE ON regulatory_snapshots
+BEGIN SELECT RAISE(ABORT,'immutable snapshot archive'); END;
+
+CREATE TRIGGER IF NOT EXISTS regulatory_snapshot_no_delete
+BEFORE DELETE ON regulatory_snapshots
+BEGIN SELECT RAISE(ABORT,'immutable snapshot archive'); END;
+
+CREATE TRIGGER IF NOT EXISTS regulatory_head_review_required
+BEFORE UPDATE ON regulatory_head
+WHEN NEW.state='active'
+BEGIN
+ SELECT CASE WHEN NEW.review_record IS NULL
+ OR json_extract(NEW.review_record,'$.review.payload.snapshotDigest') IS NOT NEW.digest
+ OR json_extract(NEW.review_record,'$.review.payload.sequence') IS NOT NEW.sequence
+ OR coalesce(length(json_extract(NEW.review_record,'$.review.signature')),0)<>128
+ OR coalesce(length(json_extract(NEW.review_record,'$.publisherPublicKeyHex')),0)<>64
+ OR coalesce(length(json_extract(NEW.review_record,'$.reviewerPublicKeyHex')),0)<>64
+ OR json_extract(NEW.review_record,'$.publisherPublicKeyHex')=json_extract(NEW.review_record,'$.reviewerPublicKeyHex')
+ THEN RAISE(ABORT,'missing or mismatched regulatory review record') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS regulatory_head_archive
+AFTER UPDATE ON regulatory_head
+BEGIN
+ INSERT INTO regulatory_events(sequence,digest,state) VALUES(NEW.sequence,NEW.digest,NEW.state);
+ INSERT INTO regulatory_snapshots(sequence,digest,envelope,published_at,review_record)
+ SELECT NEW.sequence,NEW.digest,NEW.envelope,strftime('%Y-%m-%dT%H:%M:%fZ','now'),NEW.review_record
+ WHERE NEW.state='active';
+END;
+
+-- Backfill national/investment rule definitions from the immutable archive.
+-- The ledger_no_update trigger above makes a conflicting upsert abort rather
+-- than replacing an existing historical definition.
 INSERT INTO regulatory_version_ledger(version,definition,first_sequence)
 SELECT version,definition,min(sequence)
 FROM (
