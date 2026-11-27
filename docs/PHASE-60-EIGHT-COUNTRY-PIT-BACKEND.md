@@ -70,8 +70,25 @@ The legacy `countryCalculate` endpoint exposes `module: "property"` for all eigh
 
 Every route requires `scopeConfirmed: true`. The model excludes other states/provinces, cities, additional-property surcharges, non-resident charges, mixed-use transactions, most reliefs, leasehold/linked transactions, valuation disputes, legal fees and other closing costs. Singapore excludes ABSD and SSD. Dubai output is a registration fee. Results remain sample-only and unverified.
 
+## Scoped treaty-credit API
+
+The legacy `countryCalculate` endpoint exposes `module: "dtaa"` for eight modeled bilateral treaty pairs, all using a single income item and caller-established limits:
+
+| Residence-country API | Modeled treaty pair and input basis | Scope boundary |
+|---|---|---|
+| India | India–UK; foreign tax paid, treaty-permitted tax, worldwide/foreign income, domestic tax and domestic tax attributable to the item | India-side Article 24(2) one-item credit component, historical FY 2025–26 / AY 2026–27 |
+| United States | US–UK; foreign tax paid, treaty-permitted tax, worldwide/foreign income, domestic tax and domestic tax attributable to the item | US-side Article 24 one-item general-category credit component, calendar 2026 |
+| United Kingdom | UK–India; foreign tax paid, treaty cap and UK tax with/without the item | UK-side Article 24 credit cap for one ordinary Indian-source income item, UK tax year 2025–26 |
+| Canada | Canada–UK; foreign tax paid, treaty cap, domestic limit and available domestic tax | Canadian resident individual, one ordinary non-business item, historical 2025 scope |
+| Australia | Australia–UK; foreign tax paid, treaty cap, domestic limit and available domestic tax | Australian resident individual FITO/treaty cap component, FY 2025–26 historical scope |
+| Germany | Germany–UK; foreign tax paid, treaty cap, domestic limit and available domestic tax | German resident individual, one eligible UK directors-fee item |
+| Singapore | Singapore–UK; foreign tax paid, treaty cap, domestic limit and available domestic tax | Singapore resident company, one UK-source taxable item |
+| UAE | UAE–UK; foreign tax paid, treaty cap, domestic limit and available domestic tax | UAE juridical person subject to corporate tax, one UK-source taxable item |
+
+The engine does not infer treaty eligibility, residence, beneficial ownership, income sourcing, income characterization, foreign tax conversion, carryovers, exemptions or the final domestic limitation. Treaty caps and attributable domestic tax must already be established by the caller. Singapore and UAE components have entity-specific scope; they are not individual tax-credit estimates. All results remain sample-only and unverified.
+
 ## Release boundary
 
-All results remain `sampleOnly: true` and `taxRulesVerified: false`. The country manifest remains unverified and production-disabled. The backend exposes PIT, scoped salary remainder, capital-gains components and property transfer/registration components for all eight countries. Indirect tax, corporate tax and treaty-relief modules remain unavailable in the legacy country API. The 56-scope release gate is unchanged and still blocks production.
+All results remain `sampleOnly: true` and `taxRulesVerified: false`. The country manifest remains unverified and production-disabled. The backend exposes PIT, scoped salary remainder, capital-gains components, property transfer/registration components and one-item treaty-credit components for all eight countries. Indirect tax and corporate tax remain unavailable in the legacy country API. The 56-scope release gate is unchanged and still blocks production.
 
 Independent statutory review must validate source law, effective periods, eligibility, reliefs, rounding and independently computed fixtures before any scope can be marked verified.
