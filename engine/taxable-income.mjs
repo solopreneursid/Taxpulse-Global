@@ -1,4 +1,4 @@
-import {nationalPeriodStart,resolveNationalRule} from './national-registry.mjs';
+import {nationalPeriodStart,nationalRules,resolveNationalRule} from './national-registry.mjs';
 import {resolvePayrollRule} from './payroll-registry.mjs';
 import {resolveIndiaSalaryRule} from './india-salary-registry.mjs';
 import {regionalRules,resolveRegionalRule} from './regional-registry.mjs';
@@ -213,7 +213,7 @@ export function calculateCapitalGain(input,ruleContext={}){
  const country=input.country,required=[...common,...(country==='US'?['filingStatus']:country==='IN'?['assetType']:[])];
  const keys=[...required,...(country==='IN'?[]:['assetType'])];
  if(Object.keys(input).some(k=>!keys.includes(k))||required.some(k=>!Object.hasOwn(input,k)))throw new TypeError('Unsupported fields');
- const nationalRule=resolveNationalRule(country,'investment-assessment',input.taxYear,nationalPeriodStart(country,input.taxYear),ruleContext.national),p=nationalRule.parameters;
+ const rules=nationalRules(input.taxYear,ruleContext.national,country,'investment-assessment'),nationalRule=resolveNationalRule(country,'investment-assessment',input.taxYear,nationalPeriodStart(country,input.taxYear),ruleContext.national),p=nationalRule.parameters;
  const assetType=Object.hasOwn(input,'assetType')?input.assetType:'listed-equity';
  const allowed=country==='IN'?['listed-equity','equity-fund','property','crypto']:country==='US'?['listed-equity','investment-land','crypto']:['listed-equity','property','crypto'];
  if(!allowed.includes(assetType))throw new TypeError('Unsupported asset type');
