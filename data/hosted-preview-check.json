@@ -1,5 +1,8 @@
 {
   "revision": "703faa7c1ab322456c6cecb4aec1ea7cc2b4b2bcd0bc13965d1ed9c6fd27321f",
   "sourceCount": 30,
-  "runtimeState": "bundled-preview"
+  "runtimeState": "bundled-preview",
+  "deploymentVersion": 35,
+  "deploymentId": "f4441e96-d7f0-4a70-8274-2a86f05f514a",
+  "sourceCommit": "1f4e5d50fcac246e2e592018378bc5293fff71fa"
 }
