@@ -11,6 +11,7 @@ import {loadRuntimeRules} from '../engine/runtime-rules.mjs';
 const read=p=>JSON.parse(readFileSync(new URL('../rules/'+p,import.meta.url)));
 const regional=read('regional-versions.json'),indiaSalary=read('india-salary-versions.json'),payroll=read('payroll-versions.json');
 const national=read('national-investment-2026.json');
+const nationalEvidence=await nationalEvidenceRules(national);
 const now=new Date('2026-11-25T12:00:00.000Z'),engineFingerprint='a'.repeat(64);
 const hex=b=>Buffer.from(b).toString('hex');
 const digest=async p=>hex(await crypto.subtle.digest('SHA-256',snapshotBytes(p)));
