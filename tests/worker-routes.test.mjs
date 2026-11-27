@@ -120,7 +120,7 @@ test('generated Worker routes and validation',async()=>{
  const indiaGst=await call('/v1/business/india-notified-gst',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({classification:'2523-2025-09-22',priceBasis:'exclusive',amount:100,scopeConfirmed:true})});
  assert.equal(indiaGst.status,200);assert.equal((await indiaGst.json()).taxAmount,18);
 
- for(const path of ['/v1/business/indirect-tax','/v1/business/corporate-tax','/v1/business/scoped-corporate-tax','/v1/property/transfer-tax','/v1/property/uk-sdlt','/v1/property/sg-bsd','/v1/investment/scoped-gain','/v1/treaty/credit','/v1/treaty/scoped-credit','/v1/treaty/confirmed-credit','/v1/treaty/uk-india-credit','/v1/employer-payroll/fica'])assert.equal((await call(path)).status,405,path);
+ for(const path of ['/v1/business/indirect-tax','/v1/business/corporate-tax','/v1/business/scoped-corporate-tax','/v1/property/transfer-tax','/v1/property/uk-sdlt','/v1/property/sg-bsd','/v1/investment/scoped-gain','/v1/treaty/credit','/v1/treaty/scoped-credit','/v1/treaty/confirmed-credit','/v1/treaty/uk-india-credit','/v1/employer-payroll/fica','/v1/employer-payroll/uk-ni','/v1/business/india-notified-gst'])assert.equal((await call(path)).status,405,path);
 
  const extendedPay=await call('/v1/salary/remainder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'AU',region:'AU',taxYear:'2026',pay:100000,scopeConfirmed:true})});
  assert.equal(extendedPay.status,200);assert.equal((await extendedPay.json()).annualRemainder,77480);
