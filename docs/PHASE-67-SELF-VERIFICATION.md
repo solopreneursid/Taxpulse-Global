@@ -19,7 +19,7 @@ Run with `node scripts/verification-audit.mjs`; validate with `node --test tests
 
 ## Payroll coverage
 
-The current payroll registry contains preview components for IN, US, GB, CA, AU and SG. DE and AE are absent from that registry. This does not mean those jurisdictions have no tax or social contribution obligations; it means TaxPulse does not yet have a supported, validated payroll component for them. All current entries remain legally unverified and the eight-country payroll requirement is not complete.
+The versioned payroll-contribution registry contains preview components for IN, US, GB, CA, AU and SG. DE and AE are represented by separate, narrow salary models with tests, but these are not complete payroll engines. The Germany model assumes caller-confirmed annual taxable income, statutory insurance, an actual insurer supplementary rate, childless status outside Saxony and specified wage limits. The UAE model covers ordinary expatriate salary and the ILOE premium only; it excludes GCC/UAE national pension contributions and other payroll obligations. The audit now reports both representations separately. All remain preview-only and legally unverified; eight-country payroll is not complete.
 
 Do not fill the missing jurisdictions with guessed rates or repurpose personal-income-tax calculations as payroll calculations. Add each component only with dated official sources, correct employee/employer treatment, contribution ceilings and floors, eligibility rules, payroll-period rounding, regression vectors and explicit exclusions.
 
