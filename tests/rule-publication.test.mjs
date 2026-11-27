@@ -9,6 +9,7 @@ import {join} from 'node:path';
 import {snapshotBytes} from '../engine/rule-snapshot.mjs';
 import {publishSnapshot,blockSnapshot} from '../engine/rule-publisher.mjs';
 import {runScheduledPublication} from '../engine/scheduled-publication.mjs';
+import {RegulatorySequenceAnchor} from '../engine/regulatory-sequence-anchor.mjs';
 import {loadRuntimeRules} from '../engine/runtime-rules.mjs';
 const read=p=>JSON.parse(readFileSync(new URL('../rules/'+p,import.meta.url)));
 const regional=read('regional-versions.json'),indiaSalary=read('india-salary-versions.json'),payroll=read('payroll-versions.json');
@@ -17,13 +18,25 @@ const nationalEvidence=await nationalEvidenceRules(national);
 const now=new Date('2026-11-25T12:00:00.000Z'),engineFingerprint='a'.repeat(64);
 const hex=b=>Buffer.from(b).toString('hex');
 const digest=async p=>hex(await crypto.subtle.digest('SHA-256',snapshotBytes(p)));
+function createAnchor(initial={schemaVersion:1,sequence:0,digest:null,state:'empty'},mirror=null){
+ const storage={value:structuredClone(initial),async get(key){return key==='anchor'?structuredClone(this.value):undefined;},async put(key,value){if(key!=='anchor')throw Error('Unexpected anchor storage key');this.value=structuredClone(value);}};
+ const state={storage,async blockConcurrencyWhile(fn){return fn();}};
+ const instance=new RegulatorySequenceAnchor(state,{RULE_SEQUENCE_FLOOR:mirror});
+ const stub={fetch:(url,init={})=>instance.fetch(new Request(url,init))};
+ const binding={idFromName(name){assert.equal(name,'taxpulse-regulatory-head-v1');return 'sequence-anchor-test';},get(id){assert.equal(id,'sequence-anchor-test');return stub;}};
+ const client={
+  async getState(){const r=await stub.fetch('https://anchor.test/state');if(!r.ok)throw Error('anchor read failed');return r.json();},
+  async advance(input){const r=await stub.fetch('https://anchor.test/advance',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(input)});const value=await r.json();if(!r.ok)throw Error(value.error);return value;}
+ };
+ return {binding,client,state:()=>structuredClone(storage.value)};
+}
 const key=await crypto.subtle.generateKey('Ed25519',true,['sign','verify']);
 const publicKeyHex=hex(await crypto.subtle.exportKey('raw',key.publicKey)),options={publicKeyHex,engineFingerprint,now};
 const reviewer=await crypto.subtle.generateKey('Ed25519',true,['sign','verify']);
 const reviewerPublicKeyHex=hex(await crypto.subtle.exportKey('raw',reviewer.publicKey)),reviewerId='synthetic-test-reviewer';
 async function approvedPack(sequence){const packData=await pack(sequence);const payload=statutoryReviewPayload(packData.envelope,reviewerId,now.toISOString());return {...packData,review:{payload,signature:hex(await crypto.subtle.sign('Ed25519',reviewer.privateKey,snapshotBytes(payload)))}};}
 function migrate(db){for(const file of ['001-regulatory-snapshots.sql','002-regulatory-version-ledger.sql','003-regulatory-unique-versions.sql','004-regulatory-review-archive.sql','005-regulatory-national-version-ledger.sql'])db.exec(readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));}
-const approvedOptions=packData=>({...options,review:packData.review,reviewerPublicKeyHex,reviewerId});
+const approvedOptions=(packData,sequenceAnchor)=>({...options,sequenceAnchor,review:packData.review,reviewerPublicKeyHex,reviewerId});
 function dbAdapter(db){return {prepare(sql){const s=db.prepare(sql);let args=[];return {bind(...a){args=a;return this;},async first(){return s.get(...args);},async run(){return {meta:{changes:Number(s.run(...args).changes)}};}};}};}
 async function pack(sequence){
  const p={schemaVersion:2,sequence,engineFingerprint,issuedAt:'2026-11-25T00:00:00.000Z',expiresAt:'2026-11-30T00:00:00.000Z',mode:'preview',regional:structuredClone(regional),indiaSalary:structuredClone(indiaSalary),payroll:structuredClone(payroll),national:structuredClone(national),evidence:[]};
@@ -56,10 +69,10 @@ async function pack(sequence){
 }
 test('atomic publication, fixture rejection, replay, emergency block and forward recovery',async()=>{
  const sqlite=new DatabaseSync(':memory:');try{
- migrate(sqlite);const db=dbAdapter(sqlite);
+ migrate(sqlite);const db=dbAdapter(sqlite),anchor=createAnchor();
  const one=await approvedPack(1),bad=structuredClone(one.fixtures);bad[0].expected=1;
- await assert.rejects(publishSnapshot(db,one.envelope,one.fixtures,options));
- await assert.rejects(publishSnapshot(db,one.envelope,bad,approvedOptions(one)));
+ await assert.rejects(publishSnapshot(db,one.envelope,one.fixtures,{...options,sequenceAnchor:anchor.client}));
+ await assert.rejects(publishSnapshot(db,one.envelope,bad,approvedOptions(one,anchor.client)));
  assert.equal(sqlite.prepare('SELECT sequence FROM regulatory_head').get().sequence,0);
 
  assert.equal((await publishSnapshot(db,one.envelope,one.fixtures,approvedOptions(one))).state,'active');
@@ -75,8 +88,8 @@ test('atomic publication, fixture rejection, replay, emergency block and forward
  const env={RULE_DB:db,RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,RULE_MIN_SEQUENCE:'1'};
  assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).state,'signed-preview');
  await assert.rejects(publishSnapshot(db,one.envelope,one.fixtures,approvedOptions(one)));
- await blockSnapshot(db,1);assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).state,'blocked');
- const three=await approvedPack(3);await publishSnapshot(db,three.envelope,three.fixtures,approvedOptions(three));
+ await blockSnapshot(db,1,anchor.client);assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).state,'blocked');
+ const three=await approvedPack(3);await publishSnapshot(db,three.envelope,three.fixtures,approvedOptions(three,anchor.client));
  assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).sequence,3);
  assert.equal(sqlite.prepare('SELECT count(*) n FROM regulatory_snapshots').get().n,2);
  assert.equal(sqlite.prepare('SELECT count(*) n FROM regulatory_events').get().n,3);
@@ -86,35 +99,60 @@ test('atomic publication, fixture rejection, replay, emergency block and forward
  }finally{sqlite.close();}
 });
 
-test('scheduled publisher requires independent approval, rejects tampering and retains active head',async()=>{const sqlite=new DatabaseSync(':memory:');try{migrate(sqlite);const db=dbAdapter(sqlite);let pending=null,floorValue='0';const floorStore={get:async key=>key==='taxpulse:regulatory-sequence-floor'?floorValue:null,put:async(key,value)=>{if(key!=='taxpulse:regulatory-sequence-floor')throw Error('Unexpected floor key');floorValue=value;}};const env={RULE_DB:db,RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,RULE_INBOX:{get:async()=>pending},RULE_SEQUENCE_FLOOR:floorStore};await assert.rejects(runScheduledPublication({...env,RULE_REVIEW_PUBLIC_KEY:publicKeyHex},engineFingerprint,{now}));await assert.rejects(runScheduledPublication({...env,RULE_SEQUENCE_FLOOR:undefined},engineFingerprint,{now}),/Incomplete publisher configuration/);assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).state,'no_candidate');pending=JSON.stringify(await pack(1));await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));assert.equal(sqlite.prepare('SELECT sequence FROM regulatory_head').get().sequence,0);pending=JSON.stringify(await approvedPack(1));assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).state,'active');assert.equal(floorValue,'1');assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).state,'already_processed');const two=await approvedPack(2);two.envelope.signature='0'.repeat(128);pending=JSON.stringify(two);await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));const wrongReview=await approvedPack(2);wrongReview.review.payload.reviewerId='wrong-reviewer';pending=JSON.stringify(wrongReview);await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));const replay=await approvedPack(2);replay.review=(await approvedPack(1)).review;pending=JSON.stringify(replay);await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));assert.equal(sqlite.prepare('SELECT sequence FROM regulatory_head').get().sequence,1);pending=JSON.stringify(await approvedPack(2));assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).sequence,2);assert.equal(floorValue,'2');}finally{sqlite.close();}});
-
-test('independent sequence floor detects restored D1 rollback and requires a higher approved snapshot',async()=>{
- const dir=mkdtempSync(join(tmpdir(),'taxpulse-sequence-floor-'));
- let source,restored;
+test('scheduled publisher requires independent approval, rejects tampering and retains active head',async()=>{
+ const sqlite=new DatabaseSync(':memory:');
  try{
-  source=new DatabaseSync(join(dir,'source.db'));migrate(source);const sourceDb=dbAdapter(source);
-  let pending=null,floorValue='0';
-  const floorStore={get:async key=>key==='taxpulse:regulatory-sequence-floor'?floorValue:null,put:async(key,value)=>{if(key!=='taxpulse:regulatory-sequence-floor')throw Error('Unexpected floor key');floorValue=value;}};
-  const env={RULE_DB:sourceDb,RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,RULE_INBOX:{get:async()=>pending},RULE_SEQUENCE_FLOOR:floorStore};
+  migrate(sqlite);const db=dbAdapter(sqlite);let pending=null,floorValue='0';
+  const floorStore={async put(key,value){if(key!=='taxpulse:regulatory-sequence-floor')throw Error('Unexpected floor key');floorValue=value;}};
+  const anchor=createAnchor(undefined,floorStore);
+  const env={RULE_DB:db,RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,
+   RULE_INBOX:{async get(){return pending;}},REGULATORY_SEQUENCE_ANCHOR:anchor.binding,RULE_SEQUENCE_FLOOR:floorStore};
+  await assert.rejects(runScheduledPublication({...env,RULE_REVIEW_PUBLIC_KEY:publicKeyHex},engineFingerprint,{now}));
+  await assert.rejects(runScheduledPublication({...env,REGULATORY_SEQUENCE_ANCHOR:undefined},engineFingerprint,{now}),/Incomplete publisher configuration/);
+  assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).state,'no_candidate');
+  pending=JSON.stringify(await pack(1));await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));
+  assert.equal(sqlite.prepare('SELECT sequence FROM regulatory_head').get().sequence,0);
   pending=JSON.stringify(await approvedPack(1));
-  assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).sequence,1);
+  assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).state,'active');
   assert.equal(floorValue,'1');
-  const backup=join(dir,'before-restore.db');
-  source.exec("VACUUM INTO '"+backup.replaceAll("'","''")+"'");
+  assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).state,'already_processed');
+  const two=await approvedPack(2);two.envelope.signature='0'.repeat(128);pending=JSON.stringify(two);
+  await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));
+  const wrongReview=await approvedPack(2);wrongReview.review.payload.reviewerId='wrong-reviewer';pending=JSON.stringify(wrongReview);
+  await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));
+  const replay=await approvedPack(2);replay.review=(await approvedPack(1)).review;pending=JSON.stringify(replay);
+  await assert.rejects(runScheduledPublication(env,engineFingerprint,{now}));
+  assert.equal(sqlite.prepare('SELECT sequence FROM regulatory_head').get().sequence,1);
   pending=JSON.stringify(await approvedPack(2));
   assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).sequence,2);
   assert.equal(floorValue,'2');
-  restored=new DatabaseSync(backup);
-  const restoredEnv={...env,RULE_DB:dbAdapter(restored)};
+ }finally{sqlite.close();}
+});
+
+test('independent sequence anchor detects restored D1 rollback and requires a fresh higher approved snapshot',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'taxpulse-sequence-floor-'));let source,restored;
+ try{
+  source=new DatabaseSync(join(dir,'source.db'));migrate(source);const sourceDb=dbAdapter(source);
+  let pending=null,floorValue='0';
+  const floorStore={async put(key,value){if(key!=='taxpulse:regulatory-sequence-floor')throw Error('Unexpected floor key');floorValue=value;}};
+  const anchor=createAnchor(undefined,floorStore);
+  const env={RULE_DB:sourceDb,RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,
+   RULE_INBOX:{async get(){return pending;}},REGULATORY_SEQUENCE_ANCHOR:anchor.binding,RULE_SEQUENCE_FLOOR:floorStore};
+  pending=JSON.stringify(await approvedPack(1));assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).sequence,1);assert.equal(floorValue,'1');
+  const backup=join(dir,'before-restore.db');source.exec("VACUUM INTO '"+backup.replaceAll("'","''")+"'");
+  pending=JSON.stringify(await approvedPack(2));assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).sequence,2);assert.equal(floorValue,'2');
+  restored=new DatabaseSync(backup);const restoredEnv={...env,RULE_DB:dbAdapter(restored)};
   pending=JSON.stringify(await approvedPack(3));
   const detected=await runScheduledPublication(restoredEnv,engineFingerprint,{now});
-  assert.deepEqual(detected,{state:'rollback_detected',databaseSequence:1,durableSequenceFloor:2,blockedSequence:2});
+  assert.deepEqual(detected,{state:'rollback_detected',databaseSequence:1,externalSequenceFloor:2,blockedSequence:3});
   const blocked=restored.prepare('SELECT sequence,state FROM regulatory_head').get();
-  assert.equal(blocked.sequence,2);assert.equal(blocked.state,'blocked');
-  assert.equal(floorValue,'2');
+  assert.equal(blocked.sequence,3);assert.equal(blocked.state,'blocked');assert.equal(floorValue,'3');
+  pending=JSON.stringify(await approvedPack(4));
   const recovered=await runScheduledPublication(restoredEnv,engineFingerprint,{now});
-  assert.equal(recovered.sequence,3);
-  assert.equal(floorValue,'3');
-  const recoveredHead=restored.prepare('SELECT sequence,state FROM regulatory_head').get();assert.equal(recoveredHead.sequence,3);assert.equal(recoveredHead.state,'active');
+  assert.equal(recovered.sequence,4);assert.equal(floorValue,'4');
+  const recoveredHead=restored.prepare('SELECT sequence,state FROM regulatory_head').get();
+  assert.equal(recoveredHead.sequence,4);assert.equal(recoveredHead.state,'active');
+  assert.equal(restored.prepare('SELECT count(*) n FROM regulatory_snapshots').get().n,2);
+  assert.equal(restored.prepare('SELECT count(*) n FROM regulatory_events').get().n,3);
  }finally{restored?.close();source?.close();rmSync(dir,{recursive:true,force:true});}
 });
