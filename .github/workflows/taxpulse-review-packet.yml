@@ -9,6 +9,19 @@ on:
       - 'REVIEW-HANDOFF.md'
       - 'rules/**'
       - 'engine/release-gate.mjs'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/prepare-review-packet.mjs'
+      - 'scripts/production-readiness-report.mjs'
+      - 'tests/production-readiness-report.test.mjs'
+      - '.github/workflows/taxpulse-review-packet.yml'
+      - 'REVIEW-HANDOFF.md'
+      - 'rules/**'
+      - 'engine/release-gate.mjs'
+      - 'data/d1-migration-005-preview-2026-11-27.json'
+      - 'data/preview-boundary-observation.json'
+      - 'data/regulatory-source-observation-2026-11-27.json'
   workflow_dispatch:
 permissions:
   contents: read

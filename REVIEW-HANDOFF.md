@@ -47,3 +47,19 @@ The planning engine now includes a bounded cash-flow stress scenario. It compare
 
 ## Preview D1 migration 005 — 27 November 2026
 Migration 005 has been applied to the isolated `taxpulse-regulatory-preview` database after confirming migrations 001–004, empty sequence-0 head, and zero archived snapshots/events/version rows. The publisher Worker remains unscheduled; the preview calculator Worker has no D1 binding. The national-version uniqueness, immutability and ledger-recording triggers were verified after application. No signed rule package, key enrollment or production change occurred. Evidence: `data/d1-migration-005-preview-2026-11-27.json`. D1 denied PRAGMA access to the connector query surface, so integrity_check and foreign_key_check were not claimed; the isolated provider restore drill remains separately documented.
+
+
+## Hosted preview release checkpoint — 27 November 2026
+The dedicated preview Worker `hqventures-taxpulse-integrated-preview` is deployed at version 36, deployment `0aed0de8-820b-4c28-b39d-fb9fc997518b`, revision `c2b40b7d8f3a63631f8dee6dabe11b70d31140c189dec030bec2be5a0c828415`. Hosted verification run `45967899164` passed exact static-byte parity for 43 public assets and all 44 tool routes at 320, 390 and 1440 pixel Chromium viewports. It also checked security headers, noindex, request isolation, browser errors and a synthetic business calculation. This is hosted Chromium verification, not physical Android/iOS testing, screen-reader acceptance or WCAG certification. See `data/preview-boundary-observation.json`.
+
+The 56-scope statutory inventory contains 54 narrow tax-component examples and two analogues only: US state sales tax for the non-applicable federal VAT category, and Dubai property registration fees for property tax. Neither analogue satisfies statutory approval. All 56 scopes remain independently unapproved.
+
+The 30-source read-only regulatory probe recorded five candidate observation groups (17 candidate subscopes, including 13 Canadian federal/provincial income-tax band candidates), two UK income-tax sources requiring manual review, and two inaccessible official pages (Manipur professional tax and Quebec income-tax rates). No rule was changed or activated. See `data/regulatory-source-observation-2026-11-27.json` and the source-probe artifact from workflow run `45967502147`.
+
+Migration 005 is applied to the empty `taxpulse-regulatory-preview` D1 database. The publisher Worker remains unscheduled; the calculator preview Worker remains KV-only. No signing keys are enrolled, no rules are published, no production system was changed, and monetization remains disabled.
+
+## Founder and independent-review actions
+1. Appoint qualified independent reviewers for the 56 country/module scopes, including an explicit decision on the two analogous/non-applicable cases.
+2. Appoint an independent security assessor and approve an isolated test scope.
+3. After actual statutory review, enroll separate founder publisher and independent reviewer Ed25519 public keys. Keep private keys offline; do not send them through ChatGPT or commit them.
+4. Complete physical Android/iOS, assistive-technology and accessibility acceptance using synthetic values only.

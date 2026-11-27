@@ -14,4 +14,15 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.deepEqual(p.previewInfrastructure.d1Migration005.publisherSchedules,[]);
  assert.equal(p.previewInfrastructure.d1Migration005.previewCalculatorD1Binding,false);
  assert.equal(p.previewInfrastructure.d1Migration005.verifiedTriggers.length,3);
+ assert.equal(p.previewInfrastructure.hostedPreview.versionNumber,36);
+ assert.equal(p.previewInfrastructure.hostedPreview.hostedVerificationStatus,'passed');
+ assert.equal(p.previewInfrastructure.hostedPreview.assetsVerified,43);
+ assert.equal(p.previewInfrastructure.hostedPreview.toolRoutesVerified,44);
+ assert.deepEqual(p.previewInfrastructure.hostedPreview.viewports,[320,390,1440]);
+ assert.equal(p.regulatorySourceIntelligence.sourceCount,30);
+ assert.equal(p.regulatorySourceIntelligence.candidateObservationCount,5);
+ assert.equal(p.regulatorySourceIntelligence.candidateSubscopeCount,17);
+ assert.equal(p.regulatorySourceIntelligence.reviewPendingSources,2);
+ assert.equal(p.regulatorySourceIntelligence.unavailableSources,2);
+ assert.equal(p.regulatorySourceIntelligence.automaticRuleChanges,false);
 });

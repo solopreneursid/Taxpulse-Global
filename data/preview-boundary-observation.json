@@ -1,38 +1,62 @@
 {
-  "schemaVersion": 1,
-  "observedOn": "2026-11-26",
-  "scope": "read-only engineering observation; not independent security assessment",
-  "previewRevision": "1eaf625066f061122996ab40b612cacee2397f523c5393169386b014755b096b",
-  "hostedVerificationRun": 45825332126,
+  "schemaVersion": 2,
+  "observedOn": "2026-11-27",
+  "sourceCommit": "4e7df23bd584f005acdd3449b304bb1a675e8c1d",
+  "scope": "read-only engineering observation; not independent security assessment or production approval",
+  "previewRevision": "c2b40b7d8f3a63631f8dee6dabe11b70d31140c189dec030bec2be5a0c828415",
+  "hostedVerificationRun": 45967899164,
+  "hostedVerificationStatus": "passed",
+  "hostedAssetsVerified": 43,
+  "hostedToolRoutesVerified": 44,
+  "hostedViewports": [
+    320,
+    390,
+    1440
+  ],
   "preview": {
-    "activeVersion": "44736c62-9a86-4c37-815b-efcd18aa253e",
+    "script": "hqventures-taxpulse-integrated-preview",
+    "activeVersion": "9fdb999e-127f-46c4-aa91-08009ebdbf23",
+    "versionNumber": 36,
+    "deploymentId": "0aed0de8-820b-4c28-b39d-fb9fc997518b",
     "bindings": [
       "REGULATORY_STATE"
     ],
     "schedules": 0
   },
   "publisher": {
+    "script": "hqventures-taxpulse-rule-publisher-preview",
     "activeVersion": "03147c4d-0e33-402f-b580-03d46256e193",
     "bindings": [
       "RULE_DB",
       "RULE_INBOX"
     ],
+    "d1Database": "taxpulse-regulatory-preview",
     "schedules": 0
   },
   "d1": {
-    "quickCheck": "ok",
-    "foreignKeyViolations": 0,
+    "database": "taxpulse-regulatory-preview",
+    "migration005Applied": true,
+    "verifiedTriggers": [
+      "regulatory_snapshot_unique_versions",
+      "regulatory_versions_immutable",
+      "regulatory_versions_record"
+    ],
     "headSequence": 0,
     "headState": "empty",
     "hasDigest": false,
     "hasReview": false,
     "snapshots": 0,
     "events": 0,
-    "versions": 0
+    "versions": 0,
+    "previewCalculatorD1Binding": false,
+    "integrityCheck": "Not run: D1 connector query surface denied PRAGMA access.",
+    "foreignKeyCheck": "Not run: D1 connector query surface denied PRAGMA access."
   },
   "limitations": [
-    "No key enrollment observed in the inspected Workers.",
-    "No production system or recovery operation tested.",
-    "No independent security or statutory approval implied."
+    "Hosted checks use GitHub-hosted Chromium emulation, not physical Android/iOS devices or WCAG certification.",
+    "No trusted publisher or reviewer keys are enrolled.",
+    "No independent statutory or security approval is recorded.",
+    "No production system, customer data or production deployment was modified.",
+    "No tax rules were published or automatically activated."
   ]
 }

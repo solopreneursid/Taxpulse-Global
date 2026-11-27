@@ -4,5 +4,6 @@
   "runtimeState": "bundled-preview",
   "deploymentVersion": 36,
   "deploymentId": "0aed0de8-820b-4c28-b39d-fb9fc997518b",
-  "sourceCommit": "4e7df23bd584f005acdd3449b304bb1a675e8c1d"
+  "sourceCommit": "4e7df23bd584f005acdd3449b304bb1a675e8c1d",
+  "hostedSmokeSchemaVersion": 2
 }
