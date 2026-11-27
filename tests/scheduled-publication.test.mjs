@@ -31,29 +31,25 @@ function database(initial){
    if(sql.startsWith('SELECT'))return {async first(){return structuredClone(head);}};
    if(sql.includes("SET sequence=?,state='blocked'")){
     return {
-     bind(sequence,expected,state){
-      return {
-       async run(){
-        if(head.sequence!==expected||head.state!==state)return {meta:{changes:0}};
-        head.sequence=sequence;
-        head.state='blocked';
-        return {meta:{changes:1}};
-       }
-      };
-     }
+     bind: (sequence,expected,state) => ({
+      run: async () => {
+       if(head.sequence!==expected||head.state!==state)return {meta:{changes:0}};
+       head.sequence=sequence;
+       head.state='blocked';
+       return {meta:{changes:1}};
+      }
+     })
     };
    }
    if(sql.includes("SET sequence=?,digest=?,envelope=?,review_record=?,state='active'")){
     return {
-     bind(sequence,digest,envelope,reviewRecord,expected){
-      return {
-       async run(){
-        if(head.sequence!==expected)return {meta:{changes:0}};
-        Object.assign(head,{sequence,digest,envelope,review_record:reviewRecord,state:'active'});
-        return {meta:{changes:1}};
-       }
-      };
-     }
+     bind: (sequence,digest,envelope,reviewRecord,expected) => ({
+      run: async () => {
+       if(head.sequence!==expected)return {meta:{changes:0}};
+       Object.assign(head,{sequence,digest,envelope,review_record:reviewRecord,state:'active'});
+       return {meta:{changes:1}};
+      }
+     })
     };
    }
    throw Error('Unexpected SQL in test: '+sql);
