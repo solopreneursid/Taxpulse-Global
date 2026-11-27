@@ -15,7 +15,8 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.equal(p.apiIntegration.productionEnabled,false);
  assert.equal(p.scopedTaxComponents.indirectTaxRules.length,12);
  assert.equal(p.scopedTaxComponents.corporateTaxRules.length,4);
- assert.equal(p.scopedTaxComponents.employerPayrollComponents.length,1);
+ assert.equal(p.scopedTaxComponents.employerPayrollComponents.length,2);
+ assert.match(p.scopedTaxComponents.historicalIndiaGstExample,/not general GST coverage/);
  assert.equal(p.scopedTaxComponents.treatyCreditComponents.length,1);
  assert.equal(p.scopedTaxComponents.independentApproval,'not established');
  assert.equal(p.scopedTaxComponents.productionEnabled,false);
