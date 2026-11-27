@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "observedOn": "2026-11-27",
+  "environment": "preview",
+  "database": "taxpulse-regulatory-preview",
+  "regulatoryHead": {
+    "sequence": 0,
+    "state": "empty",
+    "digestPresent": false,
+    "reviewRecordPresent": false,
+    "snapshots": 0,
+    "events": 0
+  },
+  "sequenceFloor": {
+    "namespace": "taxpulse-regulatory-sequence-floor",
+    "namespaceId": "de7c0d96e84144a3a399e599c6b1f273",
+    "binding": "RULE_SEQUENCE_FLOOR",
+    "key": "taxpulse:regulatory-sequence-floor",
+    "value": "0",
+    "readBackVerified": true
+  },
+  "publisher": {
+    "worker": "hqventures-taxpulse-rule-publisher-preview",
+    "existingBindingsPreserved": ["RULE_DB", "RULE_INBOX"],
+    "newBindingVerified": true,
+    "scheduleEnabled": false,
+    "rulesPublished": false
+  },
+  "scope": "Preview-only infrastructure provisioning. No production database, Worker, route, key enrollment, statutory rule or customer data was modified."
+}
