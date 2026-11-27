@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-11-27T08:36:05.995Z",
+  "workflowRunId": 45967502147,
+  "artifactId": 15183571745,
+  "mode": "review_only",
+  "sourceCount": 30,
+  "automaticRuleChanges": false,
+  "ruleChangesApplied": false,
+  "legalVerification": false,
+  "candidateObservationCount": 5,
+  "candidateSubscopeCount": 17,
+  "candidateObservations": [
+    {
+      "id": "US-1",
+      "jurisdiction": "US",
+      "component": "oasdi",
+      "taxYear": "2027",
+      "effectiveFrom": "2027-01-01",
+      "scope": "Annual Social Security wage base and employee rate candidate",
+      "sourceUrl": "https://www.ssa.gov/OACT/COLA/cbb.html",
+      "sourceDigest": "18eb62ead038f65cfe4740029a9be4f4e78cf472cee27bb58d80026f0c32ac4d",
+      "legalStatus": "review_required",
+      "automaticActivation": false
+    },
+    {
+      "id": "CA-6",
+      "jurisdiction": "CA",
+      "component": "cpp-ei",
+      "taxYear": "2026",
+      "effectiveFrom": "2026-01-01",
+      "scope": "Annual employee contributions outside Quebec; excludes pay-period rounding and exemptions",
+      "sourceUrl": "https://www.canada.ca/en/revenue-agency/services/forms-publications/payroll/t4032-payroll-deductions-tables/t4032oc-jan/t4032oc-january-general-information.html",
+      "sourceDigest": "7531409f0a80312ee8e8794acab3a3ec8670d6bd2ba11183540bed854fe15669",
+      "legalStatus": "review_required",
+      "automaticActivation": false
+    },
+    {
+      "id": "SG-8",
+      "jurisdiction": "SG",
+      "component": "national-assessment",
+      "assessmentYearFrom": "2024",
+      "scope": "Resident gross tax before rebates; not a current-year activation",
+      "sourceUrl": "https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-residency-and-tax-rates/individual-income-tax-rates",
+      "sourceDigest": "5008c0eb837cc154943cc02339ae26b506dda6959eb80d6aec595646a513811e",
+      "legalStatus": "review_required",
+      "automaticActivation": false
+    },
+    {
+      "id": "CA-regional-brackets",
+      "jurisdiction": "CA",
+      "component": "income-tax-bands",
+      "taxYear": "2026",
+      "candidateSubscopeCount": 13,
+      "scope": "Federal and provincial/territorial income-tax band candidates",
+      "sourceUrl": "https://www.canada.ca/en/revenue-agency/services/tax/individuals/tax-rates-brackets/current-year.html",
+      "sourceDigest": "a95847b6029ea78d781db2f63292224ecf49bec2068fc79f34e8a4d9c176c9d5",
+      "legalStatus": "review_required",
+      "automaticActivation": false
+    },
+    {
+      "id": "GB-NI-2026",
+      "jurisdiction": "GB",
+      "component": "ni",
+      "taxYear": "2026",
+      "effectiveFrom": "2026-04-06",
+      "effectiveUntil": "2027-04-06",
+      "scope": "Employer and employee National Insurance thresholds/rates candidate",
+      "sourceUrl": "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
+      "sourceDigest": "ae4cd9501cc1f8885a0064be9a27533010ce96cdc241c8d2814029bc951d8ce5",
+      "legalStatus": "review_required",
+      "automaticActivation": false
+    }
+  ],
+  "reviewPendingSources": [
+    {
+      "id": "GB-2",
+      "jurisdiction": "GB",
+      "topic": "Income tax rates",
+      "sourceUrl": "https://www.gov.uk/income-tax-rates"
+    },
+    {
+      "id": "GB-SCT-bands",
+      "jurisdiction": "GB-SCT",
+      "topic": "Scottish income tax bands",
+      "sourceUrl": "https://www.gov.scot/publications/scottish-income-tax-rates-and-bands/"
+    }
+  ],
+  "unavailableSources": [
+    {
+      "id": "IN-MN-profession",
+      "jurisdiction": "IN-MN",
+      "topic": "Professional tax",
+      "sourceUrl": "https://www.manipurtaxes.gov.in/en/professional-tax/rules/"
+    },
+    {
+      "id": "CA-QC-rate",
+      "jurisdiction": "CA-QC",
+      "topic": "Provincial income tax rates",
+      "sourceUrl": "https://www.revenuquebec.ca/en/citizens/income-tax-return/completing-your-income-tax-return/income-tax-rates/"
+    }
+  ],
+  "note": "All candidates are source-derived observations only. None has been independently verified or activated. The complete read-only probe artifact is retained in GitHub Actions run 45967502147."
+}
