@@ -37,6 +37,14 @@ jobs:
             preview-build-evidence.json
             local-accessibility-performance.json
           retention-days: 30
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: preview-deployment-package
+          path: |
+            staging/integrated/bundle/
+            preview-build-evidence.json
+          retention-days: 7
   regulatory-source-probe:
     continue-on-error: true
     runs-on: ubuntu-latest
