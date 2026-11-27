@@ -61,17 +61,17 @@ test('cash runway respects reserve, exact whole-month arithmetic and unreachable
  assert.throws(()=>financialRunway({...base,horizonMonths:0}));assert.throws(()=>financialRunway({...base,monthlyIncome:-1}));
 });
 
-for(const [country,tax] of [['GB',20],['DE',19],['AU',10],['SG',9],['AE',5],['CA',5]])test('standard-rated single-supply source fixture '+country,()=>{
- const input={country,priceBasis:'exclusive',amount:100,scopeConfirmed:true};
+for(const [country,tax] of [['GB',20],['DE',19],['AU',10],['SG',9],['AE',5],['CA',5],['US-TX',6.25]])test('standard-rated single-supply source fixture '+country,()=>{
+ const input={country,priceBasis:'exclusive',amount:100,transactionDate:'2026-11-27',scopeConfirmed:true};
  const r=standardIndirectTax(input);assert.equal(r.taxAmount,tax);assert.equal(r.grossAmount,100+tax);assert.equal(r.taxRulesVerified,false);
  assert.equal(standardIndirectTax({...input,priceBasis:'inclusive',amount:100+tax}).netAmount,100);
  assert.equal(standardIndirectTax({...input,amount:0}).taxAmount,0);
  assert.throws(()=>standardIndirectTax({...input,scopeConfirmed:false}));
 });
 test('standard indirect tax rejects unsupported scope and rounds a single amount',()=>{
- const input={country:'GB',priceBasis:'exclusive',amount:0.03,scopeConfirmed:true};
+ const input={country:'GB',priceBasis:'exclusive',amount:0.03,transactionDate:'2026-11-27',scopeConfirmed:true};
  assert.equal(standardIndirectTax(input).taxAmount,0.01);
- assert.throws(()=>standardIndirectTax({...input,country:'IN'}));assert.throws(()=>standardIndirectTax({...input,amount:-1}));assert.throws(()=>standardIndirectTax({...input,amount:0.001}));assert.throws(()=>standardIndirectTax({...input,priceBasis:'other'}));
+ assert.throws(()=>standardIndirectTax({...input,country:'IN'}));assert.throws(()=>standardIndirectTax({...input,amount:-1}));assert.throws(()=>standardIndirectTax({...input,amount:0.001}));assert.throws(()=>standardIndirectTax({...input,priceBasis:'other'}));assert.throws(()=>standardIndirectTax({...input,transactionDate:'2027-01-01'}));
 });
 
 test('financial health combines a balance sheet with cash flow without double-counting debt payments',()=>{
@@ -99,7 +99,7 @@ test('UAE threshold and Australia confirmed company rate fixtures',()=>{
 });
 
 for(const [country,rate] of [['CA-ON',13],['CA-NS',14],['CA-NB',15],['CA-NL',15],['CA-PE',15]])test('CRA HST scope '+country,()=>{
- const input={country,priceBasis:'exclusive',amount:100,scopeConfirmed:true};assert.equal(standardIndirectTax(input).taxAmount,rate);assert.equal(standardIndirectTax({...input,priceBasis:'inclusive',amount:100+rate}).netAmount,100);
+ const input={country,priceBasis:'exclusive',amount:100,transactionDate:'2026-11-27',scopeConfirmed:true};assert.equal(standardIndirectTax(input).taxAmount,rate);assert.equal(standardIndirectTax({...input,priceBasis:'inclusive',amount:100+rate}).netAmount,100);
 });
 test('company tax components US Canada Germany and Singapore with explicitly confirmed scope',()=>{
  const input={scopeConfirmed:true,taxableProfit:100000};
