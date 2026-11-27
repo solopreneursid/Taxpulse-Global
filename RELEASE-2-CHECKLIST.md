@@ -37,3 +37,7 @@ The isolated D1 provider-level restore drill has now passed (data/d1-recovery-dr
 
 ## Automated accessibility and performance regression
 Local Chromium checks 320/390/1440 widths, labelled controls, skip navigation, route and report focus, no external browser requests, initial decoded payload/resource ceilings, and 200% root text enlargement for representative workspaces and calculators. CI archives local-accessibility-performance.json. These are limited regression checks, not WCAG certification, network performance targets or physical-device acceptance.
+
+
+## Migration 005 preview-database status
+Migration 005 is included in the source and is now covered by regression tests for national, investment and salary-version backfill, first-sequence retention, parameter immutability, duplicate rejection, conflict abort and idempotent reapplication. The identified D1 target is `taxpulse-regulatory-preview`; read-only inspection found the head at sequence 0 / empty, with zero snapshots, events and ledger rows. The preview Worker reports no Cron schedules. Do not apply to any YorpHives or unrelated D1 database. After source CI passes, apply migration 005 only to this named preview database while publication remains disabled, then re-read the schema and empty head. This is a schema migration only; it does not enroll keys, publish rules, or authorize production.
