@@ -9,7 +9,7 @@ test('readiness report distinguishes all 56 preview entries from 16 scoped PIT/p
  assert.equal(p.backendPITInputBasis.DE,'taxableIncome with individual or eligible joint assessment');
  assert.equal(Object.keys(p.backendPayrollInputBasis).length,8);
  assert.equal(p.backendPayrollInputBasis.DE,'monthly EUR gross pay; region DE; requires annualTaxableIncome and healthSupplementRate');
- assert.match(p.payrollScope,/not payroll processing/);assert.equal(p.missingBackendModules.length,5);assert.equal(p.productionAuthorized,false);assert.match(p.gate,/blocked/);
+ assert.match(p.payrollScope,/no payroll withholding/);assert.equal(p.missingBackendModules.length,5);assert.equal(p.productionAuthorized,false);assert.match(p.gate,/blocked/);
  assert.equal(p.scopedTaxComponents.indirectTaxRules.length,12);
  assert.equal(p.scopedTaxComponents.corporateTaxRules.length,4);
  assert.equal(p.scopedTaxComponents.employerPayrollComponents.length,1);
