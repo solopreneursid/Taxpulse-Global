@@ -16,6 +16,10 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.equal(p.financialTwinStressTimeline.monthlyPathLimit,24);
  assert.equal(p.financialTwinStressTimeline.horizonMonths.maximum,600);
  assert.equal(p.financialTwinStressTimeline.sampleOnly,true);
+ assert.equal(p.encryptedRecordSecurity.iterations,600000);
+ assert.equal(p.encryptedRecordSecurity.cipher,'AES-256-GCM');
+ assert.equal(p.encryptedRecordSecurity.strictEnvelopeSchema,true);
+ assert.equal(p.encryptedRecordSecurity.independentSecurityAssessment,'pending');
  assert.ok(p.countries.every(c=>c.scopedPreviewExamples===7&&!c.manifestVerified&&!c.productionEnabled&&c.recordedEvidenceCount===0&&c.remaining.length===7));
  assert.equal(p.countries.find(c=>c.country==='IN').missingBackendModules.length,6);
  assert.equal(p.countries.find(c=>c.country==='CA').missingBackendModules.length,7);
