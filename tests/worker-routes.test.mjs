@@ -105,7 +105,7 @@ test('generated Worker routes and validation',async()=>{
   const response=await post(JSON.stringify({country,taxYear:'2026',module:'capgains',parameters}));
   assert.equal(response.status,200,country);
   const result=await response.json();
-  assert.equal(result.country,country);assert.equal(result.module,'capgains');
+  assert.equal(result.country,country);assert.equal(result.taxYear,'2026');assert.equal(result.module,'capgains');
   assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
   assert.ok(Number.isFinite(result[resultField]),country+' '+resultField);
   assert.ok(result.sourceUrls.length>0);
