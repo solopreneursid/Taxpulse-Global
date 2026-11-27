@@ -20,6 +20,10 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.equal(p.encryptedRecordSecurity.cipher,'AES-256-GCM');
  assert.equal(p.encryptedRecordSecurity.strictEnvelopeSchema,true);
  assert.equal(p.encryptedRecordSecurity.independentSecurityAssessment,'pending');
+ assert.equal(p.releaseAuthorization.algorithm,'Ed25519');
+ assert.equal(p.releaseAuthorization.maximumApprovalLifetimeHours,168);
+ assert.equal(p.releaseAuthorization.keyRotationInvalidatesPriorApproval,true);
+ assert.equal(p.releaseAuthorization.trustedKeysEnrolled,false);
  assert.ok(p.countries.every(c=>c.scopedPreviewExamples===7&&!c.manifestVerified&&!c.productionEnabled&&c.recordedEvidenceCount===0&&c.remaining.length===7));
  assert.equal(p.countries.find(c=>c.country==='IN').missingBackendModules.length,6);
  assert.equal(p.countries.find(c=>c.country==='CA').missingBackendModules.length,7);
