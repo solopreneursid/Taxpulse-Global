@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {countryCalculate,catalog} from '../engine/country.mjs';
 import {calculateCapitalGain} from '../engine/taxable-income.mjs';
 test('capital gains endpoint rejects legacy input shapes and requires effective-dated evidence',()=>{
- for(const country of ['GB','US','IN'])assert.throws(()=>countryCalculate({country,taxYear:'2026',module:'capgains',parameters:{assetType:'listed_equity',salePrice:20000,purchasePrice:10000,holdingMonths:12}}),/Unsupported investment example|Unsupported fields/);
- assert.ok(catalog().modules.includes('capgains'));
- assert.equal(Object.hasOwn(catalog().disabledModules,'capgains'),false);
+ for(const country of ['GB','US','IN'])assert.throws(()=>countryCalculate({country,taxYear:'2026',module:'capgains',parameters:{assetType:'listed_equity',salePrice:20000,purchasePrice:10000,holdingMonths:12}}),/Legacy capital gains disabled/);
+ assert.equal(catalog().modules.includes('capgains'),false);
+ assert.equal(Object.hasOwn(catalog().disabledModules,'capgains'),true);
 });
 test('UK scoped disposal rate is independent of holding period',()=>{
  const input={country:'GB',taxYear:'2026',disposed:'2026-06-01',saleProceeds:20000,adjustedBasis:10000,eligibleLosses:0,otherTaxableIncome:37700,scopeConfirmed:true};
