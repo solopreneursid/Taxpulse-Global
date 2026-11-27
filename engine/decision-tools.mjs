@@ -9,6 +9,29 @@ function units(v,scale=100,max=1e9){if(typeof v!=='number'||!Number.isFinite(v)|
 const out=n=>{if(n>100000000000000n||n< -100000000000000n)throw new RangeError('Result outside supported range');return Number(n)/100;};
 const round=(n,d)=>n<0n?-round(-n,d):(n+d/2n)/d;
 function currency(c){if(!currencies.includes(c))throw new RangeError('Unsupported currency');return c;}
+function isoDate(value,label='Date'){
+ if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value)||
+  !Number.isFinite(Date.parse(value+'T00:00:00.000Z'))||
+  new Date(value+'T00:00:00.000Z').toISOString().slice(0,10)!==value)
+  throw new RangeError(label+' must be a valid ISO calendar date');
+ return value;
+}
+function calendar2026(value,label='Transaction date'){
+ const date=isoDate(value,label);
+ if(date<'2026-01-01'||date>='2027-01-01')throw new RangeError(label+' must be in calendar 2026');
+ return date;
+}
+function anniversaryClamped(value){
+ const [year,month,day]=value.split('-').map(Number);
+ const targetYear=year+1;
+ const lastDay=new Date(Date.UTC(targetYear,month,0)).getUTCDate();
+ return [targetYear,String(month).padStart(2,'0'),String(Math.min(day,lastDay)).padStart(2,'0')].join('-');
+}
+function addOneDay(value){
+ const date=new Date(value+'T00:00:00.000Z');
+ date.setUTCDate(date.getUTCDate()+1);
+ return date.toISOString().slice(0,10);
+}
 const sample={sampleOnly:true,taxRulesVerified:false};
 export function indiaCtc(input,ruleContext={}){
  exact(input,['annualCtc','employerContributions','nonCashBenefits','employeeContributions','otherPayrollDeductions','residentIndividual','ageGroup','oldEligibleDeductions','newEligibleDeductions']);
@@ -258,7 +281,8 @@ export function scopedCorporateTax(input){
 
 /** England and Northern Ireland, one ordinary freehold residential purchase. */
 export function residentialSdlt(input){
- exact(input,['consideration','buyerScope','scopeConfirmed']);
+ exact(input,['consideration','buyerScope','transactionDate','scopeConfirmed']);
+ const transactionDate=calendar2026(input.transactionDate);
  if(input.scopeConfirmed!==true||!['ordinary','first-time'].includes(input.buyerScope)||!Number.isSafeInteger(input.consideration)||input.consideration<0||input.consideration>1e9)throw Error('Confirm scope and whole-pound chargeable consideration');
  const p=BigInt(input.consideration);
  let numerator=0n;
@@ -270,7 +294,7 @@ export function residentialSdlt(input){
   }
  }
  const tax=numerator/100n;
- return {...sample,currency:'GBP',consideration:Number(p),stampDuty:Number(tax),priceAndDuty:Number(p+tax),firstTimeReliefApplied:first,sourceUrls:['https://www.gov.uk/stamp-duty-land-tax/residential-property-rates','https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm00050'],sourceReviewedOn:'2026-11-27',warnings:['England or Northern Ireland, ordinary individual UK-resident buyer(s) for SDLT, one unlinked freehold residential transaction, no higher rates or other reliefs. Rates for transactions from 1 April 2025, cross-checked 27 November 2026. First-time option assumes all purchasers meet the relief conditions including main residence intention; above GBP 500,000 ordinary bands apply. Tax rounded down to whole pounds. Excludes lease rent, linked transactions, companies, additional dwellings, non-resident surcharge, Scotland, Wales and fees.']};
+ return {...sample,currency:'GBP',consideration:Number(p),transactionDate,ruleEffectiveFrom:'2025-04-01',stampDuty:Number(tax),priceAndDuty:Number(p+tax),firstTimeReliefApplied:first,sourceUrls:['https://www.gov.uk/stamp-duty-land-tax/residential-property-rates','https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm00050'],sourceReviewedOn:'2026-11-27',warnings:['England or Northern Ireland, ordinary individual UK-resident buyer(s) for SDLT, one unlinked freehold residential transaction, no higher rates or other reliefs. Rates for transactions from 1 April 2025, cross-checked 27 November 2026; selected transaction date '+transactionDate+'. First-time option assumes all purchasers meet the relief conditions including main residence intention; above GBP 500,000 ordinary bands apply. Tax rounded down to whole pounds. Excludes lease rent, linked transactions, companies, additional dwellings, non-resident surcharge, Scotland, Wales and fees.']};
 }
 /** A single income item, UK-side treaty credit cap, with eligibility already established. */
 export function ukIndiaCredit(input){
@@ -316,13 +340,19 @@ export function ukEmployerNi(input,ruleContext={}){
  return {...sample,currency:'GBP',monthlyGross:out(pay),monthlyEmployerNi:out(ni),annualEmployerNi:out(ni*12n),annualEmploymentCost:out((pay+ni)*12n),annualEmployeeRemainder:salary.annualRemainder,sourceUrls:['https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027'],warnings:['2026–27; 12 equal monthly payments to an ordinary category A employee, not a director. Employer NI 15% above GBP 417 per month. No employment allowance, special categories, freeports, investment zones, employer pension, benefits, levy, or other costs. Employee remainder is the existing limited salary model.']};
 }
 export function australiaDiscountGain(input){
- exact(input,['proceeds','costBase','eligibleCapitalLosses','otherTaxableIncome','scopeConfirmed']);
+ exact(input,['proceeds','costBase','eligibleCapitalLosses','otherTaxableIncome','acquired','disposed','scopeConfirmed']);
+ const acquired=isoDate(input.acquired,'Acquisition date');
+ const disposed=isoDate(input.disposed,'Disposal date');
+ if(disposed<'2026-07-01'||disposed>='2027-07-01')throw Error('Disposal must fall in Australian FY 2026–27');
+ const anniversary=anniversaryClamped(acquired);
+ const earliestEligibleDisposalDate=addOneDay(anniversary);
+ if(disposed<earliestEligibleDisposalDate)throw Error('The disposal date must be after the 12-month anniversary; acquisition and CGT-event days are excluded');
  if(input.scopeConfirmed!==true)throw Error('Confirm ordinary discount-eligible gain and loss treatment');
  const proceeds=units(input.proceeds),cost=units(input.costBase),loss=units(input.eligibleCapitalLosses),other=units(input.otherTaxableIncome);
  if(proceeds<cost||loss>proceeds-cost)throw Error('Only positive gains and applicable losses up to the gain supported');
  const gain=proceeds-cost,net=gain-loss,discounted=round(net,2n),calculate=taxableIncome=>assessTaxableIncome({country:'AU',taxYear:'2026',taxableIncome,residentEligible:true});
  const before=calculate(out(other)),after=calculate(out(other+discounted));
- return {...sample,currency:'AUD',grossGain:out(gain),gainAfterLosses:out(net),assessableGain:out(discounted),modeledIncrementalIncomeTax:out(units(after.incomeTax)-units(before.incomeTax)),sourceUrls:['https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/calculating-your-cgt/cgt-discount','https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/capital-gains-tax-reform'],warnings:['FY 2026–27 only, ordinary eligible Australian resident individual throughout ownership, one asset held at least 12 months, eligible losses already established and applied before 50% discount. No main residence, small-business, affordable-housing, indexation, foreign-resident or rollover case. Incremental ordinary income tax including modeled LITO only; excludes Medicare, offsets, filing rounding and later CGT reforms.']};
+ return {...sample,currency:'AUD',acquired,disposed,earliestEligibleDisposalDate,holdingPeriodEligible:true,taxPeriod:'FY 2026–27',taxPeriodStart:'2026-07-01',grossGain:out(gain),gainAfterLosses:out(net),assessableGain:out(discounted),modeledIncrementalIncomeTax:out(units(after.incomeTax)-units(before.incomeTax)),sourceUrls:['https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/cgt-discount','https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/capital-gains-tax-reform'],warnings:['FY 2026–27 only, ordinary eligible Australian resident individual throughout ownership, one asset held at least 12 months, eligible losses already established and applied before 50% discount. No main residence, small-business, affordable-housing, indexation, foreign-resident or rollover case. Earliest eligible disposal date for the supplied acquisition date: '+earliestEligibleDisposalDate+'. Incremental ordinary income tax including modeled LITO only; excludes Medicare, offsets, filing rounding and later CGT reforms.']};
 }
 
 function signedRate(v,min,max){if(typeof v!=='number'||!Number.isFinite(v)||v<min||v>max||Math.abs(v*100-Math.round(v*100))>0.00002)throw RangeError('Invalid rate');return BigInt(Math.round(v*100));}
@@ -365,7 +395,8 @@ export function usEmployerFica(input,ruleContext={}){
 }
 /** Singapore BSD only; higher of consideration and independently established market value. */
 export function singaporeBuyerDuty(input){
- exact(input,['purchasePrice','marketValue','propertyType','scopeConfirmed']);
+ exact(input,['purchasePrice','marketValue','propertyType','transactionDate','scopeConfirmed']);
+ const transactionDate=calendar2026(input.transactionDate);
  if(input.scopeConfirmed!==true||!['residential','nonresidential'].includes(input.propertyType))throw Error('Confirm pure property classification and date');
  const price=units(input.purchasePrice),value=units(input.marketValue),basis=price>value?price:value;
  if(basis<=0n)throw Error('Positive dutiable value required');
@@ -374,7 +405,7 @@ export function singaporeBuyerDuty(input){
   const slice=basis<=lower?0n:(basis<upper?basis:upper)-lower;numerator+=slice*rate;lower=upper;
  }
  const dollars=numerator/10000n,duty=(dollars<1n?1n:dollars)*100n;
- return {...sample,currency:'SGD',dutiableValue:out(basis),buyerStampDuty:out(duty),purchasePricePlusBsd:out(price+duty),sourceUrls:["https://www.iras.gov.sg/taxes/stamp-duty/for-property/buying-or-acquiring-property/buyer's-stamp-duty-(bsd)"],warnings:['Singapore pure residential or pure non-residential property, ordinary single acquisition under rates effective from 15 February 2023, cross-checked 27 November 2026. BSD only, floor to whole SGD with minimum SGD 1. No ABSD, SSD, remission, mixed-use, linked acquisition, valuation, financing or other charges; purchase price plus BSD is not total acquisition cost.']};
+ return {...sample,currency:'SGD',transactionDate,ruleEffectiveFrom:'2023-02-15',dutiableValue:out(basis),buyerStampDuty:out(duty),purchasePricePlusBsd:out(price+duty),sourceUrls:["https://www.iras.gov.sg/taxes/stamp-duty/for-property/buying-or-acquiring-property/buyer's-stamp-duty-(bsd)"],warnings:['Singapore pure residential or pure non-residential property, ordinary single acquisition under rates effective from 15 February 2023, cross-checked 27 November 2026 for transaction date '+transactionDate+'. BSD only, floor to whole SGD with minimum SGD 1. No ABSD, SSD, remission, mixed-use, linked acquisition, valuation, financing or other charges; purchase price plus BSD is not total acquisition cost.']};
 }
 /** UK dividend component after explicitly established allocation of personal allowance. */
 export function ukDividendTax(input){
@@ -393,18 +424,22 @@ export function ukDividendTax(input){
 
 /** Compare only explicitly confirmed personal investment components, not total tax. */
 export function scopedInvestmentGain(input){
- exact(input,['jurisdiction','confirmedNetGain','scopeConfirmed']);
+ exact(input,['jurisdiction','confirmedNetGain','transactionDate','scopeConfirmed']);
+ const transactionDate=calendar2026(input.transactionDate,'Disposal date');
  if(input.scopeConfirmed!==true||!['CA','DE','SG','AE'].includes(input.jurisdiction))throw Error('Confirm established positive gain and classification');
  const gain=units(input.confirmedNetGain);let included=null,tax=null,currency,source,scope;
  if(input.jurisdiction==='CA'){currency='CAD';included=round(gain,2n);source='https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-38.html';scope='Canada calendar 2026, ordinary individual net positive capital gain after confirmed eligible current-year losses, one-half inclusion; no exemption, reserve, carryover or special asset. Inclusion component only; no income tax calculated.';}
  else if(input.jurisdiction==='DE'){currency='EUR';included=gain;tax=round(gain*2500n,10000n);source='https://www.gesetze-im-internet.de/estg/__32d.html';scope='Germany 2026, ordinary private share disposal income subject to section 32d standard 25% separate tariff; entered gain already taxable after applicable allowance and loss treatment. Excludes church tax, solidarity surcharge, foreign credits, preferential assessment and special participation rules.';}
  else if(input.jurisdiction==='SG'){currency='SGD';included=0n;tax=0n;source='https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/what-is-taxable-what-is-not/gains-from-sale-of-property-shares-and-financial-instruments';scope='Singapore individual, confirmed personal investment share disposal, not trading or business income. Local income tax on this gain only, not stamp duty or foreign tax.';}
  else {currency='AED';included=0n;tax=0n;source='https://tax.gov.ae/en/taxes/corporate.tax/corporate.tax.topics/basis.of.taxation.natural.person.aspx';scope='UAE natural person, confirmed Personal Investment Income excluded from corporate tax; not licensed business or commercial activity. Corporate tax component only, not other taxes or duties.';}
- return {...sample,currency,confirmedNetGain:out(gain),includedGain:included===null?null:out(included),modeledTax:tax===null?null:out(tax),scope,sourceUrls:[source],warnings:[scope+' Source cross-check 27 November 2026. No residence, exemption or investment classification inferred. No total payable tax or filing determination.']};
+ return {...sample,currency,taxYear:'2026',transactionDate,confirmedNetGain:out(gain),includedGain:included===null?null:out(included),modeledTax:tax===null?null:out(tax),scope,sourceUrls:[source,...(input.jurisdiction==='CA'?['https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/sole-proprietorships-partnerships/report-business-income-expenses/claiming-capital-cost-allowance/personal-use-property.html']:[])],warnings:[scope+' Disposal date '+transactionDate+'. Source cross-check 27 November 2026. No residence, exemption or investment classification inferred. No total payable tax or filing determination.']};
 }
 /** Selected ordinary property transaction components, no valuation inference. */
 export function scopedTransferTax(input){
- exact(input,['jurisdiction','taxableConsideration','scopeConfirmed']);
+ exact(input,['jurisdiction','taxableConsideration','transactionDate','scopeConfirmed']);
+ const transactionDate=isoDate(input.transactionDate);
+ const nsw=input.jurisdiction==='AU-NSW';
+ if(nsw?(transactionDate<'2026-07-01'||transactionDate>='2027-07-01'):(transactionDate<'2026-01-01'||transactionDate>='2027-01-01'))throw Error(nsw?'NSW transfer date must be in FY 2026–27':'Transaction date must be in calendar 2026');
  if(input.scopeConfirmed!==true||!['DE-BE','CA-ON','IN-DL-male','IN-DL-female','US-NY','AU-NSW','AE-DU'].includes(input.jurisdiction))throw Error('Confirm applicable location and taxable consideration');
  const p=units(input.taxableConsideration);if(p===0n)throw Error('Positive consideration required');
  let tax,currency,source,scope;
@@ -414,7 +449,7 @@ export function scopedTransferTax(input){
  else if(input.jurisdiction==='AU-NSW'){currency='AUD';source='https://www.revenue.nsw.gov.au/taxes-duties-levies-royalties/transfer-duty/understanding-transfer-duty/calculate-transfer-duty';scope='NSW general transfer duty, FY 2026–27, confirmed ordinary nonresidential direct acquisition, no concessions, surcharge or special valuation. Input restricted to whole multiples of AUD 100; uses published base amounts.';if(p%10000n!==0n)throw Error('Use multiples of AUD 100 only');const brackets=[[129000000n,5223700n,550n],[38700000n,1160200n,450n],[10300000n,166200n,350n],[3800000n,52500n,175n],[1800000n,22500n,150n],[0n,0n,125n]];const [floor,base,rate]=brackets.find(([f])=>p>f);tax=base+round((p-floor)*rate,10000n);if(tax<2000n)tax=2000n;}
  else if(input.jurisdiction==='AE-DU'){currency='AED';source='https://dubailand.gov.ae/en/news-media/dld-calls-on-developers-to-pay-property-registration-fees-within-60-days/';scope='Dubai property sale registration FEE, not a tax. Combined buyer/seller 4% charge on confirmed sale value, allocation by agreement. Excludes administrative, registrar, mortgage and other fees.';tax=round(p*400n,10000n);}
  else {currency='CAD';source='https://www.ontario.ca/document/land-transfer-tax/calculating-land-transfer-tax';scope='Ontario ordinary direct acquisition containing one or two single-family residences, provincial LTT only, agreements and transfers under rates effective January 2017; no refund, rebate, non-resident speculation tax or municipal LTT.';let total=0n,lower=0n;for(const [upper,rate] of [[5500000n,50n],[25000000n,100n],[40000000n,150n],[200000000n,200n],[100000000000n,250n]]){const v=p<=lower?0n:(p<upper?p:upper)-lower;total+=v*rate;lower=upper;}tax=round(total,10000n);}
- return {...sample,currency,taxableConsideration:out(p),transferTax:out(tax),considerationPlusTax:out(p+tax),chargeType:input.jurisdiction==='AE-DU'?'registration-fee':'tax',scope,sourceUrls:[source],warnings:[scope+' Cross-checked 27 November 2026. Nearest minor-unit arithmetic only, not assessment rounding or total closing costs.']};
+ return {...sample,currency,transactionDate,taxPeriod:nsw?'FY 2026–27':'Calendar year 2026',ruleEffectiveFrom:input.jurisdiction==='AU-NSW'?'2026-07-01':input.jurisdiction==='CA-ON'?'2017-01-01':input.jurisdiction==='DE-BE'?'2014-01-01':null,taxableConsideration:out(p),transferTax:out(tax),considerationPlusTax:out(p+tax),chargeType:input.jurisdiction==='AE-DU'?'registration-fee':'tax',scope,sourceUrls:[source],warnings:[scope+' Transaction date '+transactionDate+'; effective period '+(nsw?'FY 2026–27':'calendar 2026')+'. Cross-checked 27 November 2026. Nearest minor-unit arithmetic only, not assessment rounding or total closing costs.']};
 }
 export function texasStateSalesTax(input){
  exact(input,['exclusiveAmount','scopeConfirmed']);

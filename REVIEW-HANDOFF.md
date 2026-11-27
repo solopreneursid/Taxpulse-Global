@@ -66,6 +66,14 @@ The browser preview build includes these modules and their rule registry in the 
 
 This does not complete any of the 56 statutory scopes. India GST, local US sales taxes, Canadian PST/QST, full corporate liabilities, tax classification, full place-of-supply logic, statutory eligibility and filing treatment remain incomplete. The corporate components are before selected rebates/reliefs where noted. The new registry is not part of a trusted signed production package, all outputs remain sample-only and taxRulesVerified=false, and the release gate, manifest and production deployment remain unchanged. Independent review is still required.
 
+## Effective-dated capital gains and property tools — 27 November 2026
+
+The Australian FY 2026–27 CGT discount example now requires acquisition and disposal dates and enforces the ATO 12-month ownership test with acquisition and CGT-event days excluded. The disposal must fall within FY 2026–27; the earliest eligible disposal date is included in the result warning. Canada, Germany, Singapore and UAE confirmed-net-gain components require a calendar-2026 disposal date.
+
+UK residential SDLT and Singapore BSD now require calendar-2026 transaction dates and return the effective date of their current schedules. The selected Berlin, Ontario, Delhi, New York State, NSW and Dubai transfer-charge examples also require a transaction date; NSW is restricted to FY 2026–27, while the others are calendar-2026 examples.
+
+These changes add date validation and clearer evidence metadata, not statutory completeness. All results remain sample-only and taxRulesVerified=false. Cost-base, loss, eligibility, valuation, residency, surcharge, exemption, place-of-supply and filing determinations remain excluded where stated. No release gate, signed rules, production manifest, D1 state or production deployment was changed.
+
 ## Founder and independent-review actions
 1. Appoint qualified independent reviewers for the 56 country/module scopes, including an explicit decision on the two analogous/non-applicable cases.
 2. Appoint an independent security assessor and approve an isolated test scope.
