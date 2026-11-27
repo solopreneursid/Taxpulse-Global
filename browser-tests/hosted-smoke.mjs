@@ -36,6 +36,13 @@ const browser=await chromium.launch({headless:true});try{
     }));
     assert.deepEqual(a,{overflow:false,duplicateIds:[],unlabeled:[],missingDescriptions:[]},path+' accessibility/layout');
     if(path==='/'){assert.equal(await page.locator('#tools .category-card').count(),6);assert.equal(await page.locator('#tools .tool-link').count(),44);await page.keyboard.press('Tab');assert.equal(await page.evaluate(()=>document.activeElement.classList.contains('skip')),true);await page.keyboard.press('Enter');assert.equal(await page.evaluate(()=>document.activeElement.id),'main');}
+    if(path==='/money'){
+     const archive=page.locator('#planning-archive');if(!(await archive.evaluate(el=>el.open)))await archive.locator('summary').click();
+     for(const [k,v] of Object.entries({monthlyIncome:5000,monthlyExpenses:4000,liquidSavings:8000,reserveFloor:6000,horizonMonths:12,incomeReductionPercent:50,expenseIncreasePercent:25,shockStartMonth:2,shockDurationMonths:3}))await page.locator('#cash-flow-stress-'+k).fill(String(v));
+     await page.locator('#cash-flow-stress-run').click();await page.locator('#cash-flow-stress-result').waitFor({state:'visible',timeout:10000});
+     const stress=await page.locator('#cash-flow-stress-result').innerText();assert.match(stress,/Stress ending savings/);assert.match(stress,/9,500/);assert.match(stress,/First reserve breach month/);
+     results.push({width,action:'financial-twin-cash-flow-stress',endingSavings:'9,500',reserveBreachMonth:3});
+    }
     if(id==='updates'){await page.locator('.regulatory-panel').waitFor({state:'visible',timeout:20000});assert.equal(await page.locator('.regulatory-source').count(),target.sourceCount);}
     if(id==='business-break-even'){
      for(const [k,v] of Object.entries({unitPrice:1000,unitVariableCost:400,monthlyFixedCosts:30000,monthlyUnits:80,targetMonthlySurplus:15000}))await page.locator('#business-break-even-'+k).fill(String(v));
