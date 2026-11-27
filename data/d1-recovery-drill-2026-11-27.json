@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "observedOn": "2026-11-27",
+  "scope": "isolated Cloudflare D1 Time Travel restore using synthetic structural data, no production records or valid statutory signatures",
+  "database": "taxpulse-isolated-recovery-20261127",
+  "databaseId": "efc7f2b2-b9f7-4c7a-8cb3-905a997186d9",
+  "migrations": [
+    "001",
+    "002",
+    "003",
+    "004"
+  ],
+  "bookmark": "00000000-00000012-00005130-e00618678f0ed79177cf60177971b800",
+  "initial": {
+    "sequence": 1,
+    "state": "active",
+    "snapshots": 1,
+    "events": 1,
+    "ledger": 1
+  },
+  "beforeRestore": {
+    "sequence": 2,
+    "state": "blocked"
+  },
+  "restore": {
+    "providerAccepted": true,
+    "sequence": 1,
+    "state": "active",
+    "snapshots": 1,
+    "events": 1,
+    "ledger": 1,
+    "reviewRecordPreserved": true,
+    "quickCheck": "ok",
+    "foreignKeyViolations": 0
+  },
+  "triggerRejections": {
+    "sequenceReplay": "non-monotonic sequence",
+    "snapshotMutation": "immutable snapshot archive",
+    "ledgerMutation": "immutable version ledger"
+  },
+  "existingPreviewHead": {
+    "sequence": 0,
+    "state": "empty"
+  },
+  "cleanup": {
+    "deleted": true,
+    "absenceConfirmed": true
+  },
+  "limitations": [
+    "Provider restoration rolls back sequence. Recovery must not reactivate old snapshots without a separately enforced sequence floor and fresh higher-sequence approval.",
+    "Initial automated error matcher truncated the provider error string before the trigger message; full provider responses were inspected and all three rejections confirmed.",
+    "This is not an independent security assessment, production restore, valid signature verification, or proof of recovery time objectives."
+  ]
+}

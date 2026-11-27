@@ -119,6 +119,11 @@ export function financialRunway(input){
 }
 
 const indirectSchedules=Object.freeze({
+ 'CA-ON':Object.freeze({currency:'CAD',rate:1300,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'Ontario — confirmed ordinary HST place of supply'}),
+ 'CA-NS':Object.freeze({currency:'CAD',rate:1400,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'Nova Scotia — confirmed ordinary HST place of supply'}),
+ 'CA-NB':Object.freeze({currency:'CAD',rate:1500,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'New Brunswick — confirmed ordinary HST place of supply'}),
+ 'CA-NL':Object.freeze({currency:'CAD',rate:1500,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'Newfoundland and Labrador — confirmed ordinary HST place of supply'}),
+ 'CA-PE':Object.freeze({currency:'CAD',rate:1500,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'Prince Edward Island — confirmed ordinary HST place of supply'}),
  GB:Object.freeze({currency:'GBP',rate:2000,source:'https://www.gov.uk/vat-rates',scope:'UK standard-rated domestic supply'}),
  DE:Object.freeze({currency:'EUR',rate:1900,source:'https://www.gesetze-im-internet.de/ustg_1980/__12.html',scope:'Germany ordinary standard-rated domestic supply'}),
  AU:Object.freeze({currency:'AUD',rate:1000,source:'https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/how-gst-works',scope:'Australia standard-rated domestic taxable sale'}),
@@ -133,7 +138,7 @@ export function standardIndirectTax(input){
  const s=indirectSchedules[input.country],amount=units(input.amount),rate=BigInt(s.rate);
  const tax=input.priceBasis==='exclusive'?round(amount*rate,10000n):round(amount*rate,10000n+rate);
  const net=input.priceBasis==='exclusive'?amount:amount-tax,gross=net+tax;
- return {...sample,currency:s.currency,ratePercent:s.rate/100,netAmount:out(net),taxAmount:out(tax),grossAmount:out(gross),scope:s.scope,sourceUrls:[s.source],sourceReviewedOn:'2026-11-26',warnings:[s.scope+'. Published standard rate cross-check as of 26 November 2026, not independently approved. Confirm registered seller, tax point, place of supply, standard-rated classification and price basis before using. Single amount rounded to nearest currency cent; not invoice-line rounding, input tax recovery, filing, exemption, zero-rating, reduced rate, reverse charge or cross-border advice.']};
+ return {...sample,currency:s.currency,ratePercent:s.rate/100,netAmount:out(net),taxAmount:out(tax),grossAmount:out(gross),scope:s.scope,sourceUrls:[s.source],sourceReviewedOn:input.country.startsWith('CA-')?'2026-11-27':'2026-11-26',warnings:[s.scope+'. Published standard rate cross-check in November 2026, not independently approved. Confirm registered seller, tax point, place of supply, standard-rated classification and price basis before using. Single amount rounded to nearest currency cent; not invoice-line rounding, input tax recovery, filing, exemption, zero-rating, reduced rate, reverse charge or cross-border advice.']};
 }
 
 /** Integrated snapshot; user-entered balances and cash flows, no estimated asset valuations. */
@@ -149,7 +154,7 @@ export function financialHealthSnapshot(input){
 /** Ordinary company-tax rate calculation on an already established taxable profit. */
 export function scopedCorporateTax(input){
  exact(input,['jurisdiction','taxableProfit','scopeConfirmed']);
- if(input.scopeConfirmed!==true||!['GB','AE','AU-base','AU-full'].includes(input.jurisdiction))throw Error('Confirm ordinary company scope');
+ if(input.scopeConfirmed!==true||!['GB','AE','AU-base','AU-full','US','CA-general','CA-small','DE','SG-PTE','SG-startup'].includes(input.jurisdiction))throw Error('Confirm ordinary company scope');
  const p=units(input.taxableProfit);let numerator,currency,source,scope,period;
  if(input.jurisdiction==='GB'){
   currency='GBP';source='https://www.gov.uk/guidance/corporation-tax-marginal-relief';period='1 April 2026 to 31 March 2027';
@@ -159,11 +164,77 @@ export function scopedCorporateTax(input){
   currency='AED';source='https://mof.gov.ae/en/news/ministry-of-finance-confirms-applicable-taxable-income-threshold-for-corporate-tax-abu-dhabi-uae/';period='Calendar year 2026';
   scope='UAE ordinary resident juridical person, full calendar-year tax period; not exempt, free-zone, multinational minimum-tax or small-business relief case.';
   numerator=(p>37500000n?p-37500000n:0n)*900n;
+ }else if(input.jurisdiction==='US'){
+  currency='USD';source='https://www.irs.gov/instructions/i1120';period='Calendar year 2026';
+  scope='US domestic ordinary C corporation, regular federal income tax only; excludes state and local taxes, corporate alternative minimum tax, credits, special taxes and adjustments.';
+  numerator=p*2100n;
+ }else if(input.jurisdiction.startsWith('CA-')){
+  currency='CAD';source='https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/corporation-tax-rates.html';period='Calendar year 2026';
+  const small=input.jurisdiction==='CA-small';
+  if(small&&p>50000000n)throw Error('Confirmed eligible profit cannot exceed CAD 500,000 in this example');
+  scope='Canada federal component only; full-year Canadian business income, '+(small?'all input profit confirmed eligible for the small business deduction within the actual allocated limit':'all input profit confirmed subject to the general federal rate reduction')+'. Excludes provincial tax, special sectors, refundable tax, and other credits.';
+  numerator=p*(small?900n:1500n);
+ }else if(input.jurisdiction==='DE'){
+  currency='EUR';source='https://www.gesetze-im-internet.de/kstg_1977/__23.html';period='Assessment year 2026';
+  scope='Germany ordinary corporation subject to the 15% corporate income tax component only. Excludes solidarity surcharge, municipal trade tax, credits and other liabilities.';
+  numerator=p*1500n;
+ }else if(input.jurisdiction.startsWith('SG-')){
+  currency='SGD';source='https://www.iras.gov.sg/taxes/corporate-income-tax/basics-of-corporate-income-tax/corporate-income-tax-rate-rebates-and-tax-exemption-schemes';period='YA 2026 (basis period ordinarily 2025)';
+  const startup=input.jurisdiction==='SG-startup',firstLimit=startup?10000000n:1000000n,cap=20000000n;
+  const first=p<firstLimit?p:firstLimit,second=p<=firstLimit?0n:(p<cap?p:cap)-firstLimit;
+  scope='Singapore normal chargeable income before '+(startup?'confirmed eligible start-up exemption':'partial tax exemption')+'; gross 17% calculation after exemption but before YA 2026 corporate income tax rebate, cash grants, credits and other relief.';
+  numerator=(p*4n-first*3n-second*2n)*1700n;
  }else{
   currency='AUD';source='https://www.ato.gov.au/tax-rates-and-codes/company-tax-rate-changes';period='1 July 2026 to 30 June 2027';
   scope='Australian ordinary resident company, confirmed '+(input.jurisdiction==='AU-base'?'base rate entity eligible for 25%':'not a base rate entity, full 30% rate')+', full aligned income year, no special entity rates.';
   numerator=p*(input.jurisdiction==='AU-base'?2500n:3000n);
  }
- const tax=round(numerator,10000n);
- return {...sample,currency,taxableProfit:out(p),grossCorporateTax:out(tax),profitAfterModeledTax:out(p-tax),effectiveRatePercent:p===0n?0:Number(round(tax*10000n,p))/100,sourceUrls:[source],sourceReviewedOn:'2026-11-26',taxPeriod:period,scope,warnings:[scope+' '+period+'. Taxable profit must already be independently established, not turnover or accounting profit. Gross modeled rate calculation before other credits, offsets, reliefs, adjustments, withholding, dividend taxes or filing-specific rounding. No eligibility, accounting adjustments, associated-company count, free-zone status or tax residence inferred. No filing or statutory approval.']};
+ const tax=round(numerator,input.jurisdiction.startsWith('SG-')?40000n:10000n);
+ return {...sample,currency,taxableProfit:out(p),grossCorporateTax:out(tax),profitAfterModeledTax:out(p-tax),effectiveRatePercent:p===0n?0:Number(round(tax*10000n,p))/100,sourceUrls:[source],sourceReviewedOn:['GB','AE','AU-base','AU-full'].includes(input.jurisdiction)?'2026-11-26':'2026-11-27',taxPeriod:period,scope,warnings:[scope+' '+period+'. Taxable profit must already be independently established, not turnover or accounting profit. Gross modeled rate calculation before other credits, offsets, reliefs, adjustments, withholding, dividend taxes or filing-specific rounding. No eligibility, accounting adjustments, associated-company count, free-zone status or tax residence inferred. No filing or statutory approval.']};
+}
+
+/** England and Northern Ireland, one ordinary freehold residential purchase. */
+export function residentialSdlt(input){
+ exact(input,['consideration','buyerScope','scopeConfirmed']);
+ if(input.scopeConfirmed!==true||!['ordinary','first-time'].includes(input.buyerScope)||!Number.isSafeInteger(input.consideration)||input.consideration<0||input.consideration>1e9)throw Error('Confirm scope and whole-pound chargeable consideration');
+ const p=BigInt(input.consideration);
+ let numerator=0n;
+ const first=input.buyerScope==='first-time'&&p<=500000n;
+ if(first)numerator=(p>300000n?p-300000n:0n)*5n;
+ else {
+  let lower=0n;for(const [upper,rate] of [[125000n,0n],[250000n,2n],[925000n,5n],[1500000n,10n],[1000000000n,12n]]){
+   const taxable=p<=lower?0n:(p<upper?p:upper)-lower;numerator+=taxable*rate;lower=upper;
+  }
+ }
+ const tax=numerator/100n;
+ return {...sample,currency:'GBP',consideration:Number(p),stampDuty:Number(tax),priceAndDuty:Number(p+tax),firstTimeReliefApplied:first,sourceUrls:['https://www.gov.uk/stamp-duty-land-tax/residential-property-rates','https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm00050'],sourceReviewedOn:'2026-11-27',warnings:['England or Northern Ireland, ordinary individual UK-resident buyer(s) for SDLT, one unlinked freehold residential transaction, no higher rates or other reliefs. Rates for transactions from 1 April 2025, cross-checked 27 November 2026. First-time option assumes all purchasers meet the relief conditions including main residence intention; above GBP 500,000 ordinary bands apply. Tax rounded down to whole pounds. Excludes lease rent, linked transactions, companies, additional dwellings, non-resident surcharge, Scotland, Wales and fees.']};
+}
+/** A single income item, UK-side treaty credit cap, with eligibility already established. */
+export function ukIndiaCredit(input){
+ exact(input,['foreignTaxPaidGbp','treatyEligibleCapGbp','ukTaxWithIncome','ukTaxWithoutIncome','scopeConfirmed']);
+ if(input.scopeConfirmed!==true)throw Error('Confirm UK residence, Indian source and eligible taxes');
+ const paid=units(input.foreignTaxPaidGbp),cap=units(input.treatyEligibleCapGbp),withIncome=units(input.ukTaxWithIncome),without=units(input.ukTaxWithoutIncome);
+ if(without>withIncome)throw Error('UK tax without income must not exceed tax with income');
+ const attributable=withIncome-without,credit=[paid,cap,attributable].reduce((a,b)=>a<b?a:b);
+ return {...sample,currency:'GBP',ukTaxOnItem:out(attributable),modeledCredit:out(credit),ukTaxAfterCredit:out(withIncome-credit),foreignTaxNotCredited:out(paid-credit),combinedTax:out(withIncome-credit+paid),sourceUrls:['https://www.gov.uk/government/publications/india-tax-treaties/2020-uk-india-synthesised-text-of-the-multilateral-instrument-and-the-1993-double-taxation-convention-in-force','https://www.gov.uk/government/publications/calculating-foreign-tax-credit-relief-on-income-hs263-self-assessment-helpsheet/relief-for-foreign-tax-paid-2026-hs263'],sourceReviewedOn:'2026-11-27',warnings:['UK-side Article 24 credit-cap example for one ordinary Indian-source income item, UK tax year 2025–26, following HMRC HS263 2026. All figures already established in GBP using applicable conversion rules. No residence, treaty rate, treaty eligibility, income sourcing, refundable foreign tax, relief election, ordering of multiple sources, dividends, capital gains, or tax-sparing rules inferred. Credit is limited to paid tax, confirmed treaty-permitted amount and UK liability attributable to this item. Not a claim or filing determination.']};
+}
+/** Fixed nominal monthly amortization, integer minor units, bounded horizon. */
+export function debtRepayment(input){
+ exact(input,['currency','principal','annualRatePercent','monthlyPayment','extraPayment','horizonMonths']);
+ currency(input.currency);
+ const principal=units(input.principal),rate=units(input.annualRatePercent,100,100),payment=units(input.monthlyPayment),extra=units(input.extraPayment);
+ if(principal<=0n||payment<=0n||!Number.isSafeInteger(input.horizonMonths)||input.horizonMonths<1||input.horizonMonths>600)throw Error('Choose positive debt, payment and 1–600 months');
+ const monthlyInterest=b=>round(b*rate,120000n);
+ const simulate=limit=>{
+  let balance=principal,interest=0n,total=0n,months=0,reason=null;const schedule=[];
+  while(balance>0n&&months<input.horizonMonths){
+   const charge=monthlyInterest(balance);
+   if(limit<=charge){reason='payment-does-not-reduce-principal';break;}
+   const due=balance+charge,paid=limit<due?limit:due;balance=due-paid;interest+=charge;total+=paid;months++;
+   schedule.push({month:months,payment:out(paid),interest:out(charge),principalRepaid:out(paid-charge),remaining:out(balance)});
+  }
+  return {status:balance===0n?'paid':reason||'horizon-ended',payoffMonths:balance===0n?months:null,monthsModeled:months,interest:out(interest),totalPaid:out(total),remaining:out(balance),schedule};
+ };
+ const base=simulate(payment),accelerated=simulate(payment+extra),both=base.status==='paid'&&accelerated.status==='paid';
+ return {...sample,currency:input.currency,base,accelerated,interestSaved:both?out(units(base.interest,100,1e12)-units(accelerated.interest,100,1e12)):null,monthsSaved:both?base.payoffMonths-accelerated.payoffMonths:null,warnings:['Fixed nominal annual interest divided into 12 monthly periods; monthly interest rounded to nearest minor unit, payment at period end. No fees, rate changes, penalty, daily accrual, new borrowing or lender-specific rounding. If payment does not reduce principal the schedule stops before that payment; unpaid balances are not projected beyond the stop or horizon. Interest and months saved shown only if both plans pay off within the selected horizon. Example, not a lender quote.']};
 }
