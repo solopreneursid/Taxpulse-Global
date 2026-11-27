@@ -778,7 +778,7 @@ $('financial-runway-use').addEventListener('click',()=>{if(!savedProfile){$('fin
 
 $('financial-health-use').addEventListener('click',()=>{if(!savedProfile){$('financial-health-profile-status').textContent='Keep a salary example first.';return;}$('financial-health-currency').value=savedProfile.currency;$('financial-health-monthlyIncome').value=(savedProfile.annualTakeHome/12).toFixed(2);for(const k of ['monthlyExpenses','liquidSavings','otherAssets','liabilities','monthlyDebtPayments','reserveFloor','goalAmount','horizonMonths'])$('financial-health-'+k).value='';$('financial-health-result').hidden=true;$('financial-health-profile-status').textContent='Average monthly modeled salary remainder copied. Confirm or adjust the amount; enter all remaining balances in the same currency.';});
 
-const planningKinds=new Set(['financial-runway','financial-health','debt-repayment','investment-scenario','retirement-scenario']);
+const planningKinds=new Set(['monthly-budget','financial-runway','financial-health','debt-repayment','investment-scenario','retirement-scenario']);
 let planningArchive={salaryProfiles:[],scenarios:[]},planningGeneration=0,planningBusy=false;
 const planningStatus=$('planning-archive-status'),planningEntry=$('planning-archive-entry'),planningPassword=$('planning-archive-password'),planningFile=$('planning-archive-file');
 const planningAllowed=()=>runtime.state==='bundled-preview';
@@ -797,6 +797,7 @@ function selectedPlanning(){
 $('planning-archive-add').addEventListener('click',()=>{try{
  const kind=$('planning-archive-kind').value,next=structuredClone(planningArchive);
  if(kind==='salary'){if(!savedProfile)throw Error('Save a salary example first');next.salaryProfiles.push({...savedProfile.salary});}
+ else if(kind==='monthly-budget'){if($('budget-result').hidden)throw Error('Calculate a budget first');const v=k=>$('budget-'+k).valueAsNumber;next.scenarios.push({kind,input:{currency:$('budget-currency').value,monthlyIncome:v('income'),expenses:Object.fromEntries(expenseCategories.map(k=>[k,v(k)])),monthlyGoal:v('goal'),alternativeIncome:v('alt-income'),alternativeHousing:v('alt-housing')}});}
  else {if(!planningKinds.has(kind)||$(kind+'-result').hidden)throw Error('Calculate the selected planning example first');const spec=decisionSpecs.find(s=>s.id===kind);const input=Object.fromEntries(spec.fields.map(([k,_,type])=>[k,type==='currency'?$(kind+'-'+k).value:$(kind+'-'+k).valueAsNumber]));next.scenarios.push({kind,input});}
  editPlanning(validatePlanningArchive(next,ruleContext));planningStatus.textContent='Example captured in this tab.';
  }catch{planningStatus.textContent='Calculate the selected example first; check the collection limits and preview state.';}});
@@ -806,8 +807,8 @@ $('planning-archive-load').addEventListener('click',()=>{try{
  if(!planningAllowed()||planningBusy)throw Error('Unavailable');const {list,value}=selectedPlanning();
  if(list==='salaryProfiles'){showSavedProfile(createFinancialProfile(value,ruleContext));planningStatus.textContent='Selected salary profile restored to this tab.';return;}
  if(!planningKinds.has(value.kind))throw Error('Unsupported UI scenario');
- for(const [k,v] of Object.entries(value.input))$(value.kind+'-'+k).value=String(v);
- $(value.kind+'-result').hidden=true;$(value.kind+'-error').textContent='';document.querySelector('#category-money a[href="/tools/'+value.kind+'"]').click();
+ if(value.kind==='monthly-budget'){const b=value.input;$('budget-currency').value=b.currency;for(const [k,v] of Object.entries({income:b.monthlyIncome,goal:b.monthlyGoal,'alt-income':b.alternativeIncome,'alt-housing':b.alternativeHousing,...b.expenses}))$('budget-'+k).value=String(v);clearBudget();}
+ else{for(const [k,v] of Object.entries(value.input))$(value.kind+'-'+k).value=String(v);$(value.kind+'-result').hidden=true;$(value.kind+'-error').textContent='';}document.querySelector('#category-money a[href="/tools/'+value.kind+'"]').click();
  planningStatus.textContent='Inputs loaded; calculate again to view results.';
  }catch{planningStatus.textContent='Cannot load the selected entry.';}});
 async function transferPlanning(action){

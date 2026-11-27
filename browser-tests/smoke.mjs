@@ -66,7 +66,7 @@ try {
    assert.ok(await page.locator('#tools .category-card').first().evaluate(e=>e.getBoundingClientRect().height>=44));
    await page.locator('#tools summary').click();
    await page.locator('#tool-search').fill('investment');
-   assert.equal(await page.locator('#tools .tool-link:visible').count(),1);
+   assert.deepEqual((await page.locator('#tools .tool-link:visible').evaluateAll(es=>es.map(e=>e.getAttribute('href')))).sort(),['/tools/investment-scenario','/tools/investment-tax']);
    await page.locator('#tool-search').fill('');
    await page.locator('#tools summary').click();
    await page.locator('.nav a[href="/business"]').click();
