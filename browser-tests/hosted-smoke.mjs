@@ -40,7 +40,7 @@ const browser=await chromium.launch({headless:true});try{
      const archive=page.locator('#planning-archive');if(!(await archive.evaluate(el=>el.open)))await archive.locator('summary').click();
      for(const [k,v] of Object.entries({monthlyIncome:5000,monthlyExpenses:4000,liquidSavings:8000,reserveFloor:6000,horizonMonths:12,incomeReductionPercent:50,expenseIncreasePercent:25,shockStartMonth:2,shockDurationMonths:3}))await page.locator('#cash-flow-stress-'+k).fill(String(v));
      await page.locator('#cash-flow-stress-run').click();await page.locator('#cash-flow-stress-result').waitFor({state:'visible',timeout:10000});
-     const stress=await page.locator('#cash-flow-stress-result').innerText();assert.match(stress,/Stress ending savings/);assert.match(stress,/9,500/);assert.match(stress,/First reserve breach month\\s*3/);assert.match(stress,/Reserve restored month\\s*9/);
+     const stress=await page.locator('#cash-flow-stress-result').innerText();assert.match(stress,/Stress ending savings/);assert.match(stress,/9,500/);assert.match(stress,/First reserve breach month\s*3/);assert.match(stress,/Reserve restored month\s*9/);
      results.push({width,action:'financial-twin-cash-flow-stress',endingSavings:'9,500',reserveBreachMonth:3});
     }
     if(id==='updates'){await page.locator('.regulatory-panel').waitFor({state:'visible',timeout:20000});assert.equal(await page.locator('.regulatory-source').count(),target.sourceCount);}
