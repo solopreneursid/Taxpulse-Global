@@ -19,7 +19,8 @@ export async function loadRuntimeRules(env,engineFingerprint,{now=new Date()}={}
   const record=JSON.parse(head.review_record),envelope=JSON.parse(raw);
   if(!record||Object.keys(record).length!==3||record.publisherPublicKeyHex!==env.RULE_PUBLIC_KEY||record.reviewerPublicKeyHex!==env.RULE_REVIEW_PUBLIC_KEY)throw Error('Review trust mismatch');
   await verifyStatutoryReview(envelope,record.review,{publicKeyHex:env.RULE_PUBLIC_KEY,reviewerPublicKeyHex:env.RULE_REVIEW_PUBLIC_KEY,reviewerId:env.RULE_REVIEWER_ID,now});
-  const previous={sequence:0,regional:{versions:regionalRules()},indiaSalary:{versions:[resolveIndiaSalaryRule('2026')]},payroll:{versions:payrollRules()}};
+  // Bundled preview data is not a previously signed historical snapshot.
+  const previous=null;
   const s=await verifyRuleSnapshot(envelope,{publicKeyHex:env.RULE_PUBLIC_KEY,engineFingerprint,minimumSequence:minimum-1,previous,now});
   if(head.sequence!==s.sequence||head.digest!==s.digest)throw Error('Rule head mismatch');
   // Existing connected tools must all resolve the currently advertised periods.
