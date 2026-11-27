@@ -814,7 +814,28 @@ $('cash-flow-stress-run').addEventListener('click',()=>{
   const dl=document.createElement('dl');dl.className='breakdown';
   for(const [label,value] of rows){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=label.includes('month')||label.includes('Months')?(value===null?'Not reached':value===0?'Already below at start':String(value)):money(value,result.currency);dl.append(dt,dd);}
   const note=document.createElement('p');note.className='notice';note.textContent=result.warnings.join(' ');
-  stressResult.append(dl,note);stressResult.hidden=false;stressStatus.textContent='Baseline and stress scenario recalculated locally.';
+  const tableWrap=document.createElement('div');tableWrap.className='table-scroll';tableWrap.tabIndex=0;
+ const table=document.createElement('table');
+ const caption=document.createElement('caption');caption.textContent='Month-by-month comparison (first 24 months)';table.append(caption);
+ const head=document.createElement('thead'),headRow=document.createElement('tr');
+ for(const label of ['Month','Shock','Baseline net cash flow','Stress net cash flow','Baseline closing savings','Stress closing savings','Stress reserve status']){
+  const th=document.createElement('th');th.scope='col';th.textContent=label;headRow.append(th);
+ }
+ head.append(headRow);table.append(head);
+ const body=document.createElement('tbody');
+ const baselineByMonth=new Map(result.baselineMonthlyPath.map(row=>[row.month,row]));
+ for(const stressRow of result.stressMonthlyPath){
+  const baselineRow=baselineByMonth.get(stressRow.month);
+  const tr=document.createElement('tr');
+  const status=stressRow.negative?'Negative balance':stressRow.belowReserve?'Below reserve':'At or above reserve';
+  const values=[String(stressRow.month),stressRow.shockActive?'Shock active':'Normal',money(baselineRow.netCashFlow,result.currency),money(stressRow.netCashFlow,result.currency),money(baselineRow.endingLiquidSavings,result.currency),money(stressRow.endingLiquidSavings,result.currency),status];
+  for(const value of values){const td=document.createElement('td');td.textContent=value;tr.append(td);}
+  if(stressRow.negative||stressRow.belowReserve)tr.className='below-reserve';
+  body.append(tr);
+ }
+ table.append(body);tableWrap.append(table);
+ const pathNote=document.createElement('p');pathNote.textContent=result.monthlyPathTruncated?'Only the first 24 months are shown; summary metrics cover the full planning horizon.':'All months in the selected planning horizon are shown.';
+ stressResult.append(dl,tableWrap,pathNote,note);stressResult.hidden=false;stressStatus.textContent='Baseline and stress scenario recalculated locally.';
  }catch{stressStatus.textContent='Check all cash-flow amounts, percentages and shock months.';}
 });
 for(const field of stressFields.map(k=>$('cash-flow-stress-'+k)))field.addEventListener('input',()=>{stressResult.hidden=true;stressStatus.textContent='';});
