@@ -37,6 +37,8 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.equal(p.primaryDailyCollector.signedEvidenceIntakeConfigured,true);
  assert.equal(p.primaryDailyCollector.destination,'isolated preview intake');
  assert.equal(p.primaryDailyCollector.productionRuleActivation,false);
+ assert.equal(p.primaryDailyCollector.signedEvidenceDeliveryVerifiedInRun,'45755972060');
+ assert.equal(p.primaryDailyCollector.storageReadBackVerified,true);
  assert.ok(p.countries.every(c=>c.scopedPreviewExamples===7&&!c.manifestVerified&&!c.productionEnabled&&c.recordedEvidenceCount===0&&c.remaining.length===7));
  assert.equal(p.countries.find(c=>c.country==='IN').missingBackendModules.length,6);
  assert.equal(p.countries.find(c=>c.country==='CA').missingBackendModules.length,7);
