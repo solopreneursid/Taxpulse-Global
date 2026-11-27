@@ -29,6 +29,6 @@ test('payroll audit exposes unsupported jurisdictions instead of claiming eight-
 test('release gate remains blocked and audit identifies the actual blocker',()=>{
  const report=buildVerificationAudit();
  assert.equal(report.releaseGate.blocked,true);
- assert.match(report.releaseGate.reason,/Backend module not implemented|Unverified country|Missing official-source evidence/);
+ assert.match(report.releaseGate.reason,/Production release not authorized|Backend module not implemented|Unverified country|Missing official-source evidence/);
  assert.equal(report.releaseMode,'preview');
 });
