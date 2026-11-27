@@ -80,6 +80,10 @@ The deterministic cash-flow stress scenario now returns a month-by-month baselin
 
 The scenario remains a sensitivity calculation using user-entered after-tax monthly income and total expenses. It does not recalculate tax, model intra-month timing, inflation, interest, investment returns, borrowing, credit access, insurance, reimbursement or event probability. The additional path is derived output; the encrypted planning archive continues to store validated scenario inputs and recalculates outputs locally. No production or release-gate change.
 
+## Authentication and privileged-action boundary
+
+The public calculator preview has no user-account or server-side financial-profile authentication service. Personal financial profiles and planning archives remain browser-local and encrypted; the preview does not upload those records. This avoids introducing an account/session database and a new sensitive-data attack surface. Privileged production release authority is separate: GitHub/Cloudflare account access plus offline founder and independent-reviewer Ed25519 authorization bound to the exact commit, manifest and artifact digest. Trusted release keys are not enrolled and production remains unauthorized. Any future server-side account or data-sync feature requires a separate threat model and explicit approval.
+
 ## Encrypted record and integrity-envelope hardening — 27 November 2026
 
 The local encrypted-record foundation now accepts only plain JSON record objects and exact version-1 envelopes. PBKDF2-HMAC-SHA-256 remains at 600,000 iterations; AES-256-GCM uses a fresh 16-byte salt, 12-byte IV and authenticated algorithm/version metadata. Envelopes with extra fields, malformed hex or unsupported parameters fail closed. Decryption errors remain generic.
