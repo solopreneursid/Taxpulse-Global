@@ -75,7 +75,7 @@ test('atomic publication, fixture rejection, replay, emergency block and forward
  await assert.rejects(publishSnapshot(db,one.envelope,bad,approvedOptions(one,anchor.client)));
  assert.equal(sqlite.prepare('SELECT sequence FROM regulatory_head').get().sequence,0);
 
- assert.equal((await publishSnapshot(db,one.envelope,one.fixtures,approvedOptions(one))).state,'active');
+ assert.equal((await publishSnapshot(db,one.envelope,one.fixtures,approvedOptions(one,anchor.client))).state,'active');
  const expectedLedger=regional.versions.length+indiaSalary.versions.length+payroll.versions.length+nationalEvidence.length;
  assert.equal(sqlite.prepare('SELECT count(*) n FROM regulatory_version_ledger').get().n,expectedLedger);
  const nationalLedger=sqlite.prepare('SELECT definition FROM regulatory_version_ledger WHERE version=?').get('AU-2026-national-assessment-v1');
@@ -87,7 +87,7 @@ test('atomic publication, fixture rejection, replay, emergency block and forward
  assert.throws(()=>sqlite.prepare('INSERT INTO regulatory_snapshots(sequence,digest,envelope,published_at,review_record) VALUES(?,?,?,?,?)').run(2,'d'.repeat(64),JSON.stringify(mutated.envelope),now.toISOString(),null),/immutable historical version changed/);
  const env={RULE_DB:db,RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,RULE_MIN_SEQUENCE:'1'};
  assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).state,'signed-preview');
- await assert.rejects(publishSnapshot(db,one.envelope,one.fixtures,approvedOptions(one)));
+ await assert.rejects(publishSnapshot(db,one.envelope,one.fixtures,approvedOptions(one,anchor.client)));
  await blockSnapshot(db,1,anchor.client);assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).state,'blocked');
  const three=await approvedPack(3);await publishSnapshot(db,three.envelope,three.fixtures,approvedOptions(three,anchor.client));
  assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).sequence,3);
