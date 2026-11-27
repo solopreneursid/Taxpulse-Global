@@ -74,6 +74,12 @@ UK residential SDLT and Singapore BSD now require calendar-2026 transaction date
 
 These changes add date validation and clearer evidence metadata, not statutory completeness. All results remain sample-only and taxRulesVerified=false. Cost-base, loss, eligibility, valuation, residency, surcharge, exemption, place-of-supply and filing determinations remain excluded where stated. No release gate, signed rules, production manifest, D1 state or production deployment was changed.
 
+## Financial Twin stress-path transparency — 27 November 2026
+
+The deterministic cash-flow stress scenario now returns a month-by-month baseline and stressed path for the first 24 months, alongside full-horizon summary metrics (1–600 months). The preview renders an accessible comparison table with baseline/stress net cash flow, closing liquid savings, shock-active months and reserve/negative-balance status. Longer horizons are explicitly marked as truncated in the table; summary metrics still cover the complete selected horizon.
+
+The scenario remains a sensitivity calculation using user-entered after-tax monthly income and total expenses. It does not recalculate tax, model intra-month timing, inflation, interest, investment returns, borrowing, credit access, insurance, reimbursement or event probability. The additional path is derived output; the encrypted planning archive continues to store validated scenario inputs and recalculates outputs locally. No production or release-gate change.
+
 ## Founder and independent-review actions
 1. Appoint qualified independent reviewers for the 56 country/module scopes, including an explicit decision on the two analogous/non-applicable cases.
 2. Appoint an independent security assessor and approve an isolated test scope.
