@@ -1,10 +1,10 @@
-# Eight-country PIT, salary-remainder and capital-gains backend scope
+# Eight-country tax backend scope — seven module families
 
-Status: preview-only, sample-only and unverified. This is not a complete gross-to-net salary engine or filing calculation.
+Status: preview-only, sample-only and unverified. All seven module families have scoped backend routes across eight countries; this does not establish complete statutory coverage, independent verification or filing readiness.
 
-## API coverage
+## Personal income tax and salary-remainder coverage
 
-The legacy `countryCalculate` backend now has a personal-income-tax path for all eight configured countries:
+The legacy `countryCalculate` backend has a personal-income-tax and selected salary-remainder path for all eight configured countries:
 
 | Country | Input basis | Scope boundary |
 |---|---|---|
