@@ -4,6 +4,15 @@ import {productionReadinessReport} from '../scripts/production-readiness-report.
 test('readiness report distinguishes all 56 preview entries from 56 scoped backend entries across all seven module families and no approvals',()=>{
  const p=productionReadinessReport();
  assert.equal(p.requiredScopes,56);assert.equal(p.scopedPreviewExamples,56);assert.equal(p.analogousComponents,2);assert.equal(p.legacyBackendCatalogScopes,56);
+ assert.equal(p.backendCatalog.moduleFamilies,7);
+ assert.equal(p.backendCatalog.countryCount,8);
+ assert.equal(p.backendCatalog.entries,56);
+ assert.equal(p.backendCatalog.allRequiredModulesPresent,true);
+ assert.equal(p.backendCatalog.allCountriesPresent,true);
+ assert.equal(p.statutoryVerification.verifiedCountryRecords,0);
+ assert.equal(p.statutoryVerification.totalCountryRecords,8);
+ assert.equal(p.statutoryVerification.independentReviewRequired,true);
+ assert.match(p.statutoryVerification.releaseGate,/blocked/);
  assert.equal(p.missingBackendCountries.length,0);
  assert.equal(Object.keys(p.backendPITInputBasis).length,8);
  assert.equal(p.backendPITInputBasis.DE,'taxableIncome with individual or eligible joint assessment');
