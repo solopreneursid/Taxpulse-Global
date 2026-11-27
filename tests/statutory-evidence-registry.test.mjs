@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-import {resolve} from 'node:path';
-import {buildStatutoryEvidenceRegistry} from '../scripts/build-statutory-evidence-registry.mjs';
+import {buildStatutoryEvidenceRegistry,writeStatutoryEvidenceRegistry} from '../scripts/build-statutory-evidence-registry.mjs';
 
-const registry=JSON.parse(readFileSync(resolve('rules/statutory-evidence-registry.json'),'utf8'));
+const registry=writeStatutoryEvidenceRegistry();
+const onDisk=JSON.parse(readFileSync(new URL('../rules/statutory-evidence-registry.json',import.meta.url),'utf8'));
 const rebuilt=buildStatutoryEvidenceRegistry();
 
 test('statutory evidence registry enumerates all 56 jurisdiction-module scopes',()=>{
@@ -16,8 +16,9 @@ test('statutory evidence registry enumerates all 56 jurisdiction-module scopes',
  assert.equal(new Set(registry.entries.map(entry=>entry.scopeId)).size,56);
 });
 
-test('committed registry is reproducible from the source inventory and evidence files',()=>{
+test('generated registry is reproducible and matches its on-disk artifact',()=>{
  assert.deepEqual(registry,rebuilt);
+ assert.deepEqual(onDisk,registry);
 });
 
 test('every scope records gaps and explicit source and test evidence states',()=>{
@@ -47,7 +48,7 @@ test('registry digest and local metadata hashes are valid',()=>{
  assert.equal(registryDigestSha256,digest);
  for(const entry of registry.entries){
   for(const source of entry.sourceMetadataFiles){
-   const bytes=readFileSync(resolve(source.path));
+   const bytes=readFileSync(new URL('../'+source.path,import.meta.url));
    assert.equal(createHash('sha256').update(bytes).digest('hex'),source.localMetadataSha256,entry.scopeId+':'+source.path);
   }
  }
