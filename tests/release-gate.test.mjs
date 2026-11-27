@@ -10,6 +10,6 @@ test('fabricated all-verified manifest cannot enable unimplemented backend modul
   }]));
   assert.throws(
     () => assertProductionReady({ schemaVersion: 1, releaseMode: 'production', countries }),
-    /Backend module not implemented: payroll/
+    /Backend module not implemented: capgains/
   );
 });
