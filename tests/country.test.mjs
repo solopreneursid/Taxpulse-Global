@@ -28,7 +28,7 @@ test('country backend catalog exposes all eight countries and scoped PIT/payroll
  assert.equal(c.pitInputBasis.AE,'salaryIncome with employeeWagesOnly=true; ordinary employee wages only');
  assert.equal(c.payrollInputBasis.DE,'monthly EUR gross pay; region DE; requires annualTaxableIncome and healthSupplementRate');
  assert.equal(c.payrollInputBasis.AE,'monthly AED gross pay; region AE; requires monthlyBasicSalary and assumes non-GCC expatriate private-sector employee');
- assert.match(c.payrollScope,/not payroll processing/);
+ assert.match(c.payrollScope,/no payroll withholding/);
 });
 test('extended PIT contracts reject missing residency and unsupported assessments',()=>{
  assert.throws(()=>call('DE','pit',{taxableIncome:50000}),/assessment/);
