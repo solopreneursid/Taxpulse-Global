@@ -8,7 +8,7 @@ on:
       - 'tests/supplemental-baseline.test.mjs'
       - '.github/workflows/taxpulse-supplemental-sources.yml'
   schedule:
-    - cron: '25 2 * * 1'
+    - cron: '25 2 * * *'
   workflow_dispatch:
 permissions:
   contents: read
