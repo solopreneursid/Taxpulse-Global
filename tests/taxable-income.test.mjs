@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {assessTaxableIncome} from '../engine/taxable-income.mjs';
+import {toMinorUnits} from '../engine/statutory-context.mjs';
 const de=(taxableIncome,assessment='individual')=>assessTaxableIncome({country:'DE',taxYear:'2026',taxableIncome,assessment});
 const ca=(taxableIncome,netIncome=taxableIncome)=>assessTaxableIncome({country:'CA',taxYear:'2026',taxableIncome,netIncome,fullYearResident:true});
 // Expected values independently evaluated from official tariff coefficients / CRA bands.
@@ -28,4 +29,15 @@ test('unsupported cases fail closed',()=>{
 });
 test('both assessment models are preview-only',()=>{
  for(const result of [de(50000),ca(50000)]){assert.equal(result.taxRulesVerified,false);assert.equal(result.sampleOnly,true);assert.equal(result.inputBasis,'taxable-income');assert.ok(result.sourceUrls.length);}
+});
+
+test('decimal national assessments use exact minor units and reject excess precision',()=>{
+ const exact=ca(100000.05,100000.05);
+ assert.equal(exact.incomeTax,14392.74);
+ assert.equal(toMinorUnits(exact.taxBeforeCredits),1669602n);
+ assert.equal(toMinorUnits(exact.basicPersonalCredit),230328n);
+ assert.equal(toMinorUnits(exact.incomeTax),1439274n);
+ assert.throws(()=>ca(100000.001,100000.001),/two decimal places/);
+ const australia=assessTaxableIncome({country:'AU',taxYear:'2026',taxableIncome:45000.05,residentEligible:true});
+ for(const value of [australia.taxableIncome,australia.taxBeforeCredits,australia.lowIncomeOffset,australia.incomeTax])assert.doesNotThrow(()=>toMinorUnits(value));
 });
