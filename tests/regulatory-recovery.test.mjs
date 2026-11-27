@@ -73,7 +73,7 @@ test('normal publication still requires strictly increasing D1 and external sequ
  assert.equal(next.minimumSequence,7);assert.equal(next.recoveryRequired,false);
 });
 test('empty anchor accepts only a sequence above the empty D1 head',()=>{
- const head={sequence:0,state:'empty'};
+ const head={sequence:0,digest:null,state:'empty'};
  const anchor={schemaVersion:1,sequence:0,digest:null,state:'empty'};
  assert.throws(()=>assertRecoverySequenceFloor(head,anchor,0),/exceed the D1 head and external recovery floor/);
  assert.deepEqual(assertRecoverySequenceFloor(head,anchor,1),{minimumSequence:0,recoveryRequired:false});
