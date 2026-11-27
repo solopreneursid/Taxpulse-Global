@@ -11,7 +11,7 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.deepEqual(p.apiIntegration.bundledPreviewSalaryRemainderCountries,['US','GB','CA','AU','IN','SG','DE','AE']);
  assert.deepEqual(p.apiIntegration.signedPreviewSalaryRemainderCountries,['US','GB','CA','AU','SG']);
  assert.equal(p.apiIntegration.payrollCompleteness,'narrow salary scenarios only; not a complete payroll, withholding, employer-contribution or filing engine');
- assert.equal(p.apiIntegration.propertyTransferTaxJurisdictions.length,7);
+ assert.equal(p.apiIntegration.propertyTransferTaxJurisdictions.length,9);
  assert.equal(p.apiIntegration.productionEnabled,false);
  assert.equal(p.scopedTaxComponents.indirectTaxRules.length,12);
  assert.equal(p.scopedTaxComponents.corporateTaxRules.length,4);
