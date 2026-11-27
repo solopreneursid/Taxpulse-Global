@@ -86,8 +86,8 @@ async function pack(sequence){
  return {envelope:{payload:p,digest:await digest(p),signature:hex(await crypto.subtle.sign('Ed25519',key.privateKey,snapshotBytes(p)))},fixtures};
 }
 test('atomic publication, fixture rejection, replay, emergency block and forward recovery',async()=>{
- const sqlite=new DatabaseSync(':memory:');try{
- migrate(sqlite);const db=dbAdapter(sqlite),anchor=createAnchor();
+ const sqlite=new DatabaseSync(':memory:');let anchor;try{
+ migrate(sqlite);const db=dbAdapter(sqlite);anchor=createAnchor();
  const one=await approvedPack(1),bad=structuredClone(one.fixtures);bad[0].expected=1;
  await assert.rejects(publishSnapshot(db,one.envelope,one.fixtures,{...options,sequenceAnchor:anchor.client}));
  await assert.rejects(publishSnapshot(db,one.envelope,bad,approvedOptions(one,anchor.client)));
@@ -118,7 +118,7 @@ test('atomic publication, fixture rejection, replay, emergency block and forward
 });
 
 test('scheduled publisher requires independent approval, rejects tampering and retains active head',async()=>{
- const sqlite=new DatabaseSync(':memory:');
+ const sqlite=new DatabaseSync(':memory:');let anchor;
  try{
   migrate(sqlite);const db=dbAdapter(sqlite);let pending=null,floorValue='0';
   const floorStore={async put(key,value){if(key!=='taxpulse:regulatory-sequence-floor')throw Error('Unexpected floor key');floorValue=value;}};
@@ -144,7 +144,7 @@ test('scheduled publisher requires independent approval, rejects tampering and r
   pending=JSON.stringify(await approvedPack(2));
   assert.equal((await runScheduledPublication(env,engineFingerprint,{now})).sequence,2);
   assert.equal(floorValue,'2');
- }finally{sqlite.close();}
+ }finally{anchor?.close();sqlite.close();}
 });
 
 test('independent sequence anchor detects restored D1 rollback and requires a fresh higher approved snapshot',async()=>{
