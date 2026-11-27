@@ -118,6 +118,40 @@ export function financialRunway(input){
  return {...sample,currency:input.currency,monthlyBalance:out(balance),availableAboveReserve:out(available),projectedSavings:out(savings+balance*BigInt(input.horizonMonths)),monthsToGoal,wholeMonthsBeforeReserve:runway,goalGapNow:out(needed>savings?needed-savings:0n),warnings:['Constant monthly income and costs. Goal is in addition to the selected reserve. A starting balance below the protected reserve is an immediate breach even when monthly cash flow is positive. Negative projected savings means a modeled funding shortfall, not available credit. No interest, inflation, investment return, taxes, debt restructuring or emergency costs are inferred.']};
 }
 
+/**
+ * Deterministic income/expense shock against a constant-cash-flow baseline.
+ * Shock months are inclusive; the original assumptions resume automatically
+ * after the shock. This is a sensitivity analysis, not a forecast.
+ */
+export function cashFlowStressScenario(input){
+ exact(input,['currency','monthlyIncome','monthlyExpenses','liquidSavings','reserveFloor','horizonMonths','incomeReductionPercent','expenseIncreasePercent','shockStartMonth','shockDurationMonths']);
+ currency(input.currency);
+ const income=units(input.monthlyIncome),expenses=units(input.monthlyExpenses),savings=units(input.liquidSavings),reserve=units(input.reserveFloor);
+ const incomeReduction=units(input.incomeReductionPercent,100,100),expenseIncrease=units(input.expenseIncreasePercent,100,500);
+ if(!Number.isSafeInteger(input.horizonMonths)||input.horizonMonths<1||input.horizonMonths>600)throw RangeError('Choose a 1–600 month horizon');
+ if(!Number.isSafeInteger(input.shockStartMonth)||input.shockStartMonth<1||input.shockStartMonth>input.horizonMonths)throw RangeError('Shock start must be within the planning horizon');
+ if(!Number.isSafeInteger(input.shockDurationMonths)||input.shockDurationMonths<1||input.shockDurationMonths>input.horizonMonths-input.shockStartMonth+1)throw RangeError('Shock duration must fit within the planning horizon');
+ const shockEnd=input.shockStartMonth+input.shockDurationMonths-1;
+ const simulate=stressed=>{
+  let balance=savings,minimum=savings,totalIncome=0n,totalExpenses=0n,firstReserveBreachMonth=savings<reserve?0:null,firstNegativeMonth=null,reserveRestoredMonth=null,monthsBelowReserve=0;
+  for(let month=1;month<=input.horizonMonths;month++){
+   const shock=stressed&&month>=input.shockStartMonth&&month<=shockEnd;
+   const received=shock?round(income*(10000n-incomeReduction),10000n):income;
+   const spent=shock?round(expenses*(10000n+expenseIncrease),10000n):expenses;
+   balance+=received-spent;totalIncome+=received;totalExpenses+=spent;
+   if(balance<minimum)minimum=balance;
+   if(balance<reserve){monthsBelowReserve++;if(firstReserveBreachMonth===null)firstReserveBreachMonth=month;}
+   if(balance<0n&&firstNegativeMonth===null)firstNegativeMonth=month;
+   if(stressed&&month>shockEnd&&firstReserveBreachMonth!==null&&reserveRestoredMonth===null&&balance>=reserve)reserveRestoredMonth=month;
+   out(balance);out(totalIncome);out(totalExpenses);
+  }
+  return {endingLiquidSavings:out(balance),minimumLiquidSavings:out(minimum),totalIncome:out(totalIncome),totalExpenses:out(totalExpenses),netCashFlow:out(totalIncome-totalExpenses),firstReserveBreachMonth,monthsBelowReserve,firstNegativeMonth,reserveRestoredMonth};
+ };
+ const baseline=simulate(false),stress=simulate(true);
+ return {...sample,currency:input.currency,horizonMonths:input.horizonMonths,shock:{startMonth:input.shockStartMonth,endMonth:shockEnd,durationMonths:input.shockDurationMonths,incomeReductionPercent:input.incomeReductionPercent,expenseIncreasePercent:input.expenseIncreasePercent},baseline,stress,endingSavingsImpact:out(units(stress.endingLiquidSavings,100,1e12)-units(baseline.endingLiquidSavings,100,1e12)),minimumSavingsImpact:out(units(stress.minimumLiquidSavings,100,1e12)-units(baseline.minimumLiquidSavings,100,1e12)),warnings:['A deterministic cash-flow sensitivity using user-entered after-tax income and total expenses. The shock applies only during the inclusive months shown; baseline assumptions resume afterward. Expenses must include debt payments to avoid double counting. No tax recalculation, credit access, borrowing, inflation, interest, investment return, insurance, emergency reimbursement or probability is inferred. A reserve breach is a planning signal, not a solvency or lending assessment.']};
+}
+
+
 const indirectSchedules=Object.freeze({
  'CA-ON':Object.freeze({currency:'CAD',rate:1300,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'Ontario — confirmed ordinary HST place of supply'}),
  'CA-NS':Object.freeze({currency:'CAD',rate:1400,source:'https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html',scope:'Nova Scotia — confirmed ordinary HST place of supply'}),
