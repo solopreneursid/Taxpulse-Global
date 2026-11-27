@@ -12,9 +12,14 @@
     "GB": [
       "https://www.gov.uk/guidance/rates-and-thresholds-for-employers-2026-to-2027",
       "https://www.gov.uk/income-tax-rates"
+    ],
+    "SG": [
+      "https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/tax-residency-and-tax-rates/individual-income-tax-rates",
+      "https://www.cpf.gov.sg/employer/employer-obligations/how-much-cpf-contributions-to-pay",
+      "https://www.cpf.gov.sg/service/article/what-is-the-ordinary-wage-ow-ceiling"
     ]
   },
-  "scope": "Single Texas ordinary wages with regular federal rate schedule, Social Security and Medicare including additional Medicare; UK ordinary category A employee with twelve equal monthly pay periods, Scotland/rest-of-UK annual income tax and NI.",
-  "limitations": "No complete tax return, credits, AMT, pensions, student loans, insurance, other deductions, other US states or other countries. Source-reviewed formulas only; no independent professional validation.",
+  "scope": "Single Texas ordinary wages with regular federal rate schedule, Social Security and Medicare including additional Medicare; UK ordinary category A employee with twelve equal monthly pay periods, Scotland/rest-of-UK annual income tax and NI. Singapore: full-year resident, citizen or third-year-or-later permanent resident, below 55 throughout 2026, twelve equal ordinary monthly wages, full CPF rates; 2026 income-year salary estimate for YA 2027 uses the currently modeled resident tariff and earned-income relief only, with no YA 2027 rebate assumption.",
+  "limitations": "No complete tax return, credits, AMT, pensions, student loans, insurance, other deductions, other US states or other countries. Source-reviewed formulas only; no independent professional validation. Singapore YA 2027 continuation and any later rebates or statutory changes are not independently approved; projection remains preview-only.",
   "tests": "tests/salary-remainder.test.mjs"
 }

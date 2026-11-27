@@ -11,3 +11,16 @@ test('UK monthly thresholds not annualized thresholds',()=>{assert.equal(calc(gb
 test('England and Scotland 4000 monthly',()=>{const a=calc(gb(4000)),b=calc(gb(4000,'SCT'));assert.equal(a.incomeTax,7086);assert.equal(b.incomeTax,8142.05);assert.equal(a.employeeContributions,2833.92);assert.equal(a.annualRemainder,38080.08);assert.equal(b.annualRemainder,37024.03);});
 test('unsupported situations reject rather than extrapolate',()=>{for(const v of [us(250001),us(-1),us(1.001),gb(100001),gb(4000.01),{...us(10000),region:'PA'},{...us(10000),scopeConfirmed:false},{...gb(4000),extra:1}])assert.throws(()=>calc(v));});
 test('replay report',async()=>{const engineFingerprint='a'.repeat(64);const r=await createReceipt({kind:'salary-remainder',input:gb(4000,'SCT'),engineFingerprint});assert.deepEqual(await verifyReceipt(r,engineFingerprint),{integrity:true,sameEngine:true,reproduced:true});});
+
+test('Singapore 2026 income estimate resolves the separate YA 2027 preview period',()=>{
+ const a=calc({country:'SG',region:'SG',taxYear:'2026',pay:3000,scopeConfirmed:true});
+ const b=calc({country:'SG',region:'SG',taxYear:'2026',pay:4000,scopeConfirmed:true});
+ assert.equal(a.taxYearLabel,'Income earned in calendar year 2026; YA 2027');
+ assert.equal(a.taxableIncome,27800);
+ assert.equal(a.incomeTax,156);
+ assert.equal(a.employeeContributions,7200);
+ assert.equal(a.effectiveRuleVersion,'SG-2026-salary-assessment-v1');
+ assert.equal(b.taxableIncome,37400);
+ assert.equal(b.incomeTax,459);
+ assert.equal(b.employeeContributions,9600);
+});

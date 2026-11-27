@@ -409,7 +409,7 @@ function extendedSalaryRemainder(input,ruleContext={}){
  if(typeof input!=='object'||Array.isArray(input)||required.some(k=>!Object.hasOwn(input,k))||Object.keys(input).some(k=>!required.includes(k))||input.taxYear!=='2026'||input.scopeConfirmed!==true)throw new TypeError('Unsupported salary example');
  const country=input.country,pay=cgMoney(input.pay);
  if(pay%100n!==0n)throw new RangeError('Whole currency units required');
- let gross=pay,tax=0n,taxable=pay,contributions=[],incomeTaxComponents=[],taxAdjustments=[],currency,period,payFrequency='annual',warnings;
+ let gross=pay,tax=0n,taxable=pay,contributions=[],incomeTaxComponents=[],taxAdjustments=[],currency,period,payFrequency='annual',warnings,effectiveRuleVersion;
  const item=(name,amount)=>({name,amount:cgOut(amount)});
  const annualContrib=(income)=>calculateEmployeeContributions({country,taxYear:'2026',income:cgOut(income),scopeConfirmed:true},ruleContext);
  if(country==='CA'&&input.region==='AB'){
@@ -457,7 +457,7 @@ function extendedSalaryRemainder(input,ruleContext={}){
   currency='SGD';period='Income earned in calendar year 2026; YA 2027';payFrequency='monthly';gross=pay*12n;
   const r=calculateEmployeeContributions({country:'SG',taxYear:'2026',income:cgOut(pay),ageBand:'55-or-under',scopeConfirmed:true},ruleContext);
   const cpf=cgMoney(r.totalEmployeeContribution)*12n;
-  const sg=resolveNationalRule('SG','national-assessment',input.taxYear,nationalPeriodStart('SG',input.taxYear),ruleContext.national).parameters;
+  const sgRule=resolveNationalRule('SG','salary-assessment',input.taxYear,nationalPeriodStart('SG',input.taxYear,'salary-assessment'),ruleContext.national),sg=sgRule.parameters;effectiveRuleVersion=sgRule.version;
   const earned=minBig(gross,BigInt(sg.earnedIncomeRelief)*100n);
   taxable=maxBig(0n,gross-cpf-earned);
   // IRAS resident schedule YA 2024 onward; no speculative YA 2027 rebate.
@@ -469,7 +469,7 @@ function extendedSalaryRemainder(input,ruleContext={}){
  }else throw new TypeError('Unsupported salary region');
  const employeeContributions=contributions.reduce((sum,c)=>sum+cgMoney(c.amount),0n),total=tax+employeeContributions,remaining=gross-total;
  if(remaining<0n)throw new RangeError('Modeled deductions exceed wages');
- return {country,region:input.region,taxYear:'2026',taxYearLabel:period,currency,payFrequency,inputPay:cgOut(pay),annualGross:cgOut(gross),taxableIncome:cgOut(taxable),incomeTax:cgOut(tax),incomeTaxComponents,taxAdjustments,employeeContributions:cgOut(employeeContributions),contributions,totalModeledDeductions:cgOut(total),annualRemainder:cgOut(remaining),averageMonthlyRemainder:cgOut((remaining+6n)/12n),sampleOnly:true,taxRulesVerified:false,ruleId:country+'-'+input.region+'-2026-salary-remainder-v1',sourceUrls:[...new Set([...EXTENDED_PAY_SOURCES[country],...CONTRIBUTION_SOURCES[country]])],warnings:[...warnings,'Money left after modeled taxes and contributions only; not an actual payslip or complete take-home pay.']};
+ return {country,region:input.region,taxYear:'2026',taxYearLabel:period,currency,payFrequency,inputPay:cgOut(pay),annualGross:cgOut(gross),taxableIncome:cgOut(taxable),incomeTax:cgOut(tax),incomeTaxComponents,taxAdjustments,employeeContributions:cgOut(employeeContributions),contributions,totalModeledDeductions:cgOut(total),annualRemainder:cgOut(remaining),averageMonthlyRemainder:cgOut((remaining+6n)/12n),sampleOnly:true,taxRulesVerified:false,ruleId:country+'-'+input.region+'-2026-salary-remainder-v1',...(effectiveRuleVersion?{effectiveRuleVersion}:{}),sourceUrls:[...new Set([...EXTENDED_PAY_SOURCES[country],...CONTRIBUTION_SOURCES[country]])],warnings:[...warnings,'Money left after modeled taxes and contributions only; not an actual payslip or complete take-home pay.']};
 }
 
 
