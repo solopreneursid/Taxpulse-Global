@@ -33,7 +33,7 @@ function germanTariff(value,p){
 export function assessTaxableIncome(input,ruleContext={}){
  if(!input||typeof input!=='object'||Array.isArray(input)||input.taxYear!=='2026')throw new TypeError('Unsupported tax period');
  const {country}=input;
- const p=nationalRules(input.taxYear,ruleContext.national).national[country];
+ const p=nationalRules(input.taxYear,ruleContext.national,country).national[country];
  if(!p)throw new TypeError('Unsupported country assessment');
  if(country==='AE'){
   if(Object.keys(input).some(k=>!['country','taxYear','salaryIncome','employeeWagesOnly'].includes(k))||input.employeeWagesOnly!==true)throw new TypeError('Only ordinary employee wages supported');
@@ -213,7 +213,7 @@ export function calculateCapitalGain(input,ruleContext={}){
  const country=input.country,required=[...common,...(country==='US'?['filingStatus']:country==='IN'?['assetType']:[])];
  const keys=[...required,...(country==='IN'?[]:['assetType'])];
  if(Object.keys(input).some(k=>!keys.includes(k))||required.some(k=>!Object.hasOwn(input,k)))throw new TypeError('Unsupported fields');
- const rules=nationalRules(input.taxYear,ruleContext.national),p=rules.investment[country];
+ const rules=nationalRules(input.taxYear,ruleContext.national,country,'investment-assessment'),p=rules.investment[country];
  const assetType=Object.hasOwn(input,'assetType')?input.assetType:'listed-equity';
  const allowed=country==='IN'?['listed-equity','equity-fund','property','crypto']:country==='US'?['listed-equity','investment-land','crypto']:['listed-equity','property','crypto'];
  if(!allowed.includes(assetType))throw new TypeError('Unsupported asset type');
@@ -331,7 +331,7 @@ export function calculateSalaryRemainder(input,ruleContext={}){
   // Restrict to this range until AMT and credit eligibility are modeled.
   if(pay>25000000n)throw new RangeError('US examples limited to USD 250,000 annual wages');
   gross=pay;currency='USD';period='Calendar year 2026';payFrequency='annual';
-  const us=nationalRules(input.taxYear,ruleContext.national).national.US;
+  const us=nationalRules(input.taxYear,ruleContext.national,'US').national.US;
   const taxable=maxBig(0n,gross-BigInt(us.standardDeduction)*100n);
   incomeTax=cgRound(cgSlices(0n,taxable,us.filing.single.bounds,us.ordinaryRates).total);
   const oasdi=payroll('oasdi'),medicare=payroll('medicare');
@@ -422,7 +422,7 @@ function extendedSalaryRemainder(input,ruleContext={}){
   const enhanced=cgRound(pensionable*BigInt(cpp.cppEnhancedRateBasisPoints))+cgMoney(c.components[1].amount);
   const baseCPP=cgMoney(c.components[0].amount)-cgRound(pensionable*BigInt(cpp.cppEnhancedRateBasisPoints)),ei=cgMoney(c.components[2].amount);
   taxable=gross-enhanced;
-  const ca=nationalRules(input.taxYear,ruleContext.national).national.CA;
+  const ca=nationalRules(input.taxYear,ruleContext.national,'CA').national.CA;
   const federal=assessTaxableIncome({country:'CA',taxYear:'2026',taxableIncome:cgOut(taxable),netIncome:cgOut(taxable),fullYearResident:true},ruleContext);
   const federalExtraCredit=cgRound((baseCPP+ei+minBig(gross,BigInt(ca.employmentAmount)*100n))*BigInt(ca.creditRate));
   const federalTax=maxBig(0n,cgMoney(federal.incomeTax)-federalExtraCredit);
@@ -457,7 +457,7 @@ function extendedSalaryRemainder(input,ruleContext={}){
   currency='SGD';period='Income earned in calendar year 2026; YA 2027';payFrequency='monthly';gross=pay*12n;
   const r=calculateEmployeeContributions({country:'SG',taxYear:'2026',income:cgOut(pay),ageBand:'55-or-under',scopeConfirmed:true},ruleContext);
   const cpf=cgMoney(r.totalEmployeeContribution)*12n;
-  const sg=nationalRules(input.taxYear,ruleContext.national).national.SG;
+  const sg=nationalRules(input.taxYear,ruleContext.national,'SG').national.SG;
   const earned=minBig(gross,BigInt(sg.earnedIncomeRelief)*100n);
   taxable=maxBig(0n,gross-cpf-earned);
   // IRAS resident schedule YA 2024 onward; no speculative YA 2027 rebate.
