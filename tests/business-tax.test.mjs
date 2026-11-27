@@ -95,4 +95,10 @@ test('invalid business registry changes fail closed',()=>{
   const overlap=structuredClone(rules);
   overlap.indirectTax.push({...overlap.indirectTax[0],version:'GB-overlap',effectiveFrom:'2026-06-01'});
   assert.throws(()=>validateBusinessTaxRules(overlap));
+  const wrongCurrency=structuredClone(rules);
+  wrongCurrency.indirectTax[0].currency='EUR';
+  assert.throws(()=>validateBusinessTaxRules(wrongCurrency));
+  const invertedRates=structuredClone(rules);
+  invertedRates.corporateTax[1].smallBusinessRateBasisPoints=1600;
+  assert.throws(()=>validateBusinessTaxRules(invertedRates));
 });
