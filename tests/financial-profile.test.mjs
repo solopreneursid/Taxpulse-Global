@@ -46,3 +46,22 @@ test('consolidated report recalculates separate scenarios without summing curren
  const r=planningReport(input,'a'.repeat(64));assert.equal(r.salary[0].currency,'USD');assert.equal(r.salary[0].annualGross,100000);assert.equal(r.scenarios[0].metrics.nominalBalance,1221.1);assert.equal(r.scenarios[1].metrics.nominalBalance,1200);assert.equal(r.scenarios[1].currency,'GBP');assert.equal(r.taxRulesVerified,false);assert.equal(r.sampleOnly,true);assert.equal(Object.hasOwn(r,'combinedBalance'),false);
  assert.throws(()=>planningReport({salaryProfiles:[],scenarios:[]},'a'.repeat(64)));assert.throws(()=>planningReport(input,'bad'));
 });
+
+
+test('cash-flow stress is preserved, recalculated and summarized in the encrypted Financial Twin archive',async()=>{
+ const salary={country:'US',region:'TX',taxYear:'2026',pay:100000,scopeConfirmed:true};
+ const stress={currency:'USD',monthlyIncome:5000,monthlyExpenses:4000,liquidSavings:8000,reserveFloor:6000,horizonMonths:12,incomeReductionPercent:50,expenseIncreasePercent:25,shockStartMonth:2,shockDurationMonths:3};
+ const input={salaryProfiles:[salary],scenarios:[{kind:'cash-flow-stress',input:stress}]};
+ const pass='synthetic-stress-archive-passphrase',fingerprint='f'.repeat(64);
+ assert.deepEqual(validatePlanningArchive(input),input);
+ const envelope=await exportPlanningArchive(input,pass,fingerprint);
+ assert.ok(!JSON.stringify(envelope).includes('monthlyIncome'));
+ assert.deepEqual(await importPlanningArchive(envelope,pass,fingerprint),input);
+ const report=planningReport(input,fingerprint);
+ assert.equal(report.scenarios[0].kind,'cash-flow-stress');
+ assert.equal(report.scenarios[0].metrics.baselineEndingLiquidSavings,20000);
+ assert.equal(report.scenarios[0].metrics.stressEndingLiquidSavings,9500);
+ assert.equal(report.scenarios[0].metrics.stressFirstReserveBreachMonth,3);
+ assert.equal(report.scenarios[0].metrics.reserveRestoredMonth,9);
+ assert.equal(report.taxRulesVerified,false);
+});
