@@ -19,7 +19,7 @@ Run `node scripts/production-readiness-report.mjs` for a read-only manifest and 
 - Qualified independent reviewers must approve exact country/module scopes against official sources and signed fixtures.
 - Founder and independent reviewer generate and retain distinct offline keys; only public keys are enrolled.
 - Independent security assessor reviews deployed boundaries, browser storage, recovery and key revocation.
-- Physical low-end mobile usability and accessibility testing remains necessary; no WCAG conformance claim.
+- Physical low-end mobile usability and accessibility testing remains necessary; follow docs/PHYSICAL-ACCESSIBILITY-ACCEPTANCE.md. No WCAG conformance claim.
 - Freeze the actual artifact and approve its digest via the dual-signature release workflow. Production remains blocked until the actual gate succeeds.
 
 ## Independent review packet
@@ -33,11 +33,11 @@ CI exercises an isolated backup and restore with the complete review archive sch
 
 Each successful source CI generates preview-build-evidence.json containing the exact commit, revision, engine fingerprint and SHA-256 hashes for the Worker static-import closure. Compare the actual downloaded Worker module bytes with this evidence before declaring a preview release verified. The independent hosted gate additionally checks the served public assets. Neither evidence artifact is an independent statutory approval or production signature.
 
-The isolated D1 provider-level restore drill has now passed (data/d1-recovery-drill-2026-11-27.json). It uses synthetic data only; test actual production recovery procedures, independent sequence floors, key rotation and recovery objectives before release.
+The synthetic SQLite/D1-compatible backup-and-restore regression has passed (data/d1-recovery-drill-2026-11-27.json). It uses synthetic data only and is not a Cloudflare D1 provider-level restore drill. Independent KV sequence-floor enforcement is implemented and tested, but the RULE_SEQUENCE_FLOOR namespace binding and initial value are not provisioned. Test actual provider restore, binding recovery, key rotation and recovery objectives before release.
 
 ## Automated accessibility and performance regression
 Local Chromium checks 320/390/1440 widths, labelled controls, skip navigation, route and report focus, no external browser requests, initial decoded payload/resource ceilings, and 200% root text enlargement for representative workspaces and calculators. CI archives local-accessibility-performance.json. These are limited regression checks, not WCAG certification, network performance targets or physical-device acceptance.
 
 
 ## Migration 005 preview-database status
-Migration 005 is covered by regression tests for national, investment and salary-version backfill, first-sequence retention, parameter/source immutability, duplicate rejection, conflict abort and idempotent reapplication. It has now been applied to `taxpulse-regulatory-preview` only. Preflight confirmed migrations 001–004, an empty sequence-0 head, and zero snapshots, events or ledger rows. The publisher Worker is bound to this database but has no Cron schedule; the calculator preview Worker remains KV-only. Postflight confirmed all three national-version triggers and the unchanged empty head/archive/ledger. See `data/d1-migration-005-preview-2026-11-27.json`. No YorpHives or unrelated database was modified. This is a schema migration only; it does not enroll keys, publish rules, or authorize production.
+Migration 005 is covered by regression tests for national, investment and salary-version backfill, first-sequence retention, parameter/source immutability, duplicate rejection, conflict abort and idempotent reapplication. It has been applied to `taxpulse-regulatory-preview` only. The publisher now requires an independent KV binding named `RULE_SEQUENCE_FLOOR` and key `taxpulse:regulatory-sequence-floor`; neither has been provisioned. Preflight confirmed migrations 001–004, an empty sequence-0 head, and zero snapshots, events or ledger rows. The publisher Worker is bound to this database but has no Cron schedule; the calculator preview Worker remains KV-only. Postflight confirmed all three national-version triggers and the unchanged empty head/archive/ledger. See `data/d1-migration-005-preview-2026-11-27.json`. No YorpHives or unrelated database was modified. This is a schema migration only; it does not enroll keys, publish rules, or authorize production.
