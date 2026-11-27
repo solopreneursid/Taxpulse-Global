@@ -58,7 +58,7 @@ import {historicalRuleCatalog,compareHistoricalTax} from './history.mjs';
 import {assessTaxableIncome,compareIndiaRegimes,calculateCapitalGain,calculateRegionalTax,regionalTaxCatalog,calculateSalaryRemainder,calculateEmployeeContributions} from './taxable-income.mjs';
 import {calculate} from './api.mjs';
 import {calculateIndirectTax,calculateCorporateTaxComponent} from './business-tax.mjs';
-import {scopedTransferTax,scopedInvestmentGain,scopedTreatyCredit,confirmedTreatyCredit,usEmployerFica} from './decision-tools.mjs';
+import {scopedTransferTax,scopedInvestmentGain,scopedTreatyCredit,confirmedTreatyCredit,usEmployerFica,ukIndiaCredit} from './decision-tools.mjs';
 import {calculateTreatyCreditComponent} from './treaty-credit.mjs';
 import {advancedCalculate,supported} from './advanced.mjs';
 import {countryCalculate,catalog} from './country.mjs';
