@@ -5,6 +5,12 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  const p=productionReadinessReport();
  assert.equal(p.requiredScopes,56);assert.equal(p.scopedPreviewExamples,56);assert.equal(p.analogousComponents,2);assert.equal(p.legacyBackendCatalogScopes,3);
  assert.equal(p.missingBackendCountries.length,5);assert.equal(p.missingBackendModules.length,6);assert.equal(p.productionAuthorized,false);assert.match(p.gate,/blocked/);
+ assert.equal(p.scopedTaxComponents.indirectTaxRules.length,12);
+ assert.equal(p.scopedTaxComponents.corporateTaxRules.length,4);
+ assert.equal(p.scopedTaxComponents.employerPayrollComponents.length,1);
+ assert.equal(p.scopedTaxComponents.treatyCreditComponents.length,1);
+ assert.equal(p.scopedTaxComponents.independentApproval,'not established');
+ assert.equal(p.scopedTaxComponents.productionEnabled,false);
  assert.ok(p.countries.every(c=>c.scopedPreviewExamples===7&&!c.manifestVerified&&!c.productionEnabled&&c.recordedEvidenceCount===0&&c.remaining.length===7));
  assert.equal(p.countries.find(c=>c.country==='IN').missingBackendModules.length,6);
  assert.equal(p.countries.find(c=>c.country==='CA').missingBackendModules.length,7);
