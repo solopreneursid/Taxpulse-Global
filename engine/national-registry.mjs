@@ -14,12 +14,12 @@ function checkShape(value,model,path=''){
 }
 
 const increasing=a=>a.every((v,i)=>v>0&&(i===0||v>a[i-1]));
-function effectivePeriod(country,year){
+function effectivePeriod(country,year,component='national-assessment'){
  const y=Number(year),next=String(y+1).padStart(4,'0');
- const start=country==='SG'?String(y-1).padStart(4,'0')+'-01-01':
+ const start=country==='SG'&&component==='national-assessment'?String(y-1).padStart(4,'0')+'-01-01':
   country==='GB'?year+'-04-06':country==='IN'?year+'-04-01':
   country==='AU'?year+'-07-01':year+'-01-01';
- const end=country==='SG'?year+'-01-01':
+ const end=country==='SG'&&component==='national-assessment'?year+'-01-01':
   country==='GB'?next+'-04-06':country==='IN'?next+'-04-01':
   country==='AU'?next+'-07-01':next+'-01-01';
  return {start,end};
@@ -35,6 +35,7 @@ export function validateNationalRegistry(data){
 
  const expected=new Map();
  for(const country of Object.keys(n))expected.set(country+':national-assessment',{country,component:'national-assessment'});
+ expected.set('SG:salary-assessment',{country:'SG',component:'salary-assessment'});
  for(const country of Object.keys(i))expected.set(country+':investment-assessment',{country,component:'investment-assessment'});
  if(!Array.isArray(data.effectivePeriods)||data.effectivePeriods.length!==expected.size)throw Error('Missing national rule periods');
  validateEffectivePeriods(data.effectivePeriods);
@@ -44,7 +45,7 @@ export function validateNationalRegistry(data){
      row.taxYear!==data.taxYear||row.status!=='preview'||row.legalStatus!=='unverified')throw Error('Invalid national rule version metadata');
   const key=row.jurisdiction+':'+row.component,known=expected.get(key);
   if(!known||seen.has(key))throw Error('Unexpected or duplicate national rule period');
-  const period=effectivePeriod(known.country,data.taxYear);
+  const period=effectivePeriod(known.country,data.taxYear,known.component);
   if(row.effectiveFrom!==period.start||row.effectiveUntil!==period.end)throw Error('National rule period does not match the assessment year');
   if(!Array.isArray(data.sources[row.jurisdiction])||!data.sources[row.jurisdiction].length)throw Error('Missing national source evidence');
   seen.add(key);
@@ -61,18 +62,18 @@ export function resolveNationalRule(country,component,taxYear,asOf,registry=data
  if(taxYear!==source.taxYear)throw RangeError('Unsupported national assessment year');
  const rule=resolveEffectiveRule({versions:source.effectivePeriods},{jurisdiction:country,component,asOf});
  if(rule.taxYear!==taxYear)throw RangeError('National rule tax year mismatch');
- const key=component==='national-assessment'?'national':component==='investment-assessment'?'investment':null;
+ const key=component==='national-assessment'||component==='salary-assessment'?'national':component==='investment-assessment'?'investment':null;
  if(!key||!Object.hasOwn(source[key],country))throw RangeError('Unsupported national rule component');
  return Object.freeze({...rule,parameters:source[key][country],sourceUrls:source.sources[country]});
 }
 
-export function nationalPeriodStart(country,year){return effectivePeriod(country,year).start;}
+export function nationalPeriodStart(country,year,component='national-assessment'){return effectivePeriod(country,year,component).start;}
 
 export function nationalRules(year,registry=data,country=null,component='national-assessment'){
  const source=registry===data?data:validateNationalRegistry(registry);
  if(year!==source.taxYear)throw RangeError('Unsupported national assessment year');
  if(country!==null){
-  const period=effectivePeriod(country,year);
+  const period=effectivePeriod(country,year,component);
   resolveNationalRule(country,component,year,period.start,source);
  }
  return source;
@@ -82,13 +83,9 @@ export function nationalRules(year,registry=data,country=null,component='nationa
 // included in the signed snapshot. Reviewer fixtures remain a separate attestation.
 export async function nationalEvidenceRules(registry){
  validateNationalRegistry(registry);
- const rows=[];
- for(const [table,component] of [['national','national-assessment'],['investment','investment-assessment']]){
-  for(const country of Object.keys(registry[table])){
-   const period=registry.effectivePeriods.find(r=>r.jurisdiction===country&&r.component===component&&r.taxYear===registry.taxYear);
-   if(!period)throw Error('Missing effective-dated national rule');
-   rows.push({version:period.version,jurisdiction:country,taxYear:registry.taxYear,component,sourceUrls:registry.sources[country],effectiveFrom:period.effectiveFrom,effectiveUntil:period.effectiveUntil});
-  }
- }
- return rows;
+ return registry.effectivePeriods.map(period=>{
+  const table=period.component==='investment-assessment'?'investment':'national';
+  if(!Object.hasOwn(registry[table],period.jurisdiction))throw Error('Missing national rule parameters');
+  return {version:period.version,jurisdiction:period.jurisdiction,taxYear:period.taxYear,component:period.component,sourceUrls:registry.sources[period.jurisdiction],effectiveFrom:period.effectiveFrom,effectiveUntil:period.effectiveUntil};
+ });
 }
