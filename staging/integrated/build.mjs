@@ -70,7 +70,7 @@ const payrollRegistry=read('engine/payroll-registry.mjs').replace("import data f
 const payrollVersions='export default '+JSON.stringify(JSON.parse(read('rules/payroll-versions.json')))+';\n';
 for(const [name,content] of [['payroll-registry',payrollRegistry],['payroll-versions',payrollVersions]]){write(name+'.mjs',content);write('browser-'+name+'.mjs.txt',content);}
 const businessTaxRegistry=read('engine/business-tax.mjs').replace("import data from '../rules/business-tax-2026.json' with { type: 'json' };","import data from './business-tax-versions.mjs';");
-const businessTaxVersions='export default '+JSON.stringify(JSON.parse(read('rules/business-tax-2026.json'))) + ';\\n';
+const businessTaxVersions='export default '+JSON.stringify(JSON.parse(read('rules/business-tax-2026.json'))) + ';\n';
 for(const [name,content] of [
  ['business-tax',businessTaxRegistry],
  ['business-tax-versions',businessTaxVersions],
