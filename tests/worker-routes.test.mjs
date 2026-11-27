@@ -43,10 +43,7 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(html.headers.get('cross-origin-opener-policy'),'same-origin');
  assert.equal(html.headers.get('cross-origin-resource-policy'),'same-origin');
  assert.deepEqual(catalog.modules,['pit','payroll','capgains','vat','corporate','property','dtaa']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
- for(const module of []){
-  assert.ok(catalog.disabledModules[module]);
-  assert.equal((await post(JSON.stringify({...payload,module}))).status,400);
- }
+ assert.equal(Object.keys(catalog.disabledModules).length,0);
  const schema=(await (await call('/openapi.json')).json()).paths['/v1/country/calculate'].post.requestBody.content['application/json'].schema;
  assert.deepEqual(schema.properties.module.enum,catalog.modules);
  const countrySchema=(await (await call('/openapi.json')).json()).paths['/v1/country/calculate'].post.requestBody.content['application/json'].schema.properties.country.enum;assert.deepEqual(countrySchema,['IN','US','GB','DE','AE','CA','AU','SG']);
