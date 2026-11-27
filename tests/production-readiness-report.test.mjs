@@ -1,9 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {productionReadinessReport} from '../scripts/production-readiness-report.mjs';
-test('readiness report distinguishes all 56 preview entries from 48 scoped PIT/payroll/capital-gains/indirect-tax/property/treaty API entries and no approvals',()=>{
+test('readiness report distinguishes all 56 preview entries from 56 scoped backend entries across all seven module families and no approvals',()=>{
  const p=productionReadinessReport();
- assert.equal(p.requiredScopes,56);assert.equal(p.scopedPreviewExamples,56);assert.equal(p.analogousComponents,2);assert.equal(p.legacyBackendCatalogScopes,48);
+ assert.equal(p.requiredScopes,56);assert.equal(p.scopedPreviewExamples,56);assert.equal(p.analogousComponents,2);assert.equal(p.legacyBackendCatalogScopes,56);
+ assert.equal(p.backendCatalog.moduleFamilies,7);
+ assert.equal(p.backendCatalog.countryCount,8);
+ assert.equal(p.backendCatalog.entries,56);
+ assert.equal(p.backendCatalog.allRequiredModulesPresent,true);
+ assert.equal(p.backendCatalog.allCountriesPresent,true);
+ assert.equal(p.statutoryVerification.verifiedCountryRecords,0);
+ assert.equal(p.statutoryVerification.totalCountryRecords,8);
+ assert.equal(p.statutoryVerification.independentReviewRequired,true);
+ assert.match(p.statutoryVerification.releaseGate,/blocked/);
  assert.equal(p.missingBackendCountries.length,0);
  assert.equal(Object.keys(p.backendPITInputBasis).length,8);
  assert.equal(p.backendPITInputBasis.DE,'taxableIncome with individual or eligible joint assessment');
@@ -22,7 +31,10 @@ test('readiness report distinguishes all 56 preview entries from 48 scoped PIT/p
  assert.equal(Object.keys(p.backendIndirectTaxInputBasis).length,8);
  assert.match(p.backendIndirectTaxInputBasis.IN,/historical 18% IGST/);
  assert.match(p.backendIndirectTaxInputBasis.US,/no federal VAT/);
- assert.match(p.indirectTaxScope,/excludes taxability determination/);assert.equal(p.missingBackendModules.length,1);assert.equal(p.productionAuthorized,false);assert.match(p.gate,/blocked/);
+ assert.match(p.indirectTaxScope,/excludes taxability determination/);
+ assert.equal(Object.keys(p.backendCorporateInputBasis).length,8);
+ assert.equal(p.backendCorporateInputBasis.IN,'taxableProfit and scopeConfirmed; domestic company Section 115BAA 22% plus surcharge and cess component');
+ assert.match(p.corporateScope,/not a complete corporate return/);assert.equal(p.missingBackendModules.length,0);assert.equal(p.productionAuthorized,false);assert.match(p.gate,/blocked/);
  assert.equal(p.scopedTaxComponents.indirectTaxRules.length,12);
  assert.equal(p.scopedTaxComponents.corporateTaxRules.length,4);
  assert.equal(p.scopedTaxComponents.employerPayrollComponents.length,1);
@@ -58,8 +70,8 @@ test('readiness report distinguishes all 56 preview entries from 48 scoped PIT/p
  assert.equal(p.primaryDailyCollector.signedEvidenceDeliveryVerifiedInRun,'45755972060');
  assert.equal(p.primaryDailyCollector.storageReadBackVerified,true);
  assert.ok(p.countries.every(c=>c.scopedPreviewExamples===7&&!c.manifestVerified&&!c.productionEnabled&&c.recordedEvidenceCount===0&&c.remaining.length===7));
- assert.equal(p.countries.find(c=>c.country==='IN').missingBackendModules.length,1);
- assert.equal(p.countries.find(c=>c.country==='CA').missingBackendModules.length,1);
+ assert.equal(p.countries.find(c=>c.country==='IN').missingBackendModules.length,0);
+ assert.equal(p.countries.find(c=>c.country==='CA').missingBackendModules.length,0);
  assert.equal(p.previewInfrastructure.d1Migration005.database,'taxpulse-regulatory-preview');
  assert.equal(p.previewInfrastructure.d1Migration005.applied,true);
  assert.equal(p.previewInfrastructure.d1Migration005.head.sequence,0);

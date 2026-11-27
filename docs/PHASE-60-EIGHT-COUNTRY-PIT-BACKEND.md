@@ -1,10 +1,10 @@
-# Eight-country PIT, salary-remainder and capital-gains backend scope
+# Eight-country tax backend scope — seven module families
 
-Status: preview-only, sample-only and unverified. This is not a complete gross-to-net salary engine or filing calculation.
+Status: preview-only, sample-only and unverified. All seven module families have scoped backend routes across eight countries; this does not establish complete statutory coverage, independent verification or filing readiness.
 
-## API coverage
+## Personal income tax and salary-remainder coverage
 
-The legacy `countryCalculate` backend now has a personal-income-tax path for all eight configured countries:
+The legacy `countryCalculate` backend has a personal-income-tax and selected salary-remainder path for all eight configured countries:
 
 | Country | Input basis | Scope boundary |
 |---|---|---|
@@ -104,8 +104,25 @@ The legacy `countryCalculate` endpoint exposes `module: "vat"` as an indirect-ta
 
 The engine does not determine taxability, product/service classification, registration thresholds, place of supply, customer status, exemptions, zero-rating, reverse charge, imports, input-tax recovery, local surcharges or return treatment. The India example is tied to HSN 2523 and the cited 2025 notification; the US example is state-only Texas sales tax, not VAT. All results remain sample-only and unverified.
 
+## Scoped corporate-tax API
+
+The legacy `countryCalculate` endpoint exposes `module: "corporate"` for all eight countries by routing to the existing scoped jurisdiction calculators:
+
+| Country | Input contract | Component boundary |
+|---|---|---|
+| India | Taxable profit | Section 115BAA domestic-company scenario at 22% plus modeled 10% surcharge and 4% cess; no MAT |
+| United States | Taxable profit | Regular federal C-corporation 21% component |
+| United Kingdom | Taxable profit | Standard non-ring-fence small-profits/main-rate and marginal-relief schedule under the single-associated-company scope |
+| Germany | Taxable profit | 15% Körperschaftsteuer only; excludes solidarity surcharge and municipal trade tax |
+| UAE | Taxable profit | 0% up to AED 375,000 and 9% above under standard non-free-zone scope |
+| Canada | Taxable profit and `corporateScope=general\|small` | Federal general 15% or small-business 9% component |
+| Australia | Taxable profit and `corporateScope=base-rate-entity\|full-rate` | 25% or 30% company-rate scenario |
+| Singapore | Taxable profit and `corporateScope=partial-exemption\|startup-exemption` | YA 2026 17% component with the selected partial/start-up exemption, before rebate/cash grant |
+
+The engine does not determine tax adjustments, deductions, loss utilization, eligibility evidence, group relief, transfer pricing, special incentives, state/provincial taxes or the final return liability. The selected scope must match the taxpayer's actual facts; the caller's `scopeConfirmed` flag is not independent verification. All outputs remain sample-only and unverified.
+
 ## Release boundary
 
-All results remain `sampleOnly: true` and `taxRulesVerified: false`. The country manifest remains unverified and production-disabled. The backend exposes PIT, scoped salary remainder, capital-gains components, indirect-tax components, property transfer/registration components and one-item treaty-credit components for all eight countries. Corporate tax is the only module not yet exposed in the legacy country API. The 56-scope release gate is unchanged and still blocks production.
+All results remain `sampleOnly: true` and `taxRulesVerified: false`. The country manifest remains unverified and production-disabled. The backend catalog now exposes all seven module families across all eight countries (56 entries). This does not establish complete statutory coverage: the calculation components remain scoped, sample-only and taxRulesVerified=false. Every one of the 56 statutory scopes still requires independent source review, independently computed test fixtures and reviewer evidence. Trusted publisher/reviewer keys remain unenrolled, the independent security assessment remains pending, and production authorization remains blocked. The 56-scope release gate is unchanged and still blocks production.
 
 Independent statutory review must validate source law, effective periods, eligibility, reliefs, rounding and independently computed fixtures before any scope can be marked verified.

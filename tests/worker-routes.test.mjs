@@ -42,11 +42,8 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(html.headers.get('x-frame-options'),'DENY');
  assert.equal(html.headers.get('cross-origin-opener-policy'),'same-origin');
  assert.equal(html.headers.get('cross-origin-resource-policy'),'same-origin');
- assert.deepEqual(catalog.modules,['pit','payroll','capgains','vat','property','dtaa']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
- for(const module of ['corporate']){
-  assert.ok(catalog.disabledModules[module]);
-  assert.equal((await post(JSON.stringify({...payload,module}))).status,400);
- }
+ assert.deepEqual(catalog.modules,['pit','payroll','capgains','vat','corporate','property','dtaa']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
+ assert.equal(Object.keys(catalog.disabledModules).length,0);
  const schema=(await (await call('/openapi.json')).json()).paths['/v1/country/calculate'].post.requestBody.content['application/json'].schema;
  assert.deepEqual(schema.properties.module.enum,catalog.modules);
  const countrySchema=(await (await call('/openapi.json')).json()).paths['/v1/country/calculate'].post.requestBody.content['application/json'].schema.properties.country.enum;assert.deepEqual(countrySchema,['IN','US','GB','DE','AE','CA','AU','SG']);
@@ -171,6 +168,25 @@ test('generated Worker routes and validation',async()=>{
   assert.ok(Number.isFinite(result.modeledCredit));assert.ok(result.sourceUrls.length>0);
  }
  assert.equal((await post(JSON.stringify({country:'CA',taxYear:'2026',module:'dtaa',parameters:{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:false}}))).status,400);
+ const corporateCases=[
+  ['IN',{taxableProfit:1000000,scopeConfirmed:true},'INR'],
+  ['US',{taxableProfit:100000,scopeConfirmed:true},'USD'],
+  ['GB',{taxableProfit:300000,scopeConfirmed:true},'GBP'],
+  ['DE',{taxableProfit:100000,scopeConfirmed:true},'EUR'],
+  ['AE',{taxableProfit:500000,scopeConfirmed:true},'AED'],
+  ['CA',{taxableProfit:100000,corporateScope:'general',scopeConfirmed:true},'CAD'],
+  ['AU',{taxableProfit:100000,corporateScope:'base-rate-entity',scopeConfirmed:true},'AUD'],
+  ['SG',{taxableProfit:100000,corporateScope:'partial-exemption',scopeConfirmed:true},'SGD']
+ ];
+ for(const [country,parameters,currency] of corporateCases){
+  const response=await post(JSON.stringify({country,taxYear:'2026',module:'corporate',parameters}));
+  assert.equal(response.status,200,country);
+  const result=await response.json();
+  assert.equal(result.country,country);assert.equal(result.taxYear,'2026');assert.equal(result.module,'corporate');
+  assert.equal(result.currency,currency);assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
+  assert.ok(Number.isFinite(result.grossCorporateTax));assert.ok(result.sourceUrls.length>0);
+ }
+ assert.equal((await post(JSON.stringify({country:'CA',taxYear:'2026',module:'corporate',parameters:{taxableProfit:100000,corporateScope:'unsupported',scopeConfirmed:true}}))).status,400);
  const assess=await call('/v1/taxable-income/calculate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'DE',taxYear:'2026',taxableIncome:50000,assessment:'individual'})});
  assert.equal(assess.status,200);assert.equal((await assess.json()).incomeTax,10548);
  assert.equal((await call('/v1/taxable-income/calculate')).status,405);
