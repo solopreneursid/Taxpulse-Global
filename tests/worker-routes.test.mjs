@@ -42,8 +42,8 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(html.headers.get('x-frame-options'),'DENY');
  assert.equal(html.headers.get('cross-origin-opener-policy'),'same-origin');
  assert.equal(html.headers.get('cross-origin-resource-policy'),'same-origin');
- assert.deepEqual(catalog.modules,['pit']);
- for(const module of ['payroll','capgains','vat','corporate','property','dtaa']){
+ assert.deepEqual(catalog.modules,['pit','payroll']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
+ for(const module of ['capgains','vat','corporate','property','dtaa']){
   assert.ok(catalog.disabledModules[module]);
   assert.equal((await post(JSON.stringify({...payload,module}))).status,400);
  }
@@ -69,6 +69,28 @@ test('generated Worker routes and validation',async()=>{
   assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
   assert.ok(Number.isFinite(result.incomeTax));
  }
+ const extendedPayrollCases=[
+  ['IN',{region:'IN',pay:1000000,epfMonthlyWage:15000,professionalTaxAnnual:2500,scopeConfirmed:true},'INR'],
+  ['US',{region:'TX',pay:100000,scopeConfirmed:true},'USD'],
+  ['GB',{region:'RUK',pay:5000,scopeConfirmed:true},'GBP'],
+  ['DE',{region:'DE',pay:5000,annualTaxableIncome:50000,healthSupplementRate:2.9,scopeConfirmed:true},'EUR'],
+  ['AE',{region:'AE',pay:20000,monthlyBasicSalary:16000,scopeConfirmed:true},'AED'],
+  ['CA',{region:'AB',pay:100000,scopeConfirmed:true},'CAD'],
+  ['AU',{region:'AU',pay:100000,scopeConfirmed:true},'AUD'],
+  ['SG',{region:'SG',pay:5000,scopeConfirmed:true},'SGD']
+ ];
+ for(const [country,parameters,currency] of extendedPayrollCases){
+  const response=await post(JSON.stringify({country,taxYear:'2026',module:'payroll',parameters}));
+  assert.equal(response.status,200,country);
+  const result=await response.json();
+  assert.equal(result.country,country);assert.equal(result.module,'payroll');
+  assert.equal(result.currency,currency);assert.equal(result.sampleOnly,true);
+  assert.equal(result.taxRulesVerified,false);
+  assert.ok(Number.isFinite(result.annualGross)&&result.annualGross>0);
+  assert.ok(Number.isFinite(result.annualRemainder)&&result.annualRemainder>=0);
+  assert.ok(result.warnings.some(w=>w.includes('not payroll processing')));
+ }
+ assert.equal((await post(JSON.stringify({country:'US',taxYear:'2026',module:'payroll',parameters:{region:'TX',pay:100000}}))).status,400);
  const assess=await call('/v1/taxable-income/calculate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'DE',taxYear:'2026',taxableIncome:50000,assessment:'individual'})});
  assert.equal(assess.status,200);assert.equal((await assess.json()).incomeTax,10548);
  assert.equal((await call('/v1/taxable-income/calculate')).status,405);
