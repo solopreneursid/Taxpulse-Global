@@ -18,8 +18,8 @@
     "key": "taxpulse:regulatory-sequence-floor",
     "value": "0",
     "readBackVerified": true,
-    "authority": "Durable Object SQLite anchor is authoritative; KV is a non-authoritative mirror only.",
-    "kvRole": "diagnostic mirror; not used as the anti-rollback source of truth"
+    "authority": "SQLite-backed Cloudflare Durable Object is authoritative; KV is a non-authoritative diagnostic mirror.",
+    "kvRole": "diagnostic mirror only; not the anti-rollback source of truth"
   },
   "publisher": {
     "worker": "hqventures-taxpulse-rule-publisher-preview",
@@ -32,7 +32,11 @@
     "rulesPublished": false,
     "durableObjectBinding": "REGULATORY_SEQUENCE_ANCHOR",
     "durableObjectClass": "RegulatorySequenceAnchor",
-    "durableObjectBindingStatus": "not yet configured on deployed Worker"
+    "durableObjectBindingStatus": "deployed and read-back verified",
+    "durableObjectNamespaceId": "9cc1a52028864c0e81eb9c8fcde3869c",
+    "durableObjectMigrationTag": "phase67-sequence-anchor-v1",
+    "deployedVersionId": "2bb4151f-9d06-4ff2-8b0d-3e87994900ef",
+    "deployedVersionTrafficPercent": 100
   },
   "scope": "Preview-only infrastructure provisioning. No production database, Worker, route, key enrollment, statutory rule or customer data was modified."
 }
