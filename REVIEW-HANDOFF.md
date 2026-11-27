@@ -30,3 +30,6 @@ The review packet now distinguishes the actual narrow preview examples in rules/
 
 ## Coverage checkpoint — 27 November 2026
 All 56 inventory entries now have a narrow preview example or an explicitly marked analogous component. US state sales tax is not federal VAT; Dubai registration fees are not property tax. Those two entries cannot substitute for statutory approval. The remaining engineering descriptions in every row of rules/scoped-coverage.json must be addressed or the launch scope explicitly narrowed and the release gate independently redesigned and approved. No country is approved. The supplemental collector is extended to 38 targeted sources; it records baseline observations, not change detection, and remains separate from the 30-source signed monitoring contract.
+
+## Correctness review follow-up
+Reserve runway reports a time-zero breach when liquid savings are below the protected floor. Saving or loading a salary profile invalidates any asynchronous transfer generation, preventing an older import from replacing a newer selection. Decision examples with source URLs display explicit preliminary official-source references locally; no fetch is made unless the user chooses a link. These engineering fixes are not statutory approval.
