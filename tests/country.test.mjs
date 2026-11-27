@@ -43,7 +43,7 @@ test('country backend catalog exposes all eight countries and scoped PIT/payroll
  assert.match(c.indirectTaxScope,/excludes taxability determination/);
  assert.equal(c.corporateInputBasis.IN,'taxableProfit, taxRegime=115BAA and regimeEligibilityConfirmed=true; 22% base rate excludes surcharge and cess');
  assert.equal(c.corporateInputBasis.AE,'taxableProfit, qualifyingFreeZoneIncome=false and pillarTwoInScope=false; 0% up to AED 375,000 then 9%');
- assert.match(c.corporateScope,/not a complete return/);
+ assert.match(c.corporateScope,/excludes complete return/);
 });
 test('extended PIT contracts reject missing residency and unsupported assessments',()=>{
  assert.throws(()=>call('DE','pit',{taxableIncome:50000}),/assessment/);
