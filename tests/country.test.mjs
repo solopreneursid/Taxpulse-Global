@@ -27,6 +27,7 @@ test('PIT backend catalog exposes all eight countries but only the implemented m
 });
 test('extended PIT contracts reject missing residency and unsupported assessments',()=>{
  assert.throws(()=>call('DE','pit',{taxableIncome:50000}),/assessment/);
+ assert.throws(()=>countryCalculate({country:'DE',taxYear:'2026',module:'pit',parameters:{country:'DE',taxYear:'2026',taxableIncome:50000,assessment:'individual'}}),/must be top-level/);
  assert.throws(()=>call('AE','pit',{salaryIncome:100000,employeeWagesOnly:false}),/Only ordinary employee wages supported/);
  assert.throws(()=>call('CA','pit',{taxableIncome:50000,netIncome:50000,fullYearResident:false}),/full-year resident/);
  assert.throws(()=>call('AU','pit',{taxableIncome:50000,residentEligible:false}),/Resident rate eligibility/);
