@@ -19,7 +19,7 @@ const publicKeyHex=hex(await crypto.subtle.exportKey('raw',key.publicKey)),optio
 const reviewer=await crypto.subtle.generateKey('Ed25519',true,['sign','verify']);
 const reviewerPublicKeyHex=hex(await crypto.subtle.exportKey('raw',reviewer.publicKey)),reviewerId='synthetic-test-reviewer';
 async function approvedPack(sequence){const packData=await pack(sequence);const payload=statutoryReviewPayload(packData.envelope,reviewerId,now.toISOString());return {...packData,review:{payload,signature:hex(await crypto.subtle.sign('Ed25519',reviewer.privateKey,snapshotBytes(payload)))}};}
-function migrate(db){for(const file of ['001-regulatory-snapshots.sql','002-regulatory-version-ledger.sql','003-regulatory-unique-versions.sql','004-regulatory-review-archive.sql'])db.exec(readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));}
+function migrate(db){for(const file of ['001-regulatory-snapshots.sql','002-regulatory-version-ledger.sql','003-regulatory-unique-versions.sql','004-regulatory-review-archive.sql','005-regulatory-national-version-ledger.sql'])db.exec(readFileSync(new URL('../migrations/'+file,import.meta.url),'utf8'));}
 const approvedOptions=packData=>({...options,review:packData.review,reviewerPublicKeyHex,reviewerId});
 function dbAdapter(db){return {prepare(sql){const s=db.prepare(sql);let args=[];return {bind(...a){args=a;return this;},async first(){return s.get(...args);},async run(){return {meta:{changes:Number(s.run(...args).changes)}};}};}};}
 async function pack(sequence){
@@ -58,7 +58,17 @@ test('atomic publication, fixture rejection, replay, emergency block and forward
  await assert.rejects(publishSnapshot(db,one.envelope,one.fixtures,options));
  await assert.rejects(publishSnapshot(db,one.envelope,bad,approvedOptions(one)));
  assert.equal(sqlite.prepare('SELECT sequence FROM regulatory_head').get().sequence,0);
+
  assert.equal((await publishSnapshot(db,one.envelope,one.fixtures,approvedOptions(one))).state,'active');
+ const expectedLedger=regional.versions.length+indiaSalary.versions.length+payroll.versions.length+nationalEvidence.length;
+ assert.equal(sqlite.prepare('SELECT count(*) n FROM regulatory_version_ledger').get().n,expectedLedger);
+ const nationalLedger=sqlite.prepare('SELECT definition FROM regulatory_version_ledger WHERE version=?').get('AU-2026-national-assessment-v1');
+ const nationalDefinition=JSON.parse(nationalLedger.definition);
+ assert.equal(nationalDefinition.period.effectiveFrom,'2026-07-01');
+ assert.deepEqual(nationalDefinition.parameters.rates,national.national.AU.rates);
+ const mutated=await pack(2);
+ mutated.envelope.payload.national.national.AU.rates[1]+=100;
+ assert.throws(()=>sqlite.prepare('INSERT INTO regulatory_snapshots(sequence,digest,envelope,published_at,review_record) VALUES(?,?,?,?,?)').run(2,'d'.repeat(64),JSON.stringify(mutated.envelope),now.toISOString(),null),/immutable historical version changed/);
  const env={RULE_DB:db,RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,RULE_MIN_SEQUENCE:'1'};
  assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).state,'signed-preview');
  await assert.rejects(publishSnapshot(db,one.envelope,one.fixtures,approvedOptions(one)));
