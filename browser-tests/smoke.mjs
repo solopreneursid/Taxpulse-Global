@@ -10,6 +10,7 @@ const root=new URL('../',import.meta.url);
 execFileSync(process.execPath,[new URL('staging/integrated/build.mjs',root).pathname]);
 const temp=mkdtempSync(join(tmpdir(),'taxpulse-browser-'));
 let server,browser;
+const accessibilityPerformance=[];
 try {
  cpSync(new URL('staging/integrated/bundle/',root),temp,{recursive:true});
  const workerPath=join(temp,'worker.mjs');
@@ -33,8 +34,15 @@ try {
    const page=await context.newPage(),errors=[],requests=[];
    page.on('pageerror',e=>errors.push(e.message));
    page.on('request',r=>requests.push({url:r.url(),method:r.method()}));
+   const initialStart=performance.now();
    await page.goto(origin);
    await page.locator('#country-status li').last().waitFor({state:'attached'});
+   const initialReadyMs=Math.round(performance.now()-initialStart);
+   const payload=await page.evaluate(()=>{const nav=performance.getEntriesByType('navigation')[0];const resources=performance.getEntriesByType('resource');return {decodedBytes:Math.round((nav?.decodedBodySize||0)+resources.reduce((a,r)=>a+(r.decodedBodySize||0),0)),resourceCount:resources.length};});
+   assert.ok(initialReadyMs<15000,'Local initial readiness exceeded regression ceiling');
+   assert.ok(payload.decodedBytes>0&&payload.decodedBytes<3000000,'Local decoded payload outside regression budget');
+   assert.ok(payload.resourceCount<100,'Initial resource count exceeded regression budget');
+   accessibilityPerformance.push({viewport:viewport.width,initialReadyMs,...payload});
    const duplicateIds=await page.evaluate(()=>{const ids=Array.from(document.querySelectorAll('[id]'),e=>e.id);return ids.filter((id,i)=>ids.indexOf(id)!==i);});
    assert.deepEqual(duplicateIds,[],'Duplicate HTML IDs');
    assert.equal(await page.locator('#country-status li').count(),8);
@@ -57,6 +65,7 @@ try {
    assert.deepEqual(await page.locator('main > section.card:visible').evaluateAll(es=>es.map(e=>e.id)),['tools']);
    await page.locator('.nav a[href="/salary"]').click();
    await page.locator('#category-salary').waitFor();
+   assert.equal(await page.evaluate(()=>document.activeElement.id),'category-salary','SPA navigation focus');
    assert.equal(new URL(page.url()).pathname,'/salary');
    await page.locator('#category-salary a[href="/tools/salary-remainder"]').click();
    await page.locator('#salary-remainder').waitFor();
@@ -118,7 +127,7 @@ try {
    await page.locator('.nav a[href="/money"]').click();await page.locator('#planning-archive summary').click();await page.locator('#planning-archive-kind').selectOption('investment-scenario');await page.locator('#planning-archive-add').click();assert.match(await page.locator('#planning-archive-status').innerText(),/captured/);
    await page.locator('#planning-archive-password').fill('fictional-browser-archive-password');const archiveDownload=page.waitForEvent('download');await page.locator('#planning-archive-export').click();const archivePath=await (await archiveDownload).path();assert.ok(archivePath);
    await page.locator('#planning-archive-clear').click();await page.locator('#planning-archive-password').fill('fictional-browser-archive-password');await page.locator('#planning-archive-file').setInputFiles(archivePath);await page.locator('#planning-archive-import').click();await page.waitForFunction(()=>document.getElementById('planning-archive-status').textContent.includes('validated'));
-   await page.locator('#planning-report-show').click();await page.locator('#planning-report-result').waitFor();assert.match(await page.locator('#planning-report-entries').innerText(),/INR\s*1,221.10/);assert.equal(await page.locator('#planning-report-download').isDisabled(),true);
+   await page.locator('#planning-report-show').click();await page.locator('#planning-report-result').waitFor();assert.match(await page.locator('#planning-report-entries').innerText(),/INR\s*1,221.10/);assert.equal(await page.locator('#planning-report-download').isDisabled(),true);assert.equal(await page.evaluate(()=>document.activeElement.id),'planning-report-result','Report result receives focus');
    await page.locator('#planning-report-confirm').check();const reportDownload=page.waitForEvent('download');await page.locator('#planning-report-download').click();const reportPath=await (await reportDownload).path();const report=JSON.parse(readFileSync(reportPath,'utf8'));assert.equal(report.scenarios[0].metrics.nominalBalance,1221.1);assert.equal(report.taxRulesVerified,false);assert.equal(await page.locator('#planning-report-download').isDisabled(),true);
    await page.locator('#planning-archive-entry').selectOption('scenario:0');await page.locator('#planning-archive-load').click();await page.locator('#investment-scenario').waitFor();assert.equal(await page.locator('#investment-scenario-initialSavings').inputValue(),'1000');assert.equal(await page.locator('#investment-scenario-result').isHidden(),true);
    await page.goto(origin+'/tools/retirement-scenario');for(const [k,v] of Object.entries({startingBalance:1000,monthlyWithdrawal:300,annualReturnPercent:0,annualSpendingGrowthPercent:0,horizonMonths:12}))await page.locator('#retirement-scenario-'+k).fill(String(v));await page.locator('#retirement-scenario-form button[type=submit]').click();await page.locator('#retirement-scenario-result').waitFor();assert.match(await page.locator('#retirement-scenario-breakdown').innerText(),/First shortfall month\s*4/);
@@ -492,11 +501,23 @@ try {
    await context.setOffline(false);
    await page.goto(origin+'/tax-rules');
    await page.locator('#country-status li').last().waitFor({state:'attached'});
+   // Simulate text enlargement independently of the existing 320px reflow tests.
+   if(viewport.width===1440){
+    const zoomCases=[['/','tools'],['/money','category-money'],['/tools/financial-health','financial-health'],['/tools/debt-repayment','debt-repayment'],['/tools/uk-dividend-tax','uk-dividend-tax']];
+    for(const [path,id] of zoomCases){
+     await page.goto(origin+path);await page.locator('#'+id).waitFor({state:'visible'});
+     await page.evaluate(()=>{document.documentElement.style.fontSize='200%';});
+     const check=await page.evaluate(()=>({rootFont:parseFloat(getComputedStyle(document.documentElement).fontSize),overflow:document.documentElement.scrollWidth>innerWidth}));
+     assert.ok(check.rootFont>=30,path+' text enlargement not applied');assert.equal(check.overflow,false,path+' text enlargement horizontal overflow');
+     accessibilityPerformance.push({viewport:viewport.width,path,textScale:2,overflow:check.overflow});
+    }
+   }
    assert.deepEqual(errors,[]);
    assert.ok(requests.every(r=>r.url.startsWith(origin+'/')&&r.method==='GET'),'Unexpected network request: '+JSON.stringify(requests));
    console.log('Browser smoke passed '+viewport.width+'px');
   }finally{await context.close();}
  }
+ writeFileSync('local-accessibility-performance.json',JSON.stringify({schemaVersion:1,scope:'Chromium emulation and local initial-load regression ceilings; not physical-device, network latency or WCAG certification',results:accessibilityPerformance},null,2)+'\n');
 }finally{
  if(browser)await browser.close();
  if(server)await new Promise(resolve=>server.close(resolve));

@@ -34,3 +34,6 @@ CI exercises an isolated backup and restore with the complete review archive sch
 Each successful source CI generates preview-build-evidence.json containing the exact commit, revision, engine fingerprint and SHA-256 hashes for the Worker static-import closure. Compare the actual downloaded Worker module bytes with this evidence before declaring a preview release verified. The independent hosted gate additionally checks the served public assets. Neither evidence artifact is an independent statutory approval or production signature.
 
 The isolated D1 provider-level restore drill has now passed (data/d1-recovery-drill-2026-11-27.json). It uses synthetic data only; test actual production recovery procedures, independent sequence floors, key rotation and recovery objectives before release.
+
+## Automated accessibility and performance regression
+Local Chromium checks 320/390/1440 widths, labelled controls, skip navigation, route and report focus, no external browser requests, initial decoded payload/resource ceilings, and 200% root text enlargement for representative workspaces and calculators. CI archives local-accessibility-performance.json. These are limited regression checks, not WCAG certification, network performance targets or physical-device acceptance.

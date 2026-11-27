@@ -90,3 +90,7 @@ a{color:#2447a4}a:hover{color:#173278}
 .regulatory-panel{margin-top:28px;border-top:1px solid #cbd7e7;padding-top:18px}.regulatory-source{padding:16px;border-radius:12px;border:1px solid #cbd7e7;background:#f5f8fd;overflow-wrap:anywhere;box-shadow:0 3px 0 #dce5f2}.regulatory-source p{font-size:.9rem}.regulatory-source a{display:inline-flex;min-height:44px;align-items:center}
 
 .table-scroll{max-width:100%;overflow-x:auto;border:1px solid #cbd7e7;border-radius:8px;margin:12px 0}.table-scroll table{border-collapse:collapse;width:100%;min-width:32rem;font-size:.9rem}.table-scroll caption{text-align:left;font-weight:700;padding:10px}.table-scroll th,.table-scroll td{text-align:right;padding:10px;border-bottom:1px solid #cbd7e7;white-space:nowrap}.table-scroll th{background:#eff4ff;color:#244166}.table-scroll:focus-visible{outline:3px solid #2447a4;outline-offset:3px}
+
+/* Text enlargement and long labels must not force page-wide horizontal scroll. */
+.fields>*,.tool-grid>*,.category-grid>*,.breakdown>*{min-width:0;overflow-wrap:anywhere}.fields input,.fields select,details input,details select{min-width:0;max-width:100%}input,select,textarea{font-size:1rem}.primary,.secondary{max-width:100%;white-space:normal;overflow-wrap:anywhere}.table-scroll:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid #2447a4;outline-offset:3px}
+@media screen{#planning-report-entries article{border-top:1px solid #cbd7e7;padding:12px 0;min-width:0}#planning-report-entries h4{margin:0 0 8px;overflow-wrap:anywhere}}
