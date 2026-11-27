@@ -17,14 +17,22 @@
     "binding": "RULE_SEQUENCE_FLOOR",
     "key": "taxpulse:regulatory-sequence-floor",
     "value": "0",
-    "readBackVerified": true
+    "readBackVerified": true,
+    "authority": "Durable Object SQLite anchor is authoritative; KV is a non-authoritative mirror only.",
+    "kvRole": "diagnostic mirror; not used as the anti-rollback source of truth"
   },
   "publisher": {
     "worker": "hqventures-taxpulse-rule-publisher-preview",
-    "existingBindingsPreserved": ["RULE_DB", "RULE_INBOX"],
+    "existingBindingsPreserved": [
+      "RULE_DB",
+      "RULE_INBOX"
+    ],
     "newBindingVerified": true,
     "scheduleEnabled": false,
-    "rulesPublished": false
+    "rulesPublished": false,
+    "durableObjectBinding": "REGULATORY_SEQUENCE_ANCHOR",
+    "durableObjectClass": "RegulatorySequenceAnchor",
+    "durableObjectBindingStatus": "not yet configured on deployed Worker"
   },
   "scope": "Preview-only infrastructure provisioning. No production database, Worker, route, key enrollment, statutory rule or customer data was modified."
 }
