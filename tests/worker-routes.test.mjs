@@ -42,8 +42,8 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(html.headers.get('x-frame-options'),'DENY');
  assert.equal(html.headers.get('cross-origin-opener-policy'),'same-origin');
  assert.equal(html.headers.get('cross-origin-resource-policy'),'same-origin');
- assert.deepEqual(catalog.modules,['pit','payroll','capgains','property','dtaa']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
- for(const module of ['vat','corporate']){
+ assert.deepEqual(catalog.modules,['pit','payroll','capgains','vat','property','dtaa']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
+ for(const module of ['corporate']){
   assert.ok(catalog.disabledModules[module]);
   assert.equal((await post(JSON.stringify({...payload,module}))).status,400);
  }
@@ -131,6 +131,27 @@ test('generated Worker routes and validation',async()=>{
   if(country==='AE')assert.equal(result.chargeType,'registration-fee');
  }
  assert.equal((await post(JSON.stringify({country:'IN',taxYear:'2026',module:'property',parameters:{purchaserCategory:'other',taxableConsideration:1000000,transactionDate:'2026-11-27',scopeConfirmed:true}}))).status,400);
+ const indirectTaxCases=[
+  ['IN',{classification:'2523-2025-09-22',priceBasis:'exclusive',amount:100,scopeConfirmed:true},'taxAmount'],
+  ['US',{exclusiveAmount:100,scopeConfirmed:true},'stateTax'],
+  ['GB',{amount:100,mode:'exclusive',transactionDate:'2026-11-27',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true},'taxAmount'],
+  ['DE',{amount:100,mode:'exclusive',transactionDate:'2026-11-27',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true},'taxAmount'],
+  ['AE',{amount:100,mode:'exclusive',transactionDate:'2026-11-27',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true},'taxAmount'],
+  ['CA',{province:'ON',amount:100,mode:'exclusive',transactionDate:'2026-11-27',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true},'taxAmount'],
+  ['AU',{amount:100,mode:'exclusive',transactionDate:'2026-11-27',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true},'taxAmount'],
+  ['SG',{amount:100,mode:'exclusive',transactionDate:'2026-11-27',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true},'taxAmount']
+ ];
+ for(const [country,parameters,resultField] of indirectTaxCases){
+  const response=await post(JSON.stringify({country,taxYear:'2026',module:'vat',parameters}));
+  assert.equal(response.status,200,country);
+  const result=await response.json();
+  assert.equal(result.country,country);assert.equal(result.taxYear,'2026');assert.equal(result.module,'vat');
+  assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
+  assert.ok(Number.isFinite(result[resultField]));assert.ok(result.sourceUrls.length>0);
+  if(country==='IN')assert.match(result.taxYearLabel,/Historical HSN 2523/);
+  if(country==='US')assert.equal(result.taxType,'STATE_SALES_TAX');
+ }
+ assert.equal((await post(JSON.stringify({country:'CA',taxYear:'2026',module:'vat',parameters:{province:'QC',amount:100,mode:'exclusive',transactionDate:'2026-11-27',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true}}))).status,400);
  const treatyCases=[
   ['IN',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticTax:10000,worldwideTaxableIncome:100000,foreignTaxableIncome:20000,domesticTaxOnItem:3000,scopeConfirmed:true}],
   ['US',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticTax:10000,worldwideTaxableIncome:100000,foreignTaxableIncome:20000,domesticTaxOnItem:3000,scopeConfirmed:true}],

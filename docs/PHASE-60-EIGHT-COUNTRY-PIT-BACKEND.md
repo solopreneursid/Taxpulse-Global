@@ -87,8 +87,25 @@ The legacy `countryCalculate` endpoint exposes `module: "dtaa"` for eight modele
 
 The engine does not infer treaty eligibility, residence, beneficial ownership, income sourcing, income characterization, foreign tax conversion, carryovers, exemptions or the final domestic limitation. Treaty caps and attributable domestic tax must already be established by the caller. Singapore and UAE components have entity-specific scope; they are not individual tax-credit estimates. All results remain sample-only and unverified.
 
+## Scoped indirect-tax API
+
+The legacy `countryCalculate` endpoint exposes `module: "vat"` as an indirect-tax family. It does not imply that every country has a VAT:
+
+| Country | Input contract | Component boundary |
+|---|---|---|
+| India | HSN 2523 cement classification, exclusive/inclusive price basis and amount | Historical 18% IGST notification example effective 22 September 2025 only; not a general 2026 GST calculator |
+| United States | Exclusive taxable amount | Texas 6.25% state sales-tax component only; local tax excluded; no federal VAT |
+| United Kingdom | Amount, exclusive/inclusive mode, transaction date, registered seller and standard-rated supply confirmation | Standard-rated domestic VAT only |
+| Germany | Same registered-seller and standard-rated-supply inputs | Standard-rated domestic VAT only |
+| Australia | Same registered-seller and standard-rated-supply inputs | Standard-rated domestic GST only |
+| Singapore | Same registered-seller and standard-rated-supply inputs | Standard-rated local GST only |
+| UAE | Same registered-seller and standard-rated-supply inputs | Standard-rated domestic VAT only |
+| Canada | Province AB/ON/NS/NB/NL/PE, amount, mode, transaction date and seller/supply confirmations | Selected provincial GST/HST component only |
+
+The engine does not determine taxability, product/service classification, registration thresholds, place of supply, customer status, exemptions, zero-rating, reverse charge, imports, input-tax recovery, local surcharges or return treatment. The India example is tied to HSN 2523 and the cited 2025 notification; the US example is state-only Texas sales tax, not VAT. All results remain sample-only and unverified.
+
 ## Release boundary
 
-All results remain `sampleOnly: true` and `taxRulesVerified: false`. The country manifest remains unverified and production-disabled. The backend exposes PIT, scoped salary remainder, capital-gains components, property transfer/registration components and one-item treaty-credit components for all eight countries. Indirect tax and corporate tax remain unavailable in the legacy country API. The 56-scope release gate is unchanged and still blocks production.
+All results remain `sampleOnly: true` and `taxRulesVerified: false`. The country manifest remains unverified and production-disabled. The backend exposes PIT, scoped salary remainder, capital-gains components, indirect-tax components, property transfer/registration components and one-item treaty-credit components for all eight countries. Corporate tax is the only module not yet exposed in the legacy country API. The 56-scope release gate is unchanged and still blocks production.
 
 Independent statutory review must validate source law, effective periods, eligibility, reliefs, rounding and independently computed fixtures before any scope can be marked verified.
