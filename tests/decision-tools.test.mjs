@@ -65,13 +65,13 @@ for(const [country,tax] of [['GB',20],['DE',19],['AU',10],['SG',9],['AE',5],['CA
  const input={currency:'USD',monthlyIncome:5000,monthlyExpenses:4000,liquidSavings:8000,reserveFloor:6000,horizonMonths:12,incomeReductionPercent:50,expenseIncreasePercent:25,shockStartMonth:2,shockDurationMonths:3};
  const r=cashFlowStressScenario(input);
  assert.equal(r.baseline.endingLiquidSavings,20000);
- assert.equal(r.stress.endingLiquidSavings,6500);
+ assert.equal(r.stress.endingLiquidSavings,9500);
  assert.equal(r.baseline.firstReserveBreachMonth,null);
  assert.equal(r.stress.firstReserveBreachMonth,3);
  assert.equal(r.stress.monthsBelowReserve,6);
  assert.equal(r.stress.firstNegativeMonth,null);
  assert.equal(r.stress.reserveRestoredMonth,9);
- assert.equal(r.endingSavingsImpact,-13500);
+ assert.equal(r.endingSavingsImpact,-10500);
  const noShock=cashFlowStressScenario({...input,incomeReductionPercent:0,expenseIncreasePercent:0});
  assert.deepEqual(noShock.baseline,noShock.stress);
  assert.throws(()=>cashFlowStressScenario({...input,shockStartMonth:0}));
