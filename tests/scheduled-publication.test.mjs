@@ -4,18 +4,14 @@ import {runScheduledPublication} from '../engine/scheduled-publication.mjs';
 
 function anchorNamespace(initial){
  let value=structuredClone(initial);
- const stub={async fetch(url,init={}){
-  const path=new URL(url).pathname;
-  if(path==='/state'&&init.method==='GET')return Response.json(value);
-  if(path==='/advance'&&init.method==='POST'){
-   const input=JSON.parse(init.body);
-   if(input.expectedSequence!==value.sequence||input.sequence<=value.sequence)
-    return Response.json({error:'sequence_anchor_conflict',state:value},{status:409});
+ const stub={
+  async getState(){return structuredClone(value);},
+  async advance(input){
+   if(input.expectedSequence!==value.sequence||input.sequence<=value.sequence)throw Error('sequence_anchor_conflict');
    value={schemaVersion:1,sequence:input.sequence,digest:input.digest,state:input.state};
-   return Response.json(value);
+   return structuredClone(value);
   }
-  return Response.json({error:'not_found'},{status:404});
- }};
+ };
  return {
   idFromName(name){assert.equal(name,'taxpulse-regulatory-head-v1');return 'anchor-id';},
   get(id){assert.equal(id,'anchor-id');return stub;},
