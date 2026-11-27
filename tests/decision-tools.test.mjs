@@ -112,11 +112,11 @@ test('company tax components US Canada Germany and Singapore with explicitly con
 });
 
 test('residential SDLT whole-pound rounding and first-time relief boundary',()=>{
- const i={consideration:295000,buyerScope:'ordinary',scopeConfirmed:true};assert.equal(residentialSdlt(i).stampDuty,4750);
+ const i={consideration:295000,buyerScope:'ordinary',transactionDate:'2026-11-27',scopeConfirmed:true};assert.equal(residentialSdlt(i).stampDuty,4750);
  for(const [consideration,stampDuty] of [[125000,0],[125049,0],[125050,1],[250000,2500],[925000,36250],[1500000,93750],[2000000,153750]])assert.equal(residentialSdlt({...i,consideration}).stampDuty,stampDuty);
  assert.equal(residentialSdlt({...i,buyerScope:'first-time',consideration:500000}).stampDuty,10000);
  assert.equal(residentialSdlt({...i,buyerScope:'first-time',consideration:500001}).stampDuty,15000);
- assert.throws(()=>residentialSdlt({...i,scopeConfirmed:false}));assert.throws(()=>residentialSdlt({...i,consideration:295000.01}));
+ assert.throws(()=>residentialSdlt({...i,scopeConfirmed:false}));assert.throws(()=>residentialSdlt({...i,consideration:295000.01}));assert.equal(residentialSdlt(i).transactionDate,'2026-11-27');assert.throws(()=>residentialSdlt({...i,transactionDate:'2025-12-31'}));
 });
 test('UK India credit applies the lowest of attributable UK tax, paid tax and confirmed treaty cap',()=>{
  const i={foreignTaxPaidGbp:3000,treatyEligibleCapGbp:2500,ukTaxWithIncome:12000,ukTaxWithoutIncome:9000,scopeConfirmed:true};const r=ukIndiaCredit(i);assert.equal(r.modeledCredit,2500);assert.equal(r.ukTaxAfterCredit,9500);assert.equal(r.combinedTax,12500);assert.equal(r.foreignTaxNotCredited,500);
@@ -141,7 +141,7 @@ test('UK category A employer secondary NI at monthly threshold',()=>{
  const i={region:'RUK',monthlyGross:417,scopeConfirmed:true};assert.equal(ukEmployerNi(i).monthlyEmployerNi,0);assert.equal(ukEmployerNi({...i,monthlyGross:418}).monthlyEmployerNi,.15);assert.equal(ukEmployerNi({...i,monthlyGross:1000}).annualEmployerNi,1049.4);assert.throws(()=>ukEmployerNi({...i,scopeConfirmed:false}));
 });
 test('AU confirmed losses before CGT discount and ordinary incremental income tax',()=>{
- const i={proceeds:50000,costBase:30000,eligibleCapitalLosses:2000,otherTaxableIncome:100000,scopeConfirmed:true};const r=australiaDiscountGain(i);assert.equal(r.grossGain,20000);assert.equal(r.assessableGain,9000);assert.equal(r.modeledIncrementalIncomeTax,2700);assert.throws(()=>australiaDiscountGain({...i,eligibleCapitalLosses:20001}));assert.throws(()=>australiaDiscountGain({...i,scopeConfirmed:false}));
+ const i={proceeds:50000,costBase:30000,eligibleCapitalLosses:2000,otherTaxableIncome:100000,acquired:'2024-06-01',disposed:'2026-11-27',scopeConfirmed:true};const r=australiaDiscountGain(i);assert.equal(r.grossGain,20000);assert.equal(r.assessableGain,9000);assert.equal(r.modeledIncrementalIncomeTax,2700);assert.throws(()=>australiaDiscountGain({...i,eligibleCapitalLosses:20001}));assert.throws(()=>australiaDiscountGain({...i,scopeConfirmed:false}));assert.equal(r.holdingPeriodEligible,true);assert.equal(r.minimumEligibleDisposalDate,'2025-06-01');assert.throws(()=>australiaDiscountGain({...i,acquired:'2025-11-27',disposed:'2026-11-27'}));assert.throws(()=>australiaDiscountGain({...i,acquired:'2026-01-01'}));assert.throws(()=>australiaDiscountGain({...i,disposed:'2027-07-01'}));const leap=australiaDiscountGain({...i,acquired:'2026-02-28',disposed:'2027-03-01'});assert.equal(leap.holdingPeriodEligible,true);
 });
 
 test('investment nominal scenario reconciles exact monthly compounding and zero return',()=>{
@@ -164,10 +164,10 @@ test('2026 employer FICA caps Social Security, not employer Medicare',()=>{
  const r=usEmployerFica({...i,annualWages:200000});assert.equal(r.employerFica,14339);assert.equal(r.wagesPlusEmployerFica,214339);assert.equal(usEmployerFica({...i,annualWages:0}).employerFica,0);assert.throws(()=>usEmployerFica({...i,scopeConfirmed:false}));
 });
 test('Singapore BSD official example, higher value and minimum duty',()=>{
- const i={purchasePrice:4500100,marketValue:4500100,propertyType:'residential',scopeConfirmed:true};assert.equal(singaporeBuyerDuty(i).buyerStampDuty,209606);
+ const i={purchasePrice:4500100,marketValue:4500100,propertyType:'residential',transactionDate:'2026-11-27',scopeConfirmed:true};assert.equal(singaporeBuyerDuty(i).buyerStampDuty,209606);
  assert.equal(singaporeBuyerDuty({...i,propertyType:'nonresidential'}).buyerStampDuty,194605);
  assert.equal(singaporeBuyerDuty({...i,purchasePrice:100000,marketValue:180000}).buyerStampDuty,1800);
- assert.equal(singaporeBuyerDuty({...i,purchasePrice:1,marketValue:1}).buyerStampDuty,1);assert.throws(()=>singaporeBuyerDuty({...i,purchasePrice:0,marketValue:0}));assert.throws(()=>singaporeBuyerDuty({...i,propertyType:'mixed'}));
+ assert.equal(singaporeBuyerDuty({...i,purchasePrice:1,marketValue:1}).buyerStampDuty,1);assert.throws(()=>singaporeBuyerDuty({...i,purchasePrice:0,marketValue:0}));assert.throws(()=>singaporeBuyerDuty({...i,propertyType:'mixed'}));assert.equal(singaporeBuyerDuty(i).ruleEffectiveFrom,'2023-02-15');assert.throws(()=>singaporeBuyerDuty({...i,transactionDate:'2027-01-01'}));
 });
 test('UK dividends use allowance within rate bands, including crossing the boundary',()=>{
  const i={otherTaxableIncome:17000,taxableDividends:3000,scopeConfirmed:true};assert.equal(ukDividendTax(i).modeledDividendTax,268.75);
@@ -177,13 +177,13 @@ test('UK dividends use allowance within rate bands, including crossing the bound
 });
 
 test('confirmed personal investment components preserve jurisdiction boundaries',()=>{
- const i={jurisdiction:'CA',confirmedNetGain:10000,scopeConfirmed:true};assert.equal(scopedInvestmentGain(i).includedGain,5000);assert.equal(scopedInvestmentGain(i).modeledTax,null);
+ const i={jurisdiction:'CA',confirmedNetGain:10000,transactionDate:'2026-11-27',scopeConfirmed:true};assert.equal(scopedInvestmentGain(i).includedGain,5000);assert.equal(scopedInvestmentGain(i).modeledTax,null);
  assert.equal(scopedInvestmentGain({...i,jurisdiction:'DE'}).modeledTax,2500);
  for(const jurisdiction of ['SG','AE'])assert.equal(scopedInvestmentGain({...i,jurisdiction}).modeledTax,0);
- assert.throws(()=>scopedInvestmentGain({...i,scopeConfirmed:false}));assert.throws(()=>scopedInvestmentGain({...i,confirmedNetGain:-1}));
+ assert.throws(()=>scopedInvestmentGain({...i,scopeConfirmed:false}));assert.throws(()=>scopedInvestmentGain({...i,confirmedNetGain:-1}));assert.equal(scopedInvestmentGain(i).transactionDate,'2026-11-27');assert.throws(()=>scopedInvestmentGain({...i,transactionDate:'2027-01-01'}));
 });
 test('Ontario and Berlin scoped transfer tax boundaries',()=>{
- const i={jurisdiction:'CA-ON',taxableConsideration:400000,scopeConfirmed:true};assert.equal(scopedTransferTax(i).transferTax,4475);assert.equal(scopedTransferTax({...i,taxableConsideration:55000}).transferTax,275);assert.equal(scopedTransferTax({...i,taxableConsideration:250000}).transferTax,2225);assert.equal(scopedTransferTax({...i,taxableConsideration:2000000}).transferTax,36475);assert.equal(scopedTransferTax({...i,taxableConsideration:2100000}).transferTax,38975);assert.equal(scopedTransferTax({...i,jurisdiction:'DE-BE',taxableConsideration:100000}).transferTax,6000);assert.throws(()=>scopedTransferTax({...i,jurisdiction:'DE-BE',taxableConsideration:2499}));assert.throws(()=>scopedTransferTax({...i,scopeConfirmed:false}));
+ const i={jurisdiction:'CA-ON',taxableConsideration:400000,transactionDate:'2026-11-27',scopeConfirmed:true};assert.equal(scopedTransferTax(i).transferTax,4475);assert.equal(scopedTransferTax({...i,taxableConsideration:55000}).transferTax,275);assert.equal(scopedTransferTax({...i,taxableConsideration:250000}).transferTax,2225);assert.equal(scopedTransferTax({...i,taxableConsideration:2000000}).transferTax,36475);assert.equal(scopedTransferTax({...i,taxableConsideration:2100000}).transferTax,38975);assert.equal(scopedTransferTax({...i,jurisdiction:'DE-BE',taxableConsideration:100000}).transferTax,6000);assert.throws(()=>scopedTransferTax({...i,jurisdiction:'DE-BE',taxableConsideration:2499}));assert.throws(()=>scopedTransferTax({...i,scopeConfirmed:false}));
 });
 test('Texas state sales tax only',()=>{assert.equal(texasStateSalesTax({exclusiveAmount:100,scopeConfirmed:true}).stateTax,6.25);assert.throws(()=>texasStateSalesTax({exclusiveAmount:100,scopeConfirmed:false}));});
 test('treaty credit components enforce all confirmed caps',()=>{
@@ -191,10 +191,10 @@ test('treaty credit components enforce all confirmed caps',()=>{
 });
 
 test('Delhi, NY, NSW and Dubai property charge components and eligibility boundaries',()=>{
- const i={jurisdiction:'IN-DL-male',taxableConsideration:1000000,scopeConfirmed:true};assert.equal(scopedTransferTax(i).transferTax,60000);assert.equal(scopedTransferTax({...i,jurisdiction:'IN-DL-female'}).transferTax,40000);
+ const i={jurisdiction:'IN-DL-male',taxableConsideration:1000000,transactionDate:'2026-11-27',scopeConfirmed:true};assert.equal(scopedTransferTax(i).transferTax,60000);assert.equal(scopedTransferTax({...i,jurisdiction:'IN-DL-female'}).transferTax,40000);
  assert.equal(scopedTransferTax({...i,jurisdiction:'US-NY',taxableConsideration:500}).transferTax,0);assert.equal(scopedTransferTax({...i,jurisdiction:'US-NY',taxableConsideration:501}).transferTax,4);assert.equal(scopedTransferTax({...i,jurisdiction:'US-NY',taxableConsideration:300001}).transferTax,1202);assert.throws(()=>scopedTransferTax({...i,jurisdiction:'US-NY'}));
  assert.equal(scopedTransferTax({...i,jurisdiction:'AU-NSW',taxableConsideration:1350000}).transferTax,55537);assert.equal(scopedTransferTax({...i,jurisdiction:'AU-NSW',taxableConsideration:100}).transferTax,20);assert.throws(()=>scopedTransferTax({...i,jurisdiction:'AU-NSW',taxableConsideration:100001}));
- const d=scopedTransferTax({...i,jurisdiction:'AE-DU'});assert.equal(d.transferTax,40000);assert.equal(d.chargeType,'registration-fee');
+ const d=scopedTransferTax({...i,jurisdiction:'AE-DU'});assert.equal(d.transferTax,40000);assert.equal(d.chargeType,'registration-fee');assert.equal(scopedTransferTax(i).transactionDate,'2026-11-27');assert.equal(scopedTransferTax({...i,jurisdiction:'AU-NSW'}).taxPeriod,'FY 2026–27');assert.throws(()=>scopedTransferTax({...i,jurisdiction:'AU-NSW',transactionDate:'2026-06-30'}));assert.throws(()=>scopedTransferTax({...i,transactionDate:'2027-01-01'}));
 });
 test('confirmed treaty cap components and Australian default FITO limit',()=>{
  const i={jurisdiction:'CA-GB',foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:true};
