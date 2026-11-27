@@ -14,9 +14,7 @@
       "currency": "GBP",
       "rateBasisPoints": 2000,
       "scope": "Standard-rated domestic supplies only. Reduced, zero-rated and exempt supplies, Northern Ireland cross-border goods rules and place-of-supply determinations are excluded.",
-      "sourceUrls": [
-        "https://www.gov.uk/vat-rates"
-      ]
+      "sourceUrls": ["https://www.gov.uk/vat-rates"]
     },
     {
       "jurisdiction": "DE",
@@ -29,9 +27,7 @@
       "currency": "EUR",
       "rateBasisPoints": 1900,
       "scope": "Standard-rated taxable domestic supplies only. Reduced-rate, zero-rate, exemption and place-of-supply rules are excluded.",
-      "sourceUrls": [
-        "https://www.gesetze-im-internet.de/ustg_1980/__12.html"
-      ]
+      "sourceUrls": ["https://www.gesetze-im-internet.de/ustg_1980/__12.html"]
     },
     {
       "jurisdiction": "AU",
@@ -44,9 +40,7 @@
       "currency": "AUD",
       "rateBasisPoints": 1000,
       "scope": "Standard-rated taxable supplies only. GST-free, input-taxed, registration-threshold and cross-border rules are excluded.",
-      "sourceUrls": [
-        "https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/how-gst-works"
-      ]
+      "sourceUrls": ["https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/how-gst-works"]
     },
     {
       "jurisdiction": "SG",
@@ -59,9 +53,7 @@
       "currency": "SGD",
       "rateBasisPoints": 900,
       "scope": "Standard-rated local supplies by a GST-registered business only. Zero-rated, exempt, imported-services and reverse-charge rules are excluded.",
-      "sourceUrls": [
-        "https://www.iras.gov.sg/taxes/goods-services-tax-%28gst%29/basics-of-gst/current-gst-rates"
-      ]
+      "sourceUrls": ["https://www.iras.gov.sg/taxes/goods-services-tax-%28gst%29/basics-of-gst/current-gst-rates"]
     },
     {
       "jurisdiction": "AE",
@@ -74,9 +66,7 @@
       "currency": "AED",
       "rateBasisPoints": 500,
       "scope": "Standard-rated domestic transactions only. Zero-rated, exempt, designated-zone and place-of-supply rules are excluded.",
-      "sourceUrls": [
-        "https://tax.gov.ae/en/faq.aspx?keyword=What+is+the+standard+rate+of+VAT+in+the+UAE%3F"
-      ]
+      "sourceUrls": ["https://tax.gov.ae/en/faq.aspx?keyword=What+is+the+standard+rate+of+VAT+in+the+UAE%3F"]
     },
     {
       "jurisdiction": "CA-AB",
@@ -89,9 +79,7 @@
       "currency": "CAD",
       "rateBasisPoints": 500,
       "scope": "Alberta federal GST component only. Place-of-supply, zero-rating, exemptions and registration rules are not determined.",
-      "sourceUrls": [
-        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"
-      ]
+      "sourceUrls": ["https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"]
     },
     {
       "jurisdiction": "CA-ON",
@@ -104,9 +92,7 @@
       "currency": "CAD",
       "rateBasisPoints": 1300,
       "scope": "Ontario HST standard-rate component only. Place-of-supply, zero-rating, exemptions and registration rules are not determined.",
-      "sourceUrls": [
-        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"
-      ]
+      "sourceUrls": ["https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"]
     },
     {
       "jurisdiction": "CA-NS",
@@ -119,9 +105,7 @@
       "currency": "CAD",
       "rateBasisPoints": 1400,
       "scope": "Nova Scotia HST standard-rate component only. Place-of-supply, transition, zero-rating, exemptions and registration rules are not determined.",
-      "sourceUrls": [
-        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"
-      ]
+      "sourceUrls": ["https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"]
     },
     {
       "jurisdiction": "CA-NB",
@@ -134,9 +118,7 @@
       "currency": "CAD",
       "rateBasisPoints": 1500,
       "scope": "New Brunswick HST standard-rate component only. Place-of-supply, zero-rating, exemptions and registration rules are not determined.",
-      "sourceUrls": [
-        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"
-      ]
+      "sourceUrls": ["https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"]
     },
     {
       "jurisdiction": "CA-NL",
@@ -149,9 +131,7 @@
       "currency": "CAD",
       "rateBasisPoints": 1500,
       "scope": "Newfoundland and Labrador HST standard-rate component only. Place-of-supply, zero-rating, exemptions and registration rules are not determined.",
-      "sourceUrls": [
-        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"
-      ]
+      "sourceUrls": ["https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"]
     },
     {
       "jurisdiction": "CA-PE",
@@ -164,9 +144,7 @@
       "currency": "CAD",
       "rateBasisPoints": 1500,
       "scope": "Prince Edward Island HST standard-rate component only. Place-of-supply, zero-rating, exemptions and registration rules are not determined.",
-      "sourceUrls": [
-        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"
-      ]
+      "sourceUrls": ["https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"]
     },
     {
       "jurisdiction": "US-TX",
@@ -179,9 +157,7 @@
       "currency": "USD",
       "rateBasisPoints": 625,
       "scope": "Texas state sales-tax component only. Local jurisdictions may add up to 2 percentage points; this calculator deliberately excludes local tax and does not determine taxable-item classification.",
-      "sourceUrls": [
-        "https://comptroller.texas.gov/taxes/sales/faq/local.php"
-      ]
+      "sourceUrls": ["https://comptroller.texas.gov/taxes/sales/faq/local.php"]
     }
   ],
   "corporateTax": [
@@ -199,11 +175,7 @@
       "partialExemptionTiers": null,
       "startupExemptionTiers": null,
       "scope": "Regular federal C-corporation income-tax component applied to already determined taxable income. Excludes state tax, credits, deductions, special taxes and alternative minimum tax.",
-      "sourceUrls": [
-        "https://www.irs.gov/instructions/i1120"
-      ],
-      "mainRateThreshold": null,
-      "zeroRateThreshold": null
+      "sourceUrls": ["https://www.irs.gov/instructions/i1120"]
     },
     {
       "jurisdiction": "CA",
@@ -219,11 +191,7 @@
       "partialExemptionTiers": null,
       "startupExemptionTiers": null,
       "scope": "Federal Part I component only. The caller must separately establish the eligible small-business deduction profit allocation and associated-corporation business limit. Excludes provincial/territorial tax and special rates.",
-      "sourceUrls": [
-        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/corporation-tax-rates.html"
-      ],
-      "mainRateThreshold": null,
-      "zeroRateThreshold": null
+      "sourceUrls": ["https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/corporation-tax-rates.html"]
     },
     {
       "jurisdiction": "DE",
@@ -239,11 +207,7 @@
       "partialExemptionTiers": null,
       "startupExemptionTiers": null,
       "scope": "Körperschaftsteuer component only. Excludes solidarity surcharge, municipal trade tax, tax-group rules, loss carryforwards and special adjustments.",
-      "sourceUrls": [
-        "https://www.gesetze-im-internet.de/kstg_1977/__23.html"
-      ],
-      "mainRateThreshold": null,
-      "zeroRateThreshold": null
+      "sourceUrls": ["https://www.gesetze-im-internet.de/kstg_1977/__23.html"]
     },
     {
       "jurisdiction": "SG",
@@ -257,116 +221,15 @@
       "rateBasisPoints": 1700,
       "smallBusinessRateBasisPoints": null,
       "partialExemptionTiers": [
-        {
-          "limit": 10000,
-          "exemptionRateBasisPoints": 7500
-        },
-        {
-          "limit": 190000,
-          "exemptionRateBasisPoints": 5000
-        }
+        { "limit": 10000, "exemptionRateBasisPoints": 7500 },
+        { "limit": 190000, "exemptionRateBasisPoints": 5000 }
       ],
       "startupExemptionTiers": [
-        {
-          "limit": 100000,
-          "exemptionRateBasisPoints": 7500
-        },
-        {
-          "limit": 100000,
-          "exemptionRateBasisPoints": 5000
-        }
+        { "limit": 100000, "exemptionRateBasisPoints": 7500 },
+        { "limit": 100000, "exemptionRateBasisPoints": 5000 }
       ],
       "scope": "YA 2026 corporate income-tax component before the YA 2026 corporate tax rebate or cash grant. Partial and start-up exemption eligibility must be independently established; excludes special incentives, group relief and other adjustments.",
-      "sourceUrls": [
-        "https://www.iras.gov.sg/taxes/corporate-income-tax/basics-of-corporate-income-tax/corporate-income-tax-rate-rebates-and-tax-exemption-schemes"
-      ],
-      "mainRateThreshold": null,
-      "zeroRateThreshold": null
-    },
-    {
-      "jurisdiction": "IN",
-      "country": "IN",
-      "taxType": "DOMESTIC_COMPANY_115BAA_BASE_RATE",
-      "version": "IN-AY2026-27-115BAA-base-rate-v1",
-      "taxYear": "2026",
-      "effectiveFrom": "2025-04-01",
-      "effectiveUntil": "2026-04-01",
-      "currency": "INR",
-      "rateBasisPoints": 2200,
-      "smallBusinessRateBasisPoints": null,
-      "mainRateThreshold": null,
-      "zeroRateThreshold": null,
-      "partialExemptionTiers": null,
-      "startupExemptionTiers": null,
-      "scope": "Section 115BAA 22% base income-tax component on user-established taxable profit for an eligible domestic company. Excludes 10% surcharge, 4% health and education cess, deductions, MAT and other corporate regimes.",
-      "sourceUrls": [
-        "https://www.incometax.gov.in/iec/foportal/help/company/return-applicable",
-        "https://www.incometaxindia.gov.in/en/domestic-company"
-      ]
-    },
-    {
-      "jurisdiction": "GB",
-      "country": "GB",
-      "taxType": "CORPORATION_TAX_MAIN_RATE",
-      "version": "GB-FY2026-27-main-rate-v1",
-      "taxYear": "2026",
-      "effectiveFrom": "2026-04-01",
-      "effectiveUntil": "2027-04-01",
-      "currency": "GBP",
-      "rateBasisPoints": 2500,
-      "smallBusinessRateBasisPoints": null,
-      "mainRateThreshold": 250000,
-      "zeroRateThreshold": null,
-      "partialExemptionTiers": null,
-      "startupExemptionTiers": null,
-      "scope": "25% non-ring-fence main-rate component for taxable profits above GBP 250,000 with one associated company. Excludes small-profits rate, marginal relief, short accounting periods and associated-company threshold reductions.",
-      "sourceUrls": [
-        "https://www.gov.uk/corporation-tax-rates/rates",
-        "https://www.legislation.gov.uk/ukpga/2025/8/enacted"
-      ]
-    },
-    {
-      "jurisdiction": "AU",
-      "country": "AU",
-      "taxType": "BASE_RATE_ENTITY_CORPORATE_TAX",
-      "version": "AU-FY2026-27-base-rate-entity-v1",
-      "taxYear": "2026",
-      "effectiveFrom": "2026-07-01",
-      "effectiveUntil": "2027-07-01",
-      "currency": "AUD",
-      "rateBasisPoints": 2500,
-      "smallBusinessRateBasisPoints": null,
-      "mainRateThreshold": null,
-      "zeroRateThreshold": null,
-      "partialExemptionTiers": null,
-      "startupExemptionTiers": null,
-      "scope": "25% base-rate-entity company tax component. Requires caller confirmation of aggregated turnover below AUD 50 million and base-rate-entity passive income at or below 80%. Excludes franking credits and all other company tax adjustments.",
-      "sourceUrls": [
-        "https://www.ato.gov.au/tax-rates-and-codes/company-tax-rate-changes",
-        "https://www.ato.gov.au/businesses-and-organisations/business-bulletins-newsroom/tips-and-examples-to-get-your-base-rate-entity-status-right"
-      ]
-    },
-    {
-      "jurisdiction": "AE",
-      "country": "AE",
-      "taxType": "UAE_STANDARD_CORPORATE_TAX",
-      "version": "AE-CY2026-standard-corporate-tax-v1",
-      "taxYear": "2026",
-      "effectiveFrom": "2026-01-01",
-      "effectiveUntil": "2027-01-01",
-      "currency": "AED",
-      "rateBasisPoints": 900,
-      "smallBusinessRateBasisPoints": null,
-      "mainRateThreshold": null,
-      "zeroRateThreshold": 375000,
-      "partialExemptionTiers": null,
-      "startupExemptionTiers": null,
-      "scope": "9% standard corporate-tax component on taxable income above AED 375,000, with a 0% threshold below. Excludes qualifying free-zone income, exemptions and Pillar Two multinational rules.",
-      "sourceUrls": [
-        "https://u.ae/en/information-and-services/finance-and-investment/taxation/corporate-tax",
-        "https://tax.gov.ae/en/faq.aspx?keyword=What+are+the+UAE+CT+rates",
-        "https://mof.gov.ae/wp-content/uploads/2023/02/Cabinet-Decision-No-116-of-2022-on-CT-Article-3-Threshold-1.pdf"
-      ]
+      "sourceUrls": ["https://www.iras.gov.sg/taxes/corporate-income-tax/basics-of-corporate-income-tax/corporate-income-tax-rate-rebates-and-tax-exemption-schemes"]
     }
   ]
 }
