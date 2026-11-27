@@ -1,3 +1,2 @@
 import {createPublicationWorker} from '../engine/scheduled-publication.mjs';
-export {RegulatorySequenceAnchor} from './regulatory-sequence-anchor-do.mjs';
-export default createPublicationWorker('d698f7eaa8baa6b70c0acff4b7648d0db147b450d9b90a0edc5e6f2e12381d9f');
+export default createPublicationWorker('2f96ba2a19ab0a4366eee52a07057d23a1f8c582b65860373c8a8ec1f0cc23d1');

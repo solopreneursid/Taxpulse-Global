@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "observedOn": "2026-11-27",
+  "environment": "Cloudflare preview only",
+  "anchorWorker": {
+    "script": "taxpulse-regulatory-sequence-anchor-preview",
+    "activeVersionId": "729f6331-1de4-4284-af0d-48f4e67f85b2",
+    "durableObjectClass": "RegulatorySequenceAnchor",
+    "durableObjectNamespaceId": "7aa75871b001477f98c745b50c885f5e",
+    "storage": "sqlite",
+    "routes": 0,
+    "schedules": 0
+  },
+  "publisherWorker": {
+    "script": "hqventures-taxpulse-rule-publisher-preview",
+    "activeVersionBeforeCodeIntegration": "03147c4d-0e33-402f-b580-03d46256e193",
+    "sequenceAnchorBinding": {
+      "name": "REGULATORY_SEQUENCE_ANCHOR",
+      "type": "durable_object_namespace",
+      "className": "RegulatorySequenceAnchor",
+      "scriptName": "taxpulse-regulatory-sequence-anchor-preview",
+      "namespaceId": "7aa75871b001477f98c745b50c885f5e",
+      "configured": true,
+      "publisherCodeUsesRpc": false
+    },
+    "sequenceFloorMirrorBinding": {
+      "name": "RULE_SEQUENCE_FLOOR",
+      "type": "kv_namespace",
+      "namespaceId": "de7c0d96e84144a3a399e599c6b1f273",
+      "key": "taxpulse:regulatory-sequence-floor",
+      "value": "0",
+      "configured": true
+    },
+    "d1Binding": {
+      "name": "RULE_DB",
+      "database": "taxpulse-regulatory-preview",
+      "databaseId": "28d2ae96-d032-4d8a-9776-8887e5906065"
+    },
+    "routes": 0,
+    "schedules": 0
+  },
+  "previewD1Head": {
+    "sequence": 0,
+    "state": "empty",
+    "digest": null
+  },
+  "anchorInstanceInitialized": false,
+  "engineFingerprint": "2f96ba2a19ab0a4366eee52a07057d23a1f8c582b65860373c8a8ec1f0cc23d1",
+  "limitations": [
+    "The Durable Object class and namespace are provisioned, and both the existing publisher and publisher-v2 have the cross-script binding configured.",
+    "Publisher-v2 code uses Durable Object RPC for sequence reads and atomic advances.",
+    "The Durable Object SQLite row is lazily initialized on the first RPC call; no provider-level RPC probe was run in this observation.",
+    "Publisher-v2 has no secret bindings, no routes and no schedules. No publication was triggered.",
+    "No route or schedule exists on the anchor Worker. No production resource was modified."
+  ],
+  "publisherWorkerV2": {
+    "script": "hqventures-taxpulse-rule-publisher-preview-v2",
+    "activeVersionId": "34cf8e8d-c9f0-4641-81f9-cc0032cb559a",
+    "versionNumber": 1,
+    "engineFingerprint": "2f96ba2a19ab0a4366eee52a07057d23a1f8c582b65860373c8a8ec1f0cc23d1",
+    "bindings": [
+      "REGULATORY_SEQUENCE_ANCHOR",
+      "RULE_DB",
+      "RULE_INBOX",
+      "RULE_SEQUENCE_FLOOR"
+    ],
+    "sequenceAnchorBinding": {
+      "name": "REGULATORY_SEQUENCE_ANCHOR",
+      "className": "RegulatorySequenceAnchor",
+      "scriptName": "taxpulse-regulatory-sequence-anchor-preview",
+      "namespaceId": "7aa75871b001477f98c745b50c885f5e",
+      "configured": true,
+      "publisherCodeUsesRpc": true
+    },
+    "routes": 0,
+    "schedules": 0,
+    "workersDev": {
+      "enabled": false,
+      "previewsEnabled": false
+    },
+    "secretBindings": 0,
+    "publicationEnabled": false
+  }
+}
