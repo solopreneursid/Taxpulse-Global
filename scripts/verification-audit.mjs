@@ -89,7 +89,7 @@ export function buildVerificationAudit(){
    sourceLinkedScopes:sourceRegistry.summary.sourceLinkedScopes,
    sourceMissingScopes:sourceRegistry.summary.sourceMissingScopes,
    moduleTestReferencedScopes:sourceRegistry.summary.moduleTestReferencedScopes,
-   independentReferenceScopes:sourceRegistry.summary.independentReferenceScopes,
+   referenceVectorScopes:sourceRegistry.summary.independentReferenceScopes,
    independentApprovals:sourceRegistry.summary.independentlyApprovedScopes,
    unverifiedScopes:evidence.filter(row=>row.verification!=='verified').length,
    productionEnabledScopes:evidence.filter(row=>row.productionEnabled).length
