@@ -1,5 +1,4 @@
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
-const CURRENCY = /^[A-Z]{3}$/;
 const MAX_MINOR = 9007199254740991n;
 
 function validDate(value) {
@@ -112,7 +111,8 @@ export function validateEffectivePeriods(rules) {
         typeof rule.version !== 'string' || !rule.version ||
         !validDate(rule.effectiveFrom) || !validDate(rule.effectiveUntil) ||
         rule.effectiveFrom >= rule.effectiveUntil) throw new TypeError('Invalid effective period');
-    const key = rule.jurisdiction + ':' + rule.component;
+    const eligibilityKey = JSON.stringify(rule.eligibility ?? {});
+    const key = rule.jurisdiction + ':' + rule.component + ':' + eligibilityKey;
     const group = groups.get(key) ?? [];
     group.push(rule);
     groups.set(key, group);
