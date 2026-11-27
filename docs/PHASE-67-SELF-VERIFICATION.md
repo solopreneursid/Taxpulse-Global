@@ -29,7 +29,7 @@ On 2026-11-27, the preview D1 head was queried directly and confirmed empty at s
 
 Evidence is recorded in `data/sequence-floor-provisioning-2026-11-27.json`.
 
-The repository's current publisher implementation uses a SQLite-backed Cloudflare Durable Object (`REGULATORY_SEQUENCE_ANCHOR`) as the authoritative monotonic sequence anchor. The KV namespace is only a non-authoritative diagnostic mirror; KV eventual consistency is not accepted as the anti-rollback authority. The `RULE_SEQUENCE_FLOOR` mirror binding is present, but the deployed publisher still needs the Durable Object namespace binding and class migration before its current source implementation is active. The publisher schedule remains disabled. No signed rule package exists, no publisher/reviewer key is enrolled, and no rule was published. The preview calculator Worker was not changed.
+The repository's current publisher implementation uses a SQLite-backed Cloudflare Durable Object (`REGULATORY_SEQUENCE_ANCHOR`) as the authoritative monotonic sequence anchor. The KV namespace is only a non-authoritative diagnostic mirror; KV eventual consistency is not accepted as the anti-rollback authority. The `RULE_SEQUENCE_FLOOR` mirror binding and the authoritative `REGULATORY_SEQUENCE_ANCHOR` Durable Object binding are deployed and read-back verified on publisher version `2bb4151f-9d06-4ff2-8b0d-3e87994900ef` (100% traffic). The SQLite class migration tag is `phase67-sequence-anchor-v1`. The publisher schedule remains disabled. No signed rule package exists, no publisher/reviewer key is enrolled, and no rule was published. The preview calculator Worker was not changed.
 
 ## Cloudflare D1 provider restoration
 
