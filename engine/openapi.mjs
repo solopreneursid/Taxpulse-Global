@@ -1754,5 +1754,64 @@ export const spec = {
         }
       }
     },
+    {
+      "/v1/treaty/uk-india-credit": {
+        "post": {
+          "operationId": "calculateUkIndiaTreatyCreditComponent",
+          "description": "UK-side one-item India-source foreign tax credit example for tax year 2025–26. All eligibility and domestic limits must be independently established; not a tax-credit claim.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "foreignTaxPaidGbp",
+                    "treatyEligibleCapGbp",
+                    "ukTaxWithIncome",
+                    "ukTaxWithoutIncome",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "foreignTaxPaidGbp": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "treatyEligibleCapGbp": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "ukTaxWithIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "ukTaxWithoutIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "UK-side treaty credit component with source provenance"
+            },
+            "400": {
+              "description": "Unsupported or inconsistent treaty inputs"
+            }
+          }
+        }
+      }
+    },
   }
 };
