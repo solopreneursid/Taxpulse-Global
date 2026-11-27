@@ -9,7 +9,7 @@
     "symbol": "€",
     "locale": "de-DE"
   },
-  "source_url": "https://taxsummaries.pwc.com/germany/individual/other-taxes",
+  "source_url": "https://www.gesetze-im-internet.de/estg/__32a.html",
   "modules": {
     "personal_income_tax": {
       "primitive": "progressive_brackets",

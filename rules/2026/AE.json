@@ -9,7 +9,7 @@
     "symbol": "AED ",
     "locale": "en-AE"
   },
-  "source_url": "https://u.ae/en/information-and-services/jobs/Sector-of-employment/working-in-uae-government-sector/pensions-and-social-security-for-uae-citizens",
+  "source_url": "https://u.ae/en/information-and-services/finance-and-investment/taxation",
   "modules": {
     "personal_income_tax": {
       "primitive": "progressive_brackets",

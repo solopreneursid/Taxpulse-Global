@@ -18,7 +18,7 @@ test('generated Worker routes and validation',async()=>{
  const countryPage=await call('/country/india');assert.equal(countryPage.status,200);assert.match(await countryPage.text(),/<title>India salary and tax examples/);assert.match(countryPage.headers.get('x-robots-tag'),/noindex/);assert.equal((await call('/country/not-a-country')).status,404);
  assert.equal((await call('/advanced-preview')).status,404);
  assert.equal((await call('/assets/application.js')).status,404);
- for(const path of ['/assets/simple.css','/assets/simple.mjs',...['country','primitives','us-filing-statuses','IN','US','GB','manifest','scenarios','taxable-income','proof','fingerprint','reverse-salary'].map(n=>'/assets/engine/'+n+'.mjs')]){
+ for(const path of ['/assets/simple.css','/assets/simple.mjs',...['country','primitives','us-filing-statuses','IN','US','GB','DE','AE','CA','AU','SG','manifest','scenarios','taxable-income','proof','fingerprint','reverse-salary'].map(n=>'/assets/engine/'+n+'.mjs')]){
   const asset=await call(path);assert.equal(asset.status,200,path);assert.doesNotMatch(asset.headers.get('content-security-policy'),/tailwindcss/);
   if(path.endsWith('.mjs'))assert.match(asset.headers.get('content-type'),/application\/javascript/);
  }
@@ -28,7 +28,7 @@ test('generated Worker routes and validation',async()=>{
  for(const path of ['/assets/engine/browser-vault.mjs','/assets/engine/secure-records.mjs','/assets/engine/document-text.mjs','/assets/local-tools.mjs'])assert.equal((await call(path)).status,200);
  assert.equal((await call('/assets/secure-records.mjs')).status,404);
  const manifest=await call('/app.webmanifest');assert.equal(manifest.status,200);assert.equal((await manifest.json()).display,'standalone');const sw=await call('/sw.js');assert.equal(sw.status,200);assert.equal(sw.headers.get('service-worker-allowed'),'/');assert.match(await sw.text(),/No tax calculations are available offline/);
- const catalog=await (await call('/v1/catalog')).json();assert.equal(catalog.countries.length,3);assert.deepEqual(catalog.filingStatusOptions.US,['single','mfj','hoh','mfs']);assert.match(catalog.countries.find(c=>c.code==='IN').taxYearLabel,/2026-27/);
+ const catalog=await (await call('/v1/catalog')).json();assert.equal(catalog.countries.length,8);assert.deepEqual(catalog.countries.map(c=>c.code),['IN','US','GB','DE','AE','CA','AU','SG']);assert.deepEqual(catalog.filingStatusOptions.US,['single','mfj','hoh','mfs']);assert.match(catalog.countries.find(c=>c.code==='IN').taxYearLabel,/2026-27/);
  assert.equal((await (await call('/openapi.json')).json()).openapi,'3.1.0');
  const payload={country:'GB',taxYear:'2026',module:'pit',parameters:{grossSalary:130000}};
  const post=(body,headers={})=>call('/v1/country/calculate',{method:'POST',headers:{'content-type':'application/json',...headers},body});
@@ -49,10 +49,26 @@ test('generated Worker routes and validation',async()=>{
  }
  const schema=(await (await call('/openapi.json')).json()).paths['/v1/country/calculate'].post.requestBody.content['application/json'].schema;
  assert.deepEqual(schema.properties.module.enum,catalog.modules);
+ const countrySchema=(await (await call('/openapi.json')).json()).paths['/v1/country/calculate'].post.requestBody.content['application/json'].schema.properties.country.enum;assert.deepEqual(countrySchema,['IN','US','GB','DE','AE','CA','AU','SG']);
  const indiaInput={country:'IN',taxYear:'2026',module:'pit',parameters:{grossSalary:1285000,residentIndividual:true}};
  const india=await post(JSON.stringify(indiaInput));assert.equal(india.status,200);const indiaResult=(await india.json()).result;assert.ok(Math.abs(indiaResult.incomeTax-10400)<0.005);assert.ok(Math.abs(indiaResult.marginalReliefApplied-51500)<0.005);
  assert.equal((await post(JSON.stringify({...indiaInput,parameters:{grossSalary:1285000}}))).status,400);
  assert.equal((await post(JSON.stringify({...payload,country:'DE'}))).status,400);
+ const extendedCountryCases=[
+  ['DE',{taxableIncome:50000,assessment:'individual'}],
+  ['AE',{salaryIncome:100000,employeeWagesOnly:true}],
+  ['CA',{taxableIncome:50000,netIncome:50000,fullYearResident:true}],
+  ['AU',{taxableIncome:50000,residentEligible:true}],
+  ['SG',{taxableIncome:50000,residentEligible:true}]
+ ];
+ for(const [country,parameters] of extendedCountryCases){
+  const response=await post(JSON.stringify({country,taxYear:'2026',module:'pit',parameters}));
+  assert.equal(response.status,200,country);
+  const result=await response.json();
+  assert.equal(result.country,country);assert.equal(result.module,'pit');
+  assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
+  assert.ok(Number.isFinite(result.incomeTax));
+ }
  const assess=await call('/v1/taxable-income/calculate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'DE',taxYear:'2026',taxableIncome:50000,assessment:'individual'})});
  assert.equal(assess.status,200);assert.equal((await assess.json()).incomeTax,10548);
  assert.equal((await call('/v1/taxable-income/calculate')).status,405);

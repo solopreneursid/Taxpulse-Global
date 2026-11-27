@@ -22,7 +22,7 @@ for(const [name,path] of Object.entries(mapping))write(name+'.txt',read(path));
 write('primitives.js.txt',engine+'\n');write('country-rules.js.txt','const COUNTRY_TAX_CONFIGS = '+JSON.stringify(rules)+';\n');
 for(const name of ['primitives','api','openapi','advanced','discovery'])write(name+'.mjs',read('engine/'+name+'.mjs'));
 let country=read('engine/country.mjs');
-for(const c of ['IN','US','GB']){
+for(const c of ['IN','US','GB','DE','AE','CA','AU','SG']){
  const from="import "+c+" from '../rules/2026/"+c+".json' with { type: 'json' };";
  if(!country.includes(from))throw Error('Missing canonical import '+c);
  country=country.replace(from,"import "+c+" from './"+c+".mjs';");
@@ -52,7 +52,7 @@ write('webmanifest.txt',"{\"id\":\"/\",\"name\":\"TaxPulse Global Preview\",\"sh
  write('simple-index.html.txt',read('staging/simple/index.html'));
  write('simple.css.txt',read('staging/simple/simple.css'));
  write('simple.mjs.txt',read('staging/simple/simple.mjs'));
- for(const name of ['country','primitives','us-filing-statuses','IN','US','GB','manifest']){
+ for(const name of ['country','primitives','us-filing-statuses','IN','US','GB','DE','AE','CA','AU','SG','manifest']){
    write('browser-'+name+'.mjs.txt',readFileSync(new URL(name+'.mjs',bundle),'utf8'));
  }
  write('browser-scenarios.mjs.txt',read('engine/scenarios.mjs'));
@@ -87,7 +87,7 @@ for(const name of ['taxable-income','proof','history','reverse-salary','salary-o
   const content=read('engine/'+name+'.mjs').replace("import data from '../rules/historical-versions.json' with {type:'json'};","import data from './historical-versions.mjs';");
   write(name+'.mjs',content);write('browser-'+name+'.mjs.txt',content);
 }
-const fingerprintInputs=['national-registry','national-versions','historical-versions','payroll-registry','payroll-versions','rule-snapshot','statutory-review','runtime-rules','india-salary-registry','india-salary-versions','regional-registry','regional-versions','business-tax','business-tax-versions','employer-payroll','treaty-credit','statutory-context','country','primitives','us-filing-statuses','IN','US','GB','taxable-income','proof','history','reverse-salary','salary-offers','negotiation','compensation','international'].map(name=>[name,readFileSync(new URL(name+'.mjs',bundle),'utf8')]);
+const fingerprintInputs=['national-registry','national-versions','historical-versions','payroll-registry','payroll-versions','rule-snapshot','statutory-review','runtime-rules','india-salary-registry','india-salary-versions','regional-registry','regional-versions','business-tax','business-tax-versions','employer-payroll','treaty-credit','statutory-context','country','primitives','us-filing-statuses','IN','US','GB','DE','AE','CA','AU','SG','taxable-income','proof','history','reverse-salary','salary-offers','negotiation','compensation','international'].map(name=>[name,readFileSync(new URL(name+'.mjs',bundle),'utf8')]);
 const fingerprint=createHash('sha256').update(JSON.stringify(fingerprintInputs)).digest('hex');
 write('browser-fingerprint.mjs.txt','export default '+JSON.stringify(fingerprint)+';\n');
 

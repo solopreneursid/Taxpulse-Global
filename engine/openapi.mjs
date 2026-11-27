@@ -36,7 +36,12 @@ export const spec = {
                     "enum": [
                       "IN",
                       "US",
-                      "GB"
+                      "GB",
+                      "DE",
+                      "AE",
+                      "CA",
+                      "AU",
+                      "SG"
                     ]
                   },
                   "taxYear": {
@@ -49,7 +54,7 @@ export const spec = {
                   },
                   "parameters": {
                     "type": "object",
-                    "description": "For US pit calculations, optional filingStatus is one of single (default), mfj, hoh, mfs. For IN pit, residentIndividual is a required boolean: only true permits illustrative Section 87A/202 rebate and marginal relief on ordinary salary income. Other PIT inputs are grossSalary and optional preTaxDeductions. All results are illustrative and taxRulesVerified=false."
+                    "description": "For IN, US and GB PIT, parameters use grossSalary and optional preTaxDeductions; US filingStatus is one of single (default), mfj, hoh or mfs, and IN requires residentIndividual. For DE, parameters require taxableIncome and assessment (individual or joint). For AE, parameters require salaryIncome and employeeWagesOnly=true. For CA, parameters require taxableIncome, netIncome and fullYearResident=true. For AU and SG, parameters require taxableIncome and residentEligible=true. The five extended country cases are scoped components, not gross-to-net salary estimates. All results are sampleOnly=true and taxRulesVerified=false."
                   }
                 },
                 "additionalProperties": false
