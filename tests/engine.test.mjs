@@ -9,3 +9,16 @@ test('exclusive and inclusive tax',()=>{near(p.flat_or_slab_lookup({amount:100,r
 test('treaty credit arithmetic',()=>{const r=p.treaty_offset({grossIncome:1000,sourceDomesticWhtRate:.2,treatyWhtRate:.1,residenceTaxRate:.3});near(r.foreignTaxPaid,100);near(r.foreignTaxCreditAllowed,100);near(r.totalGlobalTax,300)});
 for(const c of ['IN','US','GB'])test('original rule fixture '+c,()=>{const r=JSON.parse(readFileSync(new URL('../rules/2026/'+c+'.json',import.meta.url),'utf8'));assert.equal(r.country_code,c);assert.equal(String(r.tax_year),'2026');assert.equal(Object.keys(r.modules).length,7);assert.ok(r.source_url.startsWith('https://'))});
 test('all extracted frontend assets exist and module inventory remains intact',()=>{const h=readFileSync(new URL('../staging/assets/index.html',import.meta.url),'utf8');assert.equal(new Set([...h.matchAll(/data-module-tab="([^"]+)"/g)].map(m=>m[1])).size,38);for(const m of h.matchAll(/(?:src|href)="\/assets\/([^"]+)"/g))assert.ok(readFileSync(new URL('../staging/assets/'+m[1],import.meta.url)).length>0)});
+
+test('tax primitives preserve cents and apply explicit half-up rounding',()=>{
+ const r=p.progressive_brackets(1000.01,[{min:0,max:500,rate:.1},{min:500,max:null,rate:.2}]);
+ assert.equal(r.totalTax,150.00);
+ assert.equal(p.capped_percentage(1000.01,[{name:'cent fixture',rate:.1,min_Floor:0,annual_cap:null}]).totalContribution,100.00);
+ assert.equal(p.flat_or_slab_lookup({amount:100.01,rate:.1}).totalTax,10.00);
+ assert.equal(p.treaty_offset({grossIncome:100.01,sourceDomesticWhtRate:.1,treatyWhtRate:.05,residenceTaxRate:.2}).foreignTaxPaid,5.00);
+});
+test('tax primitives reject excessive decimal precision and malformed schedules',()=>{
+ assert.throws(()=>p.progressive_brackets(100.001,[{min:0,max:null,rate:.1}]));
+ assert.throws(()=>p.progressive_brackets(100,[{min:0,max:50,rate:.1},{min:40,max:null,rate:.2}]));
+ assert.throws(()=>p.capped_percentage(100,[{min_Floor:80,annual_cap:50,rate:.1}]));
+});

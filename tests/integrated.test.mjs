@@ -13,7 +13,10 @@ test('integrated frontend builds from canonical sources and preserves original l
  const engine=read('staging/integrated/generated/primitives.js');
  const rules=read('staging/integrated/generated/country-rules.js');
  const app=read('staging/integrated/application.js');
- assert.equal(engine.trim(),original.slice(i,j).trim());
+ const context=read('engine/statutory-context.mjs').replace(/\bexport function /g,'function ');
+ const primitive=read('engine/primitives.mjs').replace("import {toMinorUnits,decimalRateUnits,roundRatio} from './statutory-context.mjs';\n",'').replace(/\s*export \{TaxEnginePrimitives\};\s*$/,'');
+ assert.equal(engine.trim(),(context+'\n'+primitive).trim());
+ assert.ok(engine.includes('function resolveEffectiveRule'));
  const end=original.indexOf('\n    let activeModuleTab',k);
  assert.ok(!app.includes('const paLost = 12570 - standardDeductionAmount'));
  assert.ok(app.includes('const effectiveBrackets = brackets;'));

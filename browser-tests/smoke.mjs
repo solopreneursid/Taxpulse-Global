@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import { chromium } from 'playwright';
+import { assessTaxableIncome as assessTaxableIncomeBackend } from '../engine/taxable-income.mjs';
 const root=new URL('../',import.meta.url);
 execFileSync(process.execPath,[new URL('staging/integrated/build.mjs',root).pathname]);
 const temp=mkdtempSync(join(tmpdir(),'taxpulse-browser-'));
@@ -37,6 +38,30 @@ try {
    const initialStart=performance.now();
    await page.goto(origin);
    await page.locator('#country-status li').last().waitFor({state:'attached'});
+   const statutoryParity=await page.evaluate(async()=>{
+    const engine=await import('/assets/engine/statutory-context.mjs');
+    const registry={versions:[
+     {jurisdiction:'US',component:'payroll',version:'first',effectiveFrom:'2026-01-01',effectiveUntil:'2026-07-01'},
+     {jurisdiction:'US',component:'payroll',version:'second',effectiveFrom:'2026-07-01',effectiveUntil:'2027-01-01'}
+    ]};
+    const rule=engine.resolveEffectiveRule(registry,{jurisdiction:'US',component:'payroll',asOf:'2026-07-01'});
+    return {version:rule.version,amount:engine.formatMinorUnits(engine.parseMinorUnits('123.45')),tax:engine.applyBasisPoints(10001n,500).toString()};
+   });
+   assert.deepEqual(statutoryParity,{version:'second',amount:'123.45',tax:'500'});
+   const browserAssessment=await page.evaluate(async()=>{
+    const engine=await import('/assets/engine/taxable-income.mjs');
+    const result=engine.assessTaxableIncome({country:'CA',taxYear:'2026',taxableIncome:100000.05,netIncome:100000.05,fullYearResident:true});
+    return {incomeTax:result.incomeTax,taxBeforeCredits:result.taxBeforeCredits,basicPersonalCredit:result.basicPersonalCredit,ruleId:result.ruleId};
+   });
+   const backendAssessment=assessTaxableIncomeBackend({country:'CA',taxYear:'2026',taxableIncome:100000.05,netIncome:100000.05,fullYearResident:true});
+   assert.deepEqual(browserAssessment,{
+    incomeTax:backendAssessment.incomeTax,
+    taxBeforeCredits:backendAssessment.taxBeforeCredits,
+    basicPersonalCredit:backendAssessment.basicPersonalCredit,
+    ruleId:backendAssessment.ruleId
+   });
+
+
    const initialReadyMs=Math.round(performance.now()-initialStart);
    const payload=await page.evaluate(()=>{const nav=performance.getEntriesByType('navigation')[0];const resources=performance.getEntriesByType('resource');return {decodedBytes:Math.round((nav?.decodedBodySize||0)+resources.reduce((a,r)=>a+(r.decodedBodySize||0),0)),resourceCount:resources.length};});
    assert.ok(initialReadyMs<15000,'Local initial readiness exceeded regression ceiling');

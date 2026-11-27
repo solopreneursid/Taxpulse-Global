@@ -10,3 +10,14 @@ test('additional frontend modules invoke the shared engine and avoid false certi
  assert.ok(app.includes('No score can establish a safe harbor'));
  new vm.Script(app);
 });
+
+test('statutory context is byte-identical in backend and browser build',()=>{
+ execFileSync(process.execPath,[new URL('../staging/integrated/build.mjs',import.meta.url).pathname]);
+ const source=readFileSync(new URL('../engine/statutory-context.mjs',import.meta.url),'utf8');
+ const backendBundle=readFileSync(new URL('../staging/integrated/bundle/statutory-context.mjs',import.meta.url),'utf8');
+ const browserBundle=readFileSync(new URL('../staging/integrated/bundle/browser-statutory-context.mjs.txt',import.meta.url),'utf8');
+ const worker=readFileSync(new URL('../staging/integrated/bundle/worker.mjs',import.meta.url),'utf8');
+ assert.equal(backendBundle,source);
+ assert.equal(browserBundle,source);
+ assert.match(worker,/\/assets\/engine\/statutory-context\.mjs/);
+});

@@ -8,7 +8,9 @@ if(release.releaseMode!=='preview'||Object.values(release.countries).some(r=>r.p
 const revenue=JSON.parse(read('data/monetization.json'));
 if(revenue.schemaVersion!==1||revenue.mode!=='disabled'||['ads','affiliates','tracking','payments'].some(k=>revenue[k]!==false))throw Error('Preview monetization must remain disabled');
 const out=new URL('./generated/',import.meta.url);mkdirSync(out,{recursive:true});
-const engine=read('engine/primitives.mjs').replace(/\s*export \{ TaxEnginePrimitives \};\s*$/,'');
+const contextStandalone=read('engine/statutory-context.mjs').replace(/\bexport function /g,'function ');
+const primitiveStandalone=read('engine/primitives.mjs').replace("import {toMinorUnits,decimalRateUnits,roundRatio} from './statutory-context.mjs';\n",'').replace(/\s*export \{TaxEnginePrimitives\};\s*$/,'');
+const engine=contextStandalone+'\n'+primitiveStandalone;
 const rules={};for(const c of ['IN','US','GB','DE','AE','CA','AU','SG'])rules[c]={'2026':JSON.parse(read('rules/2026/'+c+'.json'))};
 writeFileSync(new URL('primitives.js',out),engine+'\n');
 writeFileSync(new URL('country-rules.js',out),'const COUNTRY_TAX_CONFIGS = '+JSON.stringify(rules)+';\n');
@@ -27,6 +29,8 @@ for(const c of ['IN','US','GB']){
  write(c+'.mjs','export default '+JSON.stringify(rules[c]['2026'])+';\n');
 }
 write('country.mjs',country);
+write('statutory-context.mjs',read('engine/statutory-context.mjs'));
+write('browser-statutory-context.mjs.txt',read('engine/statutory-context.mjs'));
 write('us-filing-statuses.mjs',read('engine/us-filing-statuses.mjs'));write('worker.mjs',read('staging/integrated/worker.mjs'));
 
 write('regulatory-dashboard.mjs',read('engine/regulatory-dashboard.mjs'));
@@ -75,7 +79,7 @@ for(const name of ['taxable-income','proof','history','reverse-salary','salary-o
   const content=read('engine/'+name+'.mjs').replace("import data from '../rules/historical-versions.json' with {type:'json'};","import data from './historical-versions.mjs';");
   write(name+'.mjs',content);write('browser-'+name+'.mjs.txt',content);
 }
-const fingerprintInputs=['national-registry','national-versions','historical-versions','payroll-registry','payroll-versions','rule-snapshot','statutory-review','runtime-rules','india-salary-registry','india-salary-versions','regional-registry','regional-versions','country','primitives','us-filing-statuses','IN','US','GB','taxable-income','proof','history','reverse-salary','salary-offers','negotiation','compensation','international'].map(name=>[name,readFileSync(new URL(name+'.mjs',bundle),'utf8')]);
+const fingerprintInputs=['national-registry','national-versions','historical-versions','payroll-registry','payroll-versions','rule-snapshot','statutory-review','runtime-rules','india-salary-registry','india-salary-versions','regional-registry','regional-versions','statutory-context','country','primitives','us-filing-statuses','IN','US','GB','taxable-income','proof','history','reverse-salary','salary-offers','negotiation','compensation','international'].map(name=>[name,readFileSync(new URL(name+'.mjs',bundle),'utf8')]);
 const fingerprint=createHash('sha256').update(JSON.stringify(fingerprintInputs)).digest('hex');
 write('browser-fingerprint.mjs.txt','export default '+JSON.stringify(fingerprint)+';\n');
 

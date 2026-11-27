@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {calculateRegionalTax} from '../engine/taxable-income.mjs';
-import {validateRegionalRegistry,resolveRegionalRule} from '../engine/regional-registry.mjs';
+import {validateRegionalRegistry,resolveRegionalRule,resolveRegionalRuleAt} from '../engine/regional-registry.mjs';
 const baseline=JSON.parse(readFileSync(new URL('../rules/regional-versions.json',import.meta.url)));
 const input={country:'US',region:'IL',taxYear:'2026',income:100000,scopeConfirmed:true};
 test('rate-only edit changes result without editing engine',()=>{
@@ -27,6 +27,7 @@ test('invalid rates, overlapping versions, partial-year transitions and wrong ju
  const r=data.versions.find(x=>x.jurisdiction==='US-IL');r.rates=[10001];
  assert.throws(()=>validateRegionalRegistry(data));
  r.rates=[495];r.effectiveFrom='2026-07-01';
+ assert.equal(resolveRegionalRuleAt({country:'US',region:'IL',asOf:'2026-07-01'},data).version,r.version);
  assert.throws(()=>resolveRegionalRule(input,data));
  r.effectiveFrom='2026-01-01';data.versions.push({...r,version:'duplicate-period'});
  assert.throws(()=>validateRegionalRegistry(data));

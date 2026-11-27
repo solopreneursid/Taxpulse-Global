@@ -232,5 +232,97 @@
     "IN": [
       "https://wm.incometaxindia.gov.in/w/determination-of-tax-in-certain-special-cases"
     ]
-  }
+  },
+  "effectivePeriods": [
+    {
+      "jurisdiction": "US",
+      "component": "national-assessment",
+      "taxYear": "2026",
+      "version": "US-2026-national-assessment-v1",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": "2027-01-01",
+      "status": "preview",
+      "legalStatus": "unverified"
+    },
+    {
+      "jurisdiction": "DE",
+      "component": "national-assessment",
+      "taxYear": "2026",
+      "version": "DE-2026-national-assessment-v1",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": "2027-01-01",
+      "status": "preview",
+      "legalStatus": "unverified"
+    },
+    {
+      "jurisdiction": "CA",
+      "component": "national-assessment",
+      "taxYear": "2026",
+      "version": "CA-2026-national-assessment-v1",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": "2027-01-01",
+      "status": "preview",
+      "legalStatus": "unverified"
+    },
+    {
+      "jurisdiction": "AU",
+      "component": "national-assessment",
+      "taxYear": "2026",
+      "version": "AU-2026-national-assessment-v1",
+      "effectiveFrom": "2026-07-01",
+      "effectiveUntil": "2027-07-01",
+      "status": "preview",
+      "legalStatus": "unverified"
+    },
+    {
+      "jurisdiction": "SG",
+      "component": "national-assessment",
+      "taxYear": "2026",
+      "version": "SG-2026-national-assessment-v1",
+      "effectiveFrom": "2025-01-01",
+      "effectiveUntil": "2026-01-01",
+      "status": "preview",
+      "legalStatus": "unverified"
+    },
+    {
+      "jurisdiction": "AE",
+      "component": "national-assessment",
+      "taxYear": "2026",
+      "version": "AE-2026-national-assessment-v1",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": "2027-01-01",
+      "status": "preview",
+      "legalStatus": "unverified"
+    },
+    {
+      "jurisdiction": "US",
+      "component": "investment-assessment",
+      "taxYear": "2026",
+      "version": "US-2026-investment-assessment-v1",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": "2027-01-01",
+      "status": "preview",
+      "legalStatus": "unverified"
+    },
+    {
+      "jurisdiction": "GB",
+      "component": "investment-assessment",
+      "taxYear": "2026",
+      "version": "GB-2026-investment-assessment-v1",
+      "effectiveFrom": "2026-04-06",
+      "effectiveUntil": "2027-04-06",
+      "status": "preview",
+      "legalStatus": "unverified"
+    },
+    {
+      "jurisdiction": "IN",
+      "component": "investment-assessment",
+      "taxYear": "2026",
+      "version": "IN-2026-investment-assessment-v1",
+      "effectiveFrom": "2026-04-01",
+      "effectiveUntil": "2027-04-01",
+      "status": "preview",
+      "legalStatus": "unverified"
+    }
+  ]
 }
