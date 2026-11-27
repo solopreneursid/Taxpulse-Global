@@ -178,5 +178,205 @@
     ],
     "url": "https://www.iras.gov.sg/taxes/goods-services-tax-%28gst%29/basics-of-gst/current-gst-rates",
     "kind": "change-discovery"
+  },
+  {
+    "id": "CA-capital-inclusion",
+    "country": "CA",
+    "jurisdiction": "CA",
+    "topics": [
+      "investment-tax"
+    ],
+    "url": "https://laws-lois.justice.gc.ca/eng/acts/I-3.3/section-38.html",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "DE-private-gain",
+    "country": "DE",
+    "jurisdiction": "DE",
+    "topics": [
+      "investment-tax"
+    ],
+    "url": "https://www.gesetze-im-internet.de/estg/__32d.html",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "SG-personal-gain",
+    "country": "SG",
+    "jurisdiction": "SG",
+    "topics": [
+      "investment-tax"
+    ],
+    "url": "https://www.iras.gov.sg/taxes/individual-income-tax/basics-of-individual-income-tax/what-is-taxable-what-is-not/gains-from-sale-of-property-shares-and-financial-instruments",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "AE-personal-investment",
+    "country": "AE",
+    "jurisdiction": "AE",
+    "topics": [
+      "investment-tax"
+    ],
+    "url": "https://tax.gov.ae/en/taxes/corporate.tax/corporate.tax.topics/basis.of.taxation.natural.person.aspx",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "US-TX-sales",
+    "country": "US",
+    "jurisdiction": "US-TX",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://comptroller.texas.gov/taxes/sales/faq/local.php",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "CA-ON-ltt",
+    "country": "CA",
+    "jurisdiction": "CA-ON",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.ontario.ca/document/land-transfer-tax/calculating-land-transfer-tax",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "DE-BE-transfer",
+    "country": "DE",
+    "jurisdiction": "DE-BE",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://service.berlin.de/dienstleistung/325323/",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "IN-DL-stamp",
+    "country": "IN",
+    "jurisdiction": "IN-DL",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://revenue.delhi.gov.in/revenue/property-registration",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "US-NY-transfer",
+    "country": "US",
+    "jurisdiction": "US-NY",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.tax.ny.gov/bus/transfer/rptidx.htm",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "AU-NSW-duty",
+    "country": "AU",
+    "jurisdiction": "AU-NSW",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.revenue.nsw.gov.au/taxes-duties-levies-royalties/transfer-duty/understanding-transfer-duty/calculate-transfer-duty",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "AE-DU-fee",
+    "country": "AE",
+    "jurisdiction": "AE-DU",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://dubailand.gov.ae/en/news-media/dld-calls-on-developers-to-pay-property-registration-fees-within-60-days/",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "US-GB-credit",
+    "country": "US",
+    "jurisdiction": "US",
+    "topics": [
+      "income-tax"
+    ],
+    "url": "https://www.gov.uk/government/publications/usa-tax-treaties/2001-uk-usa-double-taxation-convention-as-amended-by-the-2002-protocol-in-force",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "US-ftc-limit",
+    "country": "US",
+    "jurisdiction": "US",
+    "topics": [
+      "income-tax"
+    ],
+    "url": "https://www.irs.gov/individuals/international-taxpayers/foreign-tax-credit-how-to-figure-the-credit",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "CA-GB-credit",
+    "country": "CA",
+    "jurisdiction": "CA",
+    "topics": [
+      "income-tax"
+    ],
+    "url": "https://www.canada.ca/en/department-finance/programs/tax-policy/tax-treaties/country/united-kingdom-convention-consolidated-1978-1980-1985.html",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "AU-GB-credit",
+    "country": "AU",
+    "jurisdiction": "AU",
+    "topics": [
+      "income-tax"
+    ],
+    "url": "https://www.gov.uk/government/publications/australia-tax-treaties/synthesised-text-of-the-multilateral-instrument-and-the-2003-australia-uk-double-taxation-convention-in-force",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "DE-GB-credit",
+    "country": "DE",
+    "jurisdiction": "DE",
+    "topics": [
+      "income-tax"
+    ],
+    "url": "https://www.gov.uk/government/publications/germany-tax-treaties/2010-uk-germany-double-taxation-convention-as-amended-by-the-2021-protocol-in-force",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "SG-GB-credit",
+    "country": "SG",
+    "jurisdiction": "SG",
+    "topics": [
+      "income-tax"
+    ],
+    "url": "https://www.gov.uk/government/publications/singapore-tax-treaties/synthesised-text-of-the-multilateral-instrument-and-the-1997-uk-singapore-double-taxation-agreement-in-force",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "AE-GB-credit",
+    "country": "AE",
+    "jurisdiction": "AE",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.gov.uk/government/publications/united-arab-emirates-tax-treaties/2016-uk-uae-double-taxation-convention",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "SG-company-credit",
+    "country": "SG",
+    "jurisdiction": "SG",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.iras.gov.sg/taxes/corporate-income-tax/income-deductions-for-companies/claiming-reliefs/foreign-tax-credit",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "DE-credit-limit",
+    "country": "DE",
+    "jurisdiction": "DE",
+    "topics": [
+      "income-tax"
+    ],
+    "url": "https://www.gesetze-im-internet.de/estg/__34c.html",
+    "kind": "change-discovery"
   }
 ]
