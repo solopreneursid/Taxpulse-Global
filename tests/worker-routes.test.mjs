@@ -101,6 +101,8 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(treaty.status,200);assert.equal((await treaty.json()).allowedCredit,2000);
  const confirmedTreaty=await call('/v1/treaty/confirmed-credit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jurisdiction:'DE-GB',foreignTaxPaid:500,treatyPermittedTax:600,domesticLimit:700,availableDomesticTax:800,scopeConfirmed:true})});
  assert.equal(confirmedTreaty.status,200);assert.equal((await confirmedTreaty.json()).modeledCredit,500);
+ const ukIndiaTreaty=await call('/v1/treaty/uk-india-credit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({foreignTaxPaidGbp:100,treatyEligibleCapGbp:150,ukTaxWithIncome:1000,ukTaxWithoutIncome:900,scopeConfirmed:true})});
+ assert.equal(ukIndiaTreaty.status,200);assert.equal((await ukIndiaTreaty.json()).modeledCredit,100);
  const employer=await call('/v1/employer-payroll/fica',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({annualWages:100000,scopeConfirmed:true})});
  assert.equal(employer.status,200);assert.equal((await employer.json()).employerFica,7650);
  for(const path of ['/v1/business/indirect-tax','/v1/business/corporate-tax','/v1/property/transfer-tax','/v1/investment/scoped-gain','/v1/treaty/credit','/v1/treaty/confirmed-credit','/v1/employer-payroll/fica'])assert.equal((await call(path)).status,405,path);
