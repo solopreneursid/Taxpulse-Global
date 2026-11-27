@@ -31,6 +31,12 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.equal(p.supplementalSourceMonitoring.readOnly,true);
  assert.equal(p.supplementalSourceMonitoring.automaticRuleChanges,false);
  assert.equal(p.supplementalSourceMonitoring.hashChangesRequireManualReview,true);
+ assert.equal(p.primaryDailyCollector.sourceCount,30);
+ assert.equal(p.primaryDailyCollector.schedule,'47 1 * * *');
+ assert.equal(p.primaryDailyCollector.cadence,'daily');
+ assert.equal(p.primaryDailyCollector.signedEvidenceIntakeConfigured,true);
+ assert.equal(p.primaryDailyCollector.destination,'isolated preview intake');
+ assert.equal(p.primaryDailyCollector.productionRuleActivation,false);
  assert.ok(p.countries.every(c=>c.scopedPreviewExamples===7&&!c.manifestVerified&&!c.productionEnabled&&c.recordedEvidenceCount===0&&c.remaining.length===7));
  assert.equal(p.countries.find(c=>c.country==='IN').missingBackendModules.length,6);
  assert.equal(p.countries.find(c=>c.country==='CA').missingBackendModules.length,7);
