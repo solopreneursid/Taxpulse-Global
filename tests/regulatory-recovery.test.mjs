@@ -4,6 +4,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {readFileSync,mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {assertRecoverySequenceFloor} from '../engine/rule-publisher.mjs';
 const migration=n=>readFileSync(new URL('../migrations/'+n,import.meta.url),'utf8');
 function setup(db){db.exec(migration('001-regulatory-snapshots.sql'));db.exec(migration('002-regulatory-version-ledger.sql'));}
 function activate(db,sequence,versions){const envelope=JSON.stringify({payload:{regional:{versions},indiaSalary:{versions:[]},payroll:{versions:[]}}});db.prepare("UPDATE regulatory_head SET sequence=?,digest=?,envelope=?,state='active' WHERE id=1").run(sequence,String(sequence).padStart(64,'0'),envelope);}
@@ -41,4 +42,39 @@ test('all five migrations survive isolated backup and restore with review archiv
   publish(restored,4,[{version:'v3',rate:300}]);assert.equal(restored.prepare('SELECT sequence FROM regulatory_head').get().sequence,4);
   assert.equal(source.prepare('SELECT sequence FROM regulatory_head').get().sequence,3);
  }finally{restored?.close();source?.close();rmSync(dir,{recursive:true,force:true});}
+});
+
+test('external durable sequence floor rejects replay after D1 restore rollback',()=>{
+ const head={sequence:1,digest:'b'.repeat(64),state:'active'};
+ const anchor={schemaVersion:1,sequence:2,digest:'a'.repeat(64),state:'active'};
+ assert.throws(()=>assertRecoverySequenceFloor(head,anchor,2),/exceed the D1 head and external recovery floor/);
+ const fresh=assertRecoverySequenceFloor(head,anchor,3);
+ assert.equal(fresh.minimumSequence,2);assert.equal(fresh.recoveryRequired,true);
+});
+test('publisher fails closed if the external anchor is behind D1',()=>{
+ assert.throws(()=>assertRecoverySequenceFloor(
+  {sequence:3,digest:'c'.repeat(64),state:'active'},
+  {schemaVersion:1,sequence:2,digest:'b'.repeat(64),state:'active'},
+  4
+ ),/anchor is behind D1/);
+});
+test('blocked external anchor requires a fresh sequence above the block floor',()=>{
+ const head={sequence:4,state:'blocked'};
+ const anchor={schemaVersion:1,sequence:4,digest:null,state:'blocked'};
+ assert.throws(()=>assertRecoverySequenceFloor(head,anchor,4),/exceed the D1 head and external recovery floor/);
+ const next=assertRecoverySequenceFloor(head,anchor,5);
+ assert.equal(next.minimumSequence,4);assert.equal(next.recoveryRequired,true);
+});
+test('normal publication still requires strictly increasing D1 and external sequences',()=>{
+ const head={sequence:7,digest:'c'.repeat(64),state:'active'};
+ const anchor={schemaVersion:1,sequence:7,digest:'c'.repeat(64),state:'active'};
+ assert.throws(()=>assertRecoverySequenceFloor(head,anchor,7),/exceed the D1 head and external recovery floor/);
+ const next=assertRecoverySequenceFloor(head,anchor,8);
+ assert.equal(next.minimumSequence,7);assert.equal(next.recoveryRequired,false);
+});
+test('empty anchor accepts only a sequence above the empty D1 head',()=>{
+ const head={sequence:0,state:'empty'};
+ const anchor={schemaVersion:1,sequence:0,digest:null,state:'empty'};
+ assert.throws(()=>assertRecoverySequenceFloor(head,anchor,0),/exceed the D1 head and external recovery floor/);
+ assert.deepEqual(assertRecoverySequenceFloor(head,anchor,1),{minimumSequence:0,recoveryRequired:false});
 });
