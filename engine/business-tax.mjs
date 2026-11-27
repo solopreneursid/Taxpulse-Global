@@ -4,7 +4,6 @@ import { applyBasisPoints, roundRatio, toMinorUnits } from './statutory-context.
 const MAX_MINOR = 100_000_000_000n;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const HOSTS = Object.freeze({
-  IN: ['incometax.gov.in','incometaxindia.gov.in'],
   GB: ['gov.uk'],
   DE: ['gesetze-im-internet.de'],
   AU: ['ato.gov.au'],
@@ -14,7 +13,7 @@ const HOSTS = Object.freeze({
   US: ['irs.gov', 'comptroller.texas.gov']
 });
 const CURRENCIES = Object.freeze({
-  IN:'INR',GB:'GBP',DE:'EUR',AU:'AUD',SG:'SGD',AE:'AED',CA:'CAD',US:'USD'
+  GB:'GBP',DE:'EUR',AU:'AUD',SG:'SGD',AE:'AED',CA:'CAD',US:'USD'
 });
 const INDIRECT_KEYS = [
   'jurisdiction','country','taxType','version','taxYear','effectiveFrom',
@@ -23,7 +22,7 @@ const INDIRECT_KEYS = [
 const CORPORATE_KEYS = [
   'jurisdiction','country','taxType','version','taxYear','effectiveFrom',
   'effectiveUntil','currency','rateBasisPoints','smallBusinessRateBasisPoints',
-  'mainRateThreshold','zeroRateThreshold','partialExemptionTiers','startupExemptionTiers','scope','sourceUrls'
+  'partialExemptionTiers','startupExemptionTiers','scope','sourceUrls'
 ];
 const own = (value,key) => Object.hasOwn(value,key);
 const exact = (value,keys) => value && typeof value === 'object' &&
@@ -52,7 +51,7 @@ function officialSource(url,country) {
 function validateMetadata(row,dataYear) {
   if (!row || typeof row !== 'object' || Array.isArray(row) ||
       typeof row.jurisdiction !== 'string' || !/^[A-Z]{2}(?:-[A-Z]{2,3})?$/.test(row.jurisdiction) ||
-      !['IN','US','GB','DE','CA','AU','SG','AE'].includes(row.country) ||
+      !['US','GB','DE','CA','AU','SG','AE'].includes(row.country) ||
       typeof row.taxType !== 'string' || !row.taxType ||
       typeof row.version !== 'string' || !row.version ||
       row.taxYear !== dataYear ||
@@ -128,13 +127,7 @@ export function validateBusinessTaxRules(registry) {
         row.smallBusinessRateBasisPoints !== null &&
           (!Number.isSafeInteger(row.smallBusinessRateBasisPoints) ||
            row.smallBusinessRateBasisPoints < 0 || row.smallBusinessRateBasisPoints > 10000 ||
-           row.smallBusinessRateBasisPoints > row.rateBasisPoints) ||
-        row.mainRateThreshold !== null && (!Number.isSafeInteger(row.mainRateThreshold) || row.mainRateThreshold < 0) ||
-        row.zeroRateThreshold !== null && (!Number.isSafeInteger(row.zeroRateThreshold) || row.zeroRateThreshold < 0) ||
-        row.country === 'GB' && row.mainRateThreshold === null ||
-        row.country !== 'GB' && row.mainRateThreshold !== null ||
-        row.country === 'AE' && row.zeroRateThreshold === null ||
-        row.country !== 'AE' && row.zeroRateThreshold !== null) {
+           row.smallBusinessRateBasisPoints > row.rateBasisPoints)) {
       throw new TypeError('Invalid corporate tax rates');
     }
     const singapore = row.country === 'SG';
@@ -261,15 +254,7 @@ export function calculateCorporateTaxComponent(input) {
     ? [...common,'eligibleSmallBusinessProfit','smallBusinessEligibilityConfirmed']
     : country === 'SG'
       ? [...common,'reliefScheme','reliefEligibilityConfirmed']
-      : country === 'IN'
-        ? [...common,'taxRegime','regimeEligibilityConfirmed']
-        : country === 'GB'
-          ? [...common,'mainRateEligibilityConfirmed','associatedCompanies','ringFenceProfits']
-          : country === 'AU'
-            ? [...common,'aggregatedTurnoverBelow50m','passiveIncomeAtOrBelow80Percent']
-            : country === 'AE'
-              ? [...common,'qualifyingFreeZoneIncome','pillarTwoInScope']
-              : common;
+      : common;
   if (!exact(input,keys) || input.taxYear !== '2026' || input.scopeConfirmed !== true) {
     throw new TypeError('Unsupported corporate tax input');
   }
@@ -311,40 +296,6 @@ export function calculateCorporateTaxComponent(input) {
       {name:'Corporate income tax before YA 2026 rebate',rateBasisPoints:rule.rateBasisPoints,tax:output(tax)}
     ];
     warnings.push('The caller must establish the full YA 2026 exemption eligibility and chargeable-income basis. The calculation excludes the YA 2026 corporate tax rebate and cash grant, group relief, special incentives and all other adjustments.');
-  } else if (country === 'IN') {
-    if (input.taxRegime !== '115BAA' || input.regimeEligibilityConfirmed !== true) {
-      throw new TypeError('Confirm eligibility for the Section 115BAA regime');
-    }
-    tax = applyBasisPoints(profit,rule.rateBasisPoints);
-    components = [{name:'Section 115BAA base income-tax component',taxableProfit:output(profit),rateBasisPoints:rule.rateBasisPoints,tax:output(tax)}];
-    warnings.push('The caller confirms Section 115BAA eligibility and election. The 22% base rate excludes the 10% surcharge and 4% health and education cess, and does not determine deduction/MAT eligibility.');
-  } else if (country === 'GB') {
-    if (input.mainRateEligibilityConfirmed !== true || input.associatedCompanies !== 1 ||
-        input.ringFenceProfits !== false || profit <= BigInt(rule.mainRateThreshold) * 100n) {
-      throw new TypeError('Only the non-ring-fence main-rate case above the single-company threshold is supported');
-    }
-    tax = applyBasisPoints(profit,rule.rateBasisPoints);
-    components = [{name:'UK Corporation Tax main-rate component',taxableProfit:output(profit),rateBasisPoints:rule.rateBasisPoints,threshold:rule.mainRateThreshold,tax:output(tax)}];
-    warnings.push('Main-rate-only case. The caller confirms one associated company and non-ring-fence profits above the £250,000 threshold. Small-profits rate, marginal relief, short periods and associated-company threshold reductions are not modeled.');
-  } else if (country === 'AU') {
-    if (input.aggregatedTurnoverBelow50m !== true || input.passiveIncomeAtOrBelow80Percent !== true) {
-      throw new TypeError('Confirm both Australian base-rate-entity eligibility tests');
-    }
-    tax = applyBasisPoints(profit,rule.rateBasisPoints);
-    components = [{name:'Australian base-rate-entity company tax component',taxableProfit:output(profit),rateBasisPoints:rule.rateBasisPoints,tax:output(tax)}];
-    warnings.push('The caller confirms aggregated turnover below AUD 50 million and base-rate-entity passive income at or below 80%. The 25% component excludes franking credits and all other company tax adjustments.');
-  } else if (country === 'AE') {
-    if (input.qualifyingFreeZoneIncome !== false || input.pillarTwoInScope !== false) {
-      throw new TypeError('Only non-qualifying-free-zone income outside Pillar Two scope is supported');
-    }
-    const threshold = BigInt(rule.zeroRateThreshold) * 100n;
-    const taxableAboveThreshold = profit > threshold ? profit - threshold : 0n;
-    tax = applyBasisPoints(taxableAboveThreshold,rule.rateBasisPoints);
-    components = [
-      {name:'UAE 0% threshold component',taxableProfit:output(profit > threshold ? threshold : profit),rateBasisPoints:0,tax:0},
-      {name:'UAE 9% standard-rate component',taxableProfit:output(taxableAboveThreshold),rateBasisPoints:rule.rateBasisPoints,tax:output(tax)}
-    ];
-    warnings.push('The caller confirms a non-qualifying-free-zone juridical person outside the large-multinational Pillar Two rules. The 0% threshold and 9% standard-rate component exclude free-zone qualifying income and other exemptions.');
   } else {
     tax = applyBasisPoints(profit,rule.rateBasisPoints);
     components = [{name:rule.taxType,taxableProfit:output(profit),rateBasisPoints:rule.rateBasisPoints,tax:output(tax)}];
