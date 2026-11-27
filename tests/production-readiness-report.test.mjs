@@ -25,7 +25,7 @@ test('readiness report distinguishes all 56 preview entries from 56 scoped backe
  assert.match(p.indirectTaxScope,/excludes taxability determination/);
  assert.equal(Object.keys(p.backendCorporateInputBasis).length,8);
  assert.equal(p.backendCorporateInputBasis.IN,'taxableProfit and scopeConfirmed; domestic company Section 115BAA 22% plus surcharge and cess component');
- assert.match(p.corporateScope,/excludes complete return/);assert.equal(p.missingBackendModules.length,0);assert.equal(p.productionAuthorized,false);assert.match(p.gate,/blocked/);
+ assert.match(p.corporateScope,/not a complete corporate return/);assert.equal(p.missingBackendModules.length,0);assert.equal(p.productionAuthorized,false);assert.match(p.gate,/blocked/);
  assert.equal(p.scopedTaxComponents.indirectTaxRules.length,12);
  assert.equal(p.scopedTaxComponents.corporateTaxRules.length,4);
  assert.equal(p.scopedTaxComponents.employerPayrollComponents.length,1);
