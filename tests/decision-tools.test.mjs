@@ -97,3 +97,16 @@ test('UAE threshold and Australia confirmed company rate fixtures',()=>{
  assert.equal(scopedCorporateTax({...input,jurisdiction:'AU-full',taxableProfit:100000}).grossCorporateTax,30000);
  assert.throws(()=>scopedCorporateTax({...input,scopeConfirmed:false}));assert.throws(()=>scopedCorporateTax({...input,jurisdiction:'IN'}));assert.throws(()=>scopedCorporateTax({...input,taxableProfit:-1}));
 });
+
+for(const [country,rate] of [['CA-ON',13],['CA-NS',14],['CA-NB',15],['CA-NL',15],['CA-PE',15]])test('CRA HST scope '+country,()=>{
+ const input={country,priceBasis:'exclusive',amount:100,scopeConfirmed:true};assert.equal(standardIndirectTax(input).taxAmount,rate);assert.equal(standardIndirectTax({...input,priceBasis:'inclusive',amount:100+rate}).netAmount,100);
+});
+test('company tax components US Canada Germany and Singapore with explicitly confirmed scope',()=>{
+ const input={scopeConfirmed:true,taxableProfit:100000};
+ for(const [jurisdiction,expected] of [['US',21000],['CA-general',15000],['CA-small',9000],['DE',15000],['SG-PTE',8075],['SG-startup',4250]])assert.equal(scopedCorporateTax({...input,jurisdiction}).grossCorporateTax,expected);
+ assert.equal(scopedCorporateTax({...input,jurisdiction:'SG-PTE',taxableProfit:200000}).grossCorporateTax,16575);
+ assert.equal(scopedCorporateTax({...input,jurisdiction:'SG-startup',taxableProfit:200000}).grossCorporateTax,12750);
+ assert.equal(scopedCorporateTax({...input,jurisdiction:'SG-PTE',taxableProfit:10000}).grossCorporateTax,425);
+ assert.equal(scopedCorporateTax({...input,jurisdiction:'SG-PTE',taxableProfit:0}).grossCorporateTax,0);
+ assert.throws(()=>scopedCorporateTax({...input,jurisdiction:'CA-small',taxableProfit:500000.01}));
+});
