@@ -3,7 +3,7 @@ import {referenceInputs} from './engine/reference-data.mjs';
 import runtime from './engine/runtime-context.mjs';
 import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,taxableIncomeOpportunity,financialRunway,salaryCliffs,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax,residentialSdlt,ukIndiaCredit,debtRepayment,notifiedIndiaGst,ukEmployerNi,australiaDiscountGain,investmentScenario,retirementScenario,usEmployerFica,singaporeBuyerDuty,ukDividendTax} from './engine/decision-tools.mjs';
 import {calculateBudget,expenseCategories} from './engine/budget.mjs';
-import {createFinancialProfile,offerFromProfile,exportEncryptedProfile,importEncryptedProfile,validatePlanningArchive,exportPlanningArchive,importPlanningArchive} from './engine/financial-profile.mjs';
+import {createFinancialProfile,offerFromProfile,exportEncryptedProfile,importEncryptedProfile,validatePlanningArchive,exportPlanningArchive,importPlanningArchive,planningReport} from './engine/financial-profile.mjs';
 import {compareInternational} from './engine/international.mjs';
 import {compareCompensation} from './engine/compensation.mjs';
 import {negotiateSalary} from './engine/negotiation.mjs';
@@ -783,6 +783,7 @@ let planningArchive={salaryProfiles:[],scenarios:[]},planningGeneration=0,planni
 const planningStatus=$('planning-archive-status'),planningEntry=$('planning-archive-entry'),planningPassword=$('planning-archive-password'),planningFile=$('planning-archive-file');
 const planningAllowed=()=>runtime.state==='bundled-preview';
 function refreshPlanningEntries(){
+ clearPlanningReport();
  planningEntry.replaceChildren();const option=(value,label)=>{const o=document.createElement('option');o.value=value;o.textContent=label;planningEntry.append(o);};
  if(!planningArchive.salaryProfiles.length&&!planningArchive.scenarios.length)option('','No entries');
  planningArchive.salaryProfiles.forEach((s,i)=>option('salary:'+i,'Salary '+(i+1)+' · '+s.region));
@@ -833,3 +834,27 @@ $('planning-archive-export').addEventListener('click',()=>transferPlanning('expo
 $('planning-archive-import').addEventListener('click',()=>transferPlanning('import'));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)clearPlanningTransfer();});
 window.addEventListener('pagehide',clearPlanningTransfer);
+
+let currentPlanningReport=null;
+const reportResult=$('planning-report-result'),reportConfirm=$('planning-report-confirm'),reportDownload=$('planning-report-download'),reportStatus=$('planning-report-status');
+function clearPlanningReport(){currentPlanningReport=null;reportResult.hidden=true;reportConfirm.checked=false;reportDownload.disabled=true;$('planning-report-entries').replaceChildren();reportStatus.textContent='';}
+const reportLabel=k=>k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase());
+const monthMetrics=new Set(['monthsToGoal','wholeMonthsBeforeReserve','basePayoffMonths','acceleratedPayoffMonths','monthsSaved','fullyFundedMonths','firstShortfallMonth']);
+$('planning-report-show').addEventListener('click',()=>{
+ clearPlanningReport();
+ try{
+  if(!planningAllowed()||planningBusy)throw Error('Unavailable');
+  const r=planningReport(planningArchive,engineFingerprint,ruleContext);const root=$('planning-report-entries');
+  const append=(heading,currency,metrics,warnings=[])=>{const article=document.createElement('article'),h=document.createElement('h4'),dl=document.createElement('dl');h.textContent=heading+' · '+currency;dl.className='breakdown';for(const [k,v] of Object.entries(metrics)){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=reportLabel(k);dd.textContent=v===null?'Not available within model':monthMetrics.has(k)?String(v):money(v,currency);dl.append(dt,dd);}article.append(h,dl);if(warnings.length){const p=document.createElement('p');p.className='notice';p.textContent=warnings.join(' ');article.append(p);}root.append(article);};
+  for(const {index,region,currency,taxYear,...metrics} of r.salary)append('Salary '+index+' · '+region+' · '+taxYear,currency,metrics);
+  for(const s of r.scenarios)append('Scenario '+s.index+' · '+s.kind,s.currency,s.metrics,s.warnings);
+  $('planning-report-warning').textContent=r.warnings.join(' ');currentPlanningReport=r;reportResult.hidden=false;reportResult.focus();
+ }catch{reportStatus.textContent='Capture at least one valid example in the planning archive first.';}
+});
+reportConfirm.addEventListener('change',()=>{reportDownload.disabled=!currentPlanningReport||!reportConfirm.checked;});
+reportDownload.addEventListener('click',()=>{
+ if(!currentPlanningReport||!reportConfirm.checked||!planningAllowed()||planningBusy)return;
+ const url=URL.createObjectURL(new Blob([JSON.stringify(currentPlanningReport,null,2)+'\n'],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='taxpulse-unencrypted-example-report.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);reportConfirm.checked=false;reportDownload.disabled=true;reportStatus.textContent='Unencrypted example report downloaded.';
+});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearPlanningReport();});
+window.addEventListener('pagehide',clearPlanningReport);
