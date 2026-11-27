@@ -1310,8 +1310,7 @@ export const spec = {
           }
         }
       }
-    }
-    {
+      },
       "/v1/business/indirect-tax": {
         "post": {
           "operationId": "calculateIndirectTaxComponent",
@@ -1753,7 +1752,7 @@ export const spec = {
           }
         }
       }
-    },
+      },
       "/v1/treaty/uk-india-credit": {
         "post": {
           "operationId": "calculateUkIndiaTreatyCreditComponent",
