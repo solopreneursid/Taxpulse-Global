@@ -10,7 +10,7 @@ const out=n=>{if(n>100000000000000n||n< -100000000000000n)throw new RangeError('
 const round=(n,d)=>n<0n?-round(-n,d):(n+d/2n)/d;
 function currency(c){if(!currencies.includes(c))throw new RangeError('Unsupported currency');return c;}
 function isoDate(value,label='Date'){
- if(typeof value!=='string'||!/^\\d{4}-\\d{2}-\\d{2}$/.test(value)||
+ if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value)||
   !Number.isFinite(Date.parse(value+'T00:00:00.000Z'))||
   new Date(value+'T00:00:00.000Z').toISOString().slice(0,10)!==value)
   throw new RangeError(label+' must be a valid ISO calendar date');
