@@ -53,8 +53,25 @@ The legacy `countryCalculate` endpoint exposes `module: "capgains"` for all eigh
 
 The API requires `scopeConfirmed: true` for each jurisdiction. Country-specific asset classification, holding periods, loss treatment, residency and income assumptions remain explicit. Canada returns an inclusion amount rather than a tax liability. Singapore and UAE zero-tax outputs depend on caller-confirmed investment classification; the engine does not infer that a disposal is not trading or business activity. All results remain sample-only and unverified.
 
+## Scoped property transfer API
+
+The legacy `countryCalculate` endpoint exposes `module: "property"` for all eight countries:
+
+| Country | Input contract | Component boundary |
+|---|---|---|
+| India | Taxable consideration, transaction date and purchaser category male/female | Delhi sole-purchaser ordinary sale-deed stamp/transfer duty |
+| United States | Taxable consideration and transaction date | New York State residential conveyance outside NYC, below USD 1 million |
+| United Kingdom | Whole-pound consideration, ordinary/first-time buyer scope and transaction date | England/Northern Ireland residential SDLT only |
+| Germany | Taxable consideration and transaction date | Berlin ordinary direct acquisition transfer-tax component |
+| UAE | Taxable consideration and transaction date | Dubai 4% sale registration fee; this is a fee, not a tax |
+| Canada | Taxable consideration and transaction date | Ontario single-family residence provincial LTT component |
+| Australia | Taxable consideration and transaction date | NSW ordinary non-residential transfer duty for FY 2026–27 |
+| Singapore | Purchase price, market value, property type and transaction date | Pure residential/non-residential buyer's stamp duty only |
+
+Every route requires `scopeConfirmed: true`. The model excludes other states/provinces, cities, additional-property surcharges, non-resident charges, mixed-use transactions, most reliefs, leasehold/linked transactions, valuation disputes, legal fees and other closing costs. Singapore excludes ABSD and SSD. Dubai output is a registration fee. Results remain sample-only and unverified.
+
 ## Release boundary
 
-All results remain `sampleOnly: true` and `taxRulesVerified: false`. The country manifest remains unverified and production-disabled. The backend exposes PIT, scoped salary remainder and scoped capital-gains components for all eight countries. Indirect tax, corporate tax, property tax and treaty-relief modules remain unavailable in the legacy country API. The 56-scope release gate is unchanged and still blocks production.
+All results remain `sampleOnly: true` and `taxRulesVerified: false`. The country manifest remains unverified and production-disabled. The backend exposes PIT, scoped salary remainder, capital-gains components and property transfer/registration components for all eight countries. Indirect tax, corporate tax and treaty-relief modules remain unavailable in the legacy country API. The 56-scope release gate is unchanged and still blocks production.
 
 Independent statutory review must validate source law, effective periods, eligibility, reliefs, rounding and independently computed fixtures before any scope can be marked verified.
