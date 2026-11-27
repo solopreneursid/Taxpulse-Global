@@ -42,8 +42,8 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(html.headers.get('x-frame-options'),'DENY');
  assert.equal(html.headers.get('cross-origin-opener-policy'),'same-origin');
  assert.equal(html.headers.get('cross-origin-resource-policy'),'same-origin');
- assert.deepEqual(catalog.modules,['pit','payroll','capgains','vat','property','dtaa']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
- for(const module of ['corporate']){
+ assert.deepEqual(catalog.modules,['pit','payroll','capgains','vat','corporate','property','dtaa']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
+ for(const module of []){
   assert.ok(catalog.disabledModules[module]);
   assert.equal((await post(JSON.stringify({...payload,module}))).status,400);
  }
@@ -171,6 +171,25 @@ test('generated Worker routes and validation',async()=>{
   assert.ok(Number.isFinite(result.modeledCredit));assert.ok(result.sourceUrls.length>0);
  }
  assert.equal((await post(JSON.stringify({country:'CA',taxYear:'2026',module:'dtaa',parameters:{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:false}}))).status,400);
+ const corporateCases=[
+  ['IN',{taxableProfit:1000000,taxRegime:'115BAA',regimeEligibilityConfirmed:true,scopeConfirmed:true},'INR'],
+  ['US',{taxableProfit:100000,scopeConfirmed:true},'USD'],
+  ['GB',{taxableProfit:300000,mainRateEligibilityConfirmed:true,associatedCompanies:1,ringFenceProfits:false,scopeConfirmed:true},'GBP'],
+  ['DE',{taxableProfit:100000,scopeConfirmed:true},'EUR'],
+  ['AE',{taxableProfit:500000,qualifyingFreeZoneIncome:false,pillarTwoInScope:false,scopeConfirmed:true},'AED'],
+  ['CA',{taxableProfit:100000,eligibleSmallBusinessProfit:0,smallBusinessEligibilityConfirmed:false,scopeConfirmed:true},'CAD'],
+  ['AU',{taxableProfit:100000,aggregatedTurnoverBelow50m:true,passiveIncomeAtOrBelow80Percent:true,scopeConfirmed:true},'AUD'],
+  ['SG',{taxableProfit:100000,reliefScheme:'none',reliefEligibilityConfirmed:false,scopeConfirmed:true},'SGD']
+ ];
+ for(const [country,parameters,currency] of corporateCases){
+  const response=await post(JSON.stringify({country,taxYear:'2026',module:'corporate',parameters}));
+  assert.equal(response.status,200,country);
+  const result=await response.json();
+  assert.equal(result.country,country);assert.equal(result.taxYear,'2026');assert.equal(result.module,'corporate');
+  assert.equal(result.currency,currency);assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
+  assert.ok(Number.isFinite(result.corporateIncomeTaxComponent));assert.ok(result.sourceUrls.length>0);
+ }
+ assert.equal((await post(JSON.stringify({country:'AE',taxYear:'2026',module:'corporate',parameters:{taxableProfit:500000,qualifyingFreeZoneIncome:true,pillarTwoInScope:false,scopeConfirmed:true}}))).status,400);
  const assess=await call('/v1/taxable-income/calculate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'DE',taxYear:'2026',taxableIncome:50000,assessment:'individual'})});
  assert.equal(assess.status,200);assert.equal((await assess.json()).incomeTax,10548);
  assert.equal((await call('/v1/taxable-income/calculate')).status,405);
