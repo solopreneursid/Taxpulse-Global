@@ -28,6 +28,7 @@ test('generated Worker routes and validation',async()=>{
  for(const path of ['/assets/engine/browser-vault.mjs','/assets/engine/secure-records.mjs','/assets/engine/document-text.mjs','/assets/local-tools.mjs'])assert.equal((await call(path)).status,200);
  assert.equal((await call('/assets/secure-records.mjs')).status,404);
  const manifest=await call('/app.webmanifest');assert.equal(manifest.status,200);assert.equal((await manifest.json()).display,'standalone');const sw=await call('/sw.js');assert.equal(sw.status,200);assert.equal(sw.headers.get('service-worker-allowed'),'/');assert.match(await sw.text(),/No tax calculations are available offline/);
+ const openapi=await (await call('/openapi.json')).json();for(const path of ['/v1/business/indirect-tax','/v1/business/corporate-tax','/v1/property/transfer-tax','/v1/investment/scoped-gain','/v1/treaty/credit','/v1/treaty/confirmed-credit','/v1/treaty/uk-india-credit','/v1/employer-payroll/fica'])assert.ok(openapi.paths[path]?.post,path);
  const catalog=await (await call('/v1/catalog')).json();assert.equal(catalog.countries.length,8);assert.deepEqual(catalog.countries.map(c=>c.code),['IN','US','GB','DE','AE','CA','AU','SG']);assert.deepEqual(catalog.filingStatusOptions.US,['single','mfj','hoh','mfs']);assert.match(catalog.countries.find(c=>c.code==='IN').taxYearLabel,/2026-27/);
  assert.equal((await (await call('/openapi.json')).json()).openapi,'3.1.0');
  const payload={country:'GB',taxYear:'2026',module:'pit',parameters:{grossSalary:130000}};
@@ -117,6 +118,15 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(dePay.status,200);assert.equal((await dePay.json()).annualRemainder,36402);
  const aePay=await call('/v1/salary/remainder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'AE',region:'AE',taxYear:'2026',pay:20000,monthlyBasicSalary:16000,scopeConfirmed:true})});
  assert.equal(aePay.status,200);assert.equal((await aePay.json()).annualRemainder,239937);
+ const gbPay=await call('/v1/salary/remainder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'GB',region:'RUK',taxYear:'2026',pay:4000,scopeConfirmed:true})});
+ assert.equal(gbPay.status,200);assert.equal((await gbPay.json()).annualRemainder,38080.08);
+ const caPay=await call('/v1/salary/remainder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'CA',region:'AB',taxYear:'2026',pay:100000,scopeConfirmed:true})});
+ assert.equal(caPay.status,200);assert.equal((await caPay.json()).annualRemainder,74458.5);
+ const inPay=await call('/v1/salary/remainder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'IN',region:'IN',taxYear:'2026',pay:1500000,epfMonthlyWage:15000,professionalTaxAnnual:2500,scopeConfirmed:true})});
+ assert.equal(inPay.status,200);assert.equal((await inPay.json()).annualRemainder,1378400);
+ const sgPay=await call('/v1/salary/remainder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'SG',region:'SG',taxYear:'2026',pay:5000,scopeConfirmed:true})});
+ assert.equal(sgPay.status,200);assert.equal((await sgPay.json()).annualRemainder,46960);
+
  for(const path of ['/salary','/taxes','/career','/abroad','/money','/business','/tax-rules','/tools/salary-remainder','/tools/investment-tax']){const page=await call(path);assert.equal(page.status,200,path);assert.match(await page.text(),/category-card/);}
  assert.equal((await call('/tools/not-a-tool')).status,404);
  assert.equal((await call('/missing')).status,404);
