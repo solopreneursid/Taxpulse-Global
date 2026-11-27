@@ -45,8 +45,8 @@
     {
       "country": "IN",
       "module": "property",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Delhi sole purchaser stamp and transfer duty only",
       "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
       "independentApproval": false
     },
@@ -101,8 +101,8 @@
     {
       "country": "US",
       "module": "property",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "NY State base residential transfer tax outside NYC below USD 1m",
       "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
       "independentApproval": false
     },
@@ -221,8 +221,8 @@
     {
       "country": "CA",
       "module": "dtaa",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Historical Canada-side UK treaty federal nonbusiness credit cap",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
       "independentApproval": false
     },
@@ -269,16 +269,16 @@
     {
       "country": "AU",
       "module": "property",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "NSW FY2026–27 ordinary nonresidential transfer duty, multiples of AUD100",
       "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
       "independentApproval": false
     },
     {
       "country": "AU",
       "module": "dtaa",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Historical Australia-side UK treaty FITO with supplied difference and 1000 minimum limit",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
       "independentApproval": false
     },
@@ -333,8 +333,8 @@
     {
       "country": "DE",
       "module": "dtaa",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Germany-side UK directors fee credit, section 34c confirmed limit",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
       "independentApproval": false
     },
@@ -389,8 +389,8 @@
     {
       "country": "SG",
       "module": "dtaa",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Singapore-side UK treaty direct company credit cap",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
       "independentApproval": false
     },
@@ -437,16 +437,16 @@
     {
       "country": "AE",
       "module": "property",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "Dubai statutory combined sale registration fee (not tax)",
       "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
       "independentApproval": false
     },
     {
       "country": "AE",
       "module": "dtaa",
-      "status": "not-implemented",
-      "scope": null,
+      "status": "scoped-example",
+      "scope": "UAE-side UK treaty ordinary corporate credit cap",
       "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
       "independentApproval": false
     }
