@@ -89,6 +89,22 @@ test('generated Worker routes and validation',async()=>{
  const contribution=await call('/v1/contributions/calculate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'CA',taxYear:'2026',income:100000,scopeConfirmed:true})});
  assert.equal(contribution.status,200);assert.equal((await contribution.json()).totalEmployeeContribution,5769.52);
  assert.equal((await call('/v1/contributions/calculate')).status,405);
+ const businessTax=await call('/v1/business/indirect-tax',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'GB',jurisdiction:'GB',taxYear:'2026',transactionDate:'2026-11-27',amount:100,mode:'exclusive',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true})});
+ assert.equal(businessTax.status,200);assert.equal((await businessTax.json()).taxAmount,20);
+ const corporate=await call('/v1/business/corporate-tax',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'DE',taxYear:'2026',taxableProfit:100000,scopeConfirmed:true})});
+ assert.equal(corporate.status,200);assert.equal((await corporate.json()).corporateIncomeTaxComponent,15000);
+ const property=await call('/v1/property/transfer-tax',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jurisdiction:'DE-BE',taxableConsideration:100000,transactionDate:'2026-11-27',scopeConfirmed:true})});
+ assert.equal(property.status,200);assert.equal((await property.json()).transferTax,6000);
+ const scopedGain=await call('/v1/investment/scoped-gain',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jurisdiction:'CA',confirmedNetGain:100000,transactionDate:'2026-11-27',scopeConfirmed:true})});
+ assert.equal(scopedGain.status,200);assert.equal((await scopedGain.json()).includedGain,50000);
+ const treaty=await call('/v1/treaty/credit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({currency:'USD',worldwideIncome:100000,foreignSourceIncome:20000,domesticTaxOnWorldwideIncome:10000,foreignTaxPaid:3000,treatyLimit:2500,taxOnForeignItem:3000,scopeConfirmed:true})});
+ assert.equal(treaty.status,200);assert.equal((await treaty.json()).allowedCredit,2000);
+ const confirmedTreaty=await call('/v1/treaty/confirmed-credit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jurisdiction:'DE-GB',foreignTaxPaid:500,treatyPermittedTax:600,domesticLimit:700,availableDomesticTax:800,scopeConfirmed:true})});
+ assert.equal(confirmedTreaty.status,200);assert.equal((await confirmedTreaty.json()).modeledCredit,500);
+ const employer=await call('/v1/employer-payroll/fica',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({annualWages:100000,scopeConfirmed:true})});
+ assert.equal(employer.status,200);assert.equal((await employer.json()).employerFica,7650);
+ for(const path of ['/v1/business/indirect-tax','/v1/business/corporate-tax','/v1/property/transfer-tax','/v1/investment/scoped-gain','/v1/treaty/credit','/v1/treaty/confirmed-credit','/v1/employer-payroll/fica'])assert.equal((await call(path)).status,405,path);
+
  const extendedPay=await call('/v1/salary/remainder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'AU',region:'AU',taxYear:'2026',pay:100000,scopeConfirmed:true})});
  assert.equal(extendedPay.status,200);assert.equal((await extendedPay.json()).annualRemainder,77480);
  const history=await call('/v1/history/rules');assert.equal(history.status,200);assert.equal((await history.json()).rules.length,14);
