@@ -161,6 +161,7 @@ export function cashFlowStressScenario(input){
  const shockEnd=input.shockStartMonth+input.shockDurationMonths-1;
  const simulate=stressed=>{
   let balance=savings,minimum=savings,totalIncome=0n,totalExpenses=0n,firstReserveBreachMonth=savings<reserve?0:null,firstNegativeMonth=null,reserveRestoredMonth=null,monthsBelowReserve=0;
+  const monthlyPath=[];
   for(let month=1;month<=input.horizonMonths;month++){
    const shock=stressed&&month>=input.shockStartMonth&&month<=shockEnd;
    const received=shock?round(income*(10000n-incomeReduction),10000n):income;
@@ -170,12 +171,13 @@ export function cashFlowStressScenario(input){
    if(balance<reserve){monthsBelowReserve++;if(firstReserveBreachMonth===null)firstReserveBreachMonth=month;}
    if(balance<0n&&firstNegativeMonth===null)firstNegativeMonth=month;
    if(stressed&&month>shockEnd&&firstReserveBreachMonth!==null&&reserveRestoredMonth===null&&balance>=reserve)reserveRestoredMonth=month;
+   if(month<=24)monthlyPath.push({month,shockActive:shock&&(incomeReduction>0n||expenseIncrease>0n),monthlyIncome:scenarioOut(received),monthlyExpenses:scenarioOut(spent),netCashFlow:scenarioOut(received-spent),endingLiquidSavings:scenarioOut(balance),belowReserve:balance<reserve,negative:balance<0n});
    scenarioOut(balance);scenarioOut(totalIncome);scenarioOut(totalExpenses);
   }
-  return {summary:{endingLiquidSavings:scenarioOut(balance),minimumLiquidSavings:scenarioOut(minimum),totalIncome:scenarioOut(totalIncome),totalExpenses:scenarioOut(totalExpenses),netCashFlow:scenarioOut(totalIncome-totalExpenses),firstReserveBreachMonth,monthsBelowReserve,firstNegativeMonth,reserveRestoredMonth},endingMinor:balance,minimumMinor:minimum};
+  return {summary:{endingLiquidSavings:scenarioOut(balance),minimumLiquidSavings:scenarioOut(minimum),totalIncome:scenarioOut(totalIncome),totalExpenses:scenarioOut(totalExpenses),netCashFlow:scenarioOut(totalIncome-totalExpenses),firstReserveBreachMonth,monthsBelowReserve,firstNegativeMonth,reserveRestoredMonth},monthlyPath,endingMinor:balance,minimumMinor:minimum};
  };
  const baseline=simulate(false),stress=simulate(true);
- return {...sample,currency:input.currency,horizonMonths:input.horizonMonths,shock:{startMonth:input.shockStartMonth,endMonth:shockEnd,durationMonths:input.shockDurationMonths,incomeReductionPercent:input.incomeReductionPercent,expenseIncreasePercent:input.expenseIncreasePercent},baseline:baseline.summary,stress:stress.summary,endingSavingsImpact:scenarioOut(stress.endingMinor-baseline.endingMinor),minimumSavingsImpact:scenarioOut(stress.minimumMinor-baseline.minimumMinor),warnings:['A deterministic cash-flow sensitivity using user-entered after-tax income and total expenses. The shock applies only during the inclusive months shown; baseline assumptions resume afterward. Balances are sampled at month-end; intra-month payment timing and daily liquidity are not modeled. Expenses must include debt payments to avoid double counting. No tax recalculation, credit access, borrowing, inflation, interest, investment return, insurance, emergency reimbursement or probability is inferred. A reserve breach is a planning signal, not a solvency or lending assessment.']};
+ return {...sample,currency:input.currency,horizonMonths:input.horizonMonths,shock:{startMonth:input.shockStartMonth,endMonth:shockEnd,durationMonths:input.shockDurationMonths,incomeReductionPercent:input.incomeReductionPercent,expenseIncreasePercent:input.expenseIncreasePercent},baseline:baseline.summary,stress:stress.summary,baselineMonthlyPath:baseline.monthlyPath,stressMonthlyPath:stress.monthlyPath,monthlyPathLimit:24,monthlyPathTruncated:input.horizonMonths>24,endingSavingsImpact:scenarioOut(stress.endingMinor-baseline.endingMinor),minimumSavingsImpact:scenarioOut(stress.minimumMinor-baseline.minimumMinor),warnings:['A deterministic cash-flow sensitivity using user-entered after-tax income and total expenses. The shock applies only during the inclusive months shown; baseline assumptions resume afterward. Balances are sampled at month-end; intra-month payment timing and daily liquidity are not modeled. Expenses must include debt payments to avoid double counting. No tax recalculation, credit access, borrowing, inflation, interest, investment return, insurance, emergency reimbursement or probability is inferred. A reserve breach is a planning signal, not a solvency or lending assessment.']};
 }
 
 
