@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createFinancialProfile,salaryFromProfile,offerFromProfile,internationalFromProfile,negotiationFromProfile,exportEncryptedProfile,importEncryptedProfile,validatePlanningArchive,exportPlanningArchive,importPlanningArchive} from '../engine/financial-profile.mjs';
+import {createFinancialProfile,salaryFromProfile,offerFromProfile,internationalFromProfile,negotiationFromProfile,exportEncryptedProfile,importEncryptedProfile,validatePlanningArchive,exportPlanningArchive,importPlanningArchive,planningReport} from '../engine/financial-profile.mjs';
 import {calculateSalaryRemainder} from '../engine/taxable-income.mjs';
 const cases=[['US','TX',100000,{}],['GB','RUK',3000,{}],['GB','SCT',4000,{}],['CA','AB',100000,{}],['AU','AU',100000,{}],['IN','IN',1500000,{epfMonthlyWage:15000,professionalTaxAnnual:2500}],['SG','SG',5000,{}],['DE','DE',5000,{annualTaxableIncome:50000,healthSupplementRate:2.9}],['AE','AE',20000,{monthlyBasicSalary:16000}]];
 for(const [country,region,pay,extras] of cases)test('financial profile parity '+region,()=>{
@@ -39,4 +39,10 @@ test('planning archive validates bounded profiles and scenarios, authenticates f
  assert.throws(()=>validatePlanningArchive({...input,scenarios:[{kind:'__proto__',input:investment}]}));
  assert.throws(()=>validatePlanningArchive({...input,scenarios:[{kind:'investment-scenario',input:{...investment,horizonMonths:601}}]}));
  assert.throws(()=>validatePlanningArchive({...input,scenarios:[{kind:'investment-scenario',input:investment,result:{}}]}));
+});
+
+test('consolidated report recalculates separate scenarios without summing currencies or alternatives',()=>{
+ const salary={country:'US',region:'TX',taxYear:'2026',pay:100000,scopeConfirmed:true},investment={currency:'INR',initialSavings:1000,monthlyContribution:100,annualReturnPercent:12,horizonMonths:2,inflationPercent:0},input={salaryProfiles:[salary],scenarios:[{kind:'investment-scenario',input:investment},{kind:'investment-scenario',input:{...investment,currency:'GBP',annualReturnPercent:0}}]};
+ const r=planningReport(input,'a'.repeat(64));assert.equal(r.salary[0].currency,'USD');assert.equal(r.salary[0].annualGross,100000);assert.equal(r.scenarios[0].metrics.nominalBalance,1221.1);assert.equal(r.scenarios[1].metrics.nominalBalance,1200);assert.equal(r.scenarios[1].currency,'GBP');assert.equal(r.taxRulesVerified,false);assert.equal(r.sampleOnly,true);assert.equal(Object.hasOwn(r,'combinedBalance'),false);
+ assert.throws(()=>planningReport({salaryProfiles:[],scenarios:[]},'a'.repeat(64)));assert.throws(()=>planningReport(input,'bad'));
 });

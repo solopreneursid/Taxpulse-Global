@@ -10,6 +10,7 @@ const root=new URL('../',import.meta.url);
 execFileSync(process.execPath,[new URL('staging/integrated/build.mjs',root).pathname]);
 const temp=mkdtempSync(join(tmpdir(),'taxpulse-browser-'));
 let server,browser;
+const accessibilityPerformance=[];
 try {
  cpSync(new URL('staging/integrated/bundle/',root),temp,{recursive:true});
  const workerPath=join(temp,'worker.mjs');
@@ -33,8 +34,15 @@ try {
    const page=await context.newPage(),errors=[],requests=[];
    page.on('pageerror',e=>errors.push(e.message));
    page.on('request',r=>requests.push({url:r.url(),method:r.method()}));
+   const initialStart=performance.now();
    await page.goto(origin);
    await page.locator('#country-status li').last().waitFor({state:'attached'});
+   const initialReadyMs=Math.round(performance.now()-initialStart);
+   const payload=await page.evaluate(()=>{const nav=performance.getEntriesByType('navigation')[0];const resources=performance.getEntriesByType('resource');return {decodedBytes:Math.round((nav?.decodedBodySize||0)+resources.reduce((a,r)=>a+(r.decodedBodySize||0),0)),resourceCount:resources.length};});
+   assert.ok(initialReadyMs<15000,'Local initial readiness exceeded regression ceiling');
+   assert.ok(payload.decodedBytes>0&&payload.decodedBytes<3000000,'Local decoded payload outside regression budget');
+   assert.ok(payload.resourceCount<100,'Initial resource count exceeded regression budget');
+   accessibilityPerformance.push({viewport:viewport.width,initialReadyMs,...payload});
    const duplicateIds=await page.evaluate(()=>{const ids=Array.from(document.querySelectorAll('[id]'),e=>e.id);return ids.filter((id,i)=>ids.indexOf(id)!==i);});
    assert.deepEqual(duplicateIds,[],'Duplicate HTML IDs');
    assert.equal(await page.locator('#country-status li').count(),8);
@@ -51,12 +59,13 @@ try {
    assert.equal(await page.evaluate(()=>document.activeElement.classList.contains('skip')),true);
    await page.keyboard.press('Enter');
    assert.equal(await page.evaluate(()=>document.activeElement.id),'main');
-   assert.equal(await page.locator('#tools .tool-link').count(),36);
+   assert.equal(await page.locator('#tools .tool-link').count(),39);
    assert.equal(await page.locator('#tools .category-card').count(),6);
-   for(const [category,count] of Object.entries({"salary":4,"taxes":14,"career":4,"abroad":4,"money":6,"business":4})){const id=category==='business'?'business':'category-'+category;assert.equal(await page.locator('#'+id+' a[href^="/tools/"]').count(),count);assert.match(await page.locator('#tools .category-card.category-'+category+' small').textContent(),new RegExp('^'+count+' example tools?'));}
+   for(const [category,count] of Object.entries({"salary":5,"taxes":16,"career":4,"abroad":4,"money":6,"business":4})){const id=category==='business'?'business':'category-'+category;assert.equal(await page.locator('#'+id+' a[href^="/tools/"]').count(),count);assert.match(await page.locator('#tools .category-card.category-'+category+' small').textContent(),new RegExp('^'+count+' example tools?'));}
    assert.deepEqual(await page.locator('main > section.card:visible').evaluateAll(es=>es.map(e=>e.id)),['tools']);
    await page.locator('.nav a[href="/salary"]').click();
    await page.locator('#category-salary').waitFor();
+   assert.equal(await page.evaluate(()=>document.activeElement.id),'category-salary','SPA navigation focus');
    assert.equal(new URL(page.url()).pathname,'/salary');
    await page.locator('#category-salary a[href="/tools/salary-remainder"]').click();
    await page.locator('#salary-remainder').waitFor();
@@ -118,8 +127,13 @@ try {
    await page.locator('.nav a[href="/money"]').click();await page.locator('#planning-archive summary').click();await page.locator('#planning-archive-kind').selectOption('investment-scenario');await page.locator('#planning-archive-add').click();assert.match(await page.locator('#planning-archive-status').innerText(),/captured/);
    await page.locator('#planning-archive-password').fill('fictional-browser-archive-password');const archiveDownload=page.waitForEvent('download');await page.locator('#planning-archive-export').click();const archivePath=await (await archiveDownload).path();assert.ok(archivePath);
    await page.locator('#planning-archive-clear').click();await page.locator('#planning-archive-password').fill('fictional-browser-archive-password');await page.locator('#planning-archive-file').setInputFiles(archivePath);await page.locator('#planning-archive-import').click();await page.waitForFunction(()=>document.getElementById('planning-archive-status').textContent.includes('validated'));
+   await page.locator('#planning-report-show').click();await page.locator('#planning-report-result').waitFor();assert.match(await page.locator('#planning-report-entries').innerText(),/INR\s*1,221.10/);assert.equal(await page.locator('#planning-report-download').isDisabled(),true);assert.equal(await page.evaluate(()=>document.activeElement.id),'planning-report-result','Report result receives focus');
+   await page.locator('#planning-report-confirm').check();const reportDownload=page.waitForEvent('download');await page.locator('#planning-report-download').click();const reportPath=await (await reportDownload).path();const consolidatedReport=JSON.parse(readFileSync(reportPath,'utf8'));assert.equal(consolidatedReport.scenarios[0].metrics.nominalBalance,1221.1);assert.equal(consolidatedReport.taxRulesVerified,false);assert.equal(await page.locator('#planning-report-download').isDisabled(),true);
    await page.locator('#planning-archive-entry').selectOption('scenario:0');await page.locator('#planning-archive-load').click();await page.locator('#investment-scenario').waitFor();assert.equal(await page.locator('#investment-scenario-initialSavings').inputValue(),'1000');assert.equal(await page.locator('#investment-scenario-result').isHidden(),true);
    await page.goto(origin+'/tools/retirement-scenario');for(const [k,v] of Object.entries({startingBalance:1000,monthlyWithdrawal:300,annualReturnPercent:0,annualSpendingGrowthPercent:0,horizonMonths:12}))await page.locator('#retirement-scenario-'+k).fill(String(v));await page.locator('#retirement-scenario-form button[type=submit]').click();await page.locator('#retirement-scenario-result').waitFor();assert.match(await page.locator('#retirement-scenario-breakdown').innerText(),/First shortfall month\s*4/);
+   await page.goto(origin+'/tools/us-employer-fica');await page.locator('#us-employer-fica-annualWages').fill('200000');await page.locator('#us-employer-fica-scopeConfirmed').check();await page.locator('#us-employer-fica-form button[type=submit]').click();await page.locator('#us-employer-fica-result').waitFor();assert.match(await page.locator('#us-employer-fica-breakdown').innerText(),/USD\s*14,339/);
+   await page.goto(origin+'/tools/sg-buyer-duty');await page.locator('#sg-buyer-duty-purchasePrice').fill('4500100');await page.locator('#sg-buyer-duty-marketValue').fill('4500100');await page.locator('#sg-buyer-duty-scopeConfirmed').check();await page.locator('#sg-buyer-duty-form button[type=submit]').click();await page.locator('#sg-buyer-duty-result').waitFor();assert.match(await page.locator('#sg-buyer-duty-breakdown').innerText(),/SGD\s*209,606/);
+   await page.goto(origin+'/tools/uk-dividend-tax');await page.locator('#uk-dividend-tax-otherTaxableIncome').fill('17000');await page.locator('#uk-dividend-tax-taxableDividends').fill('3000');await page.locator('#uk-dividend-tax-scopeConfirmed').check();await page.locator('#uk-dividend-tax-form button[type=submit]').click();await page.locator('#uk-dividend-tax-result').waitFor();assert.match(await page.locator('#uk-dividend-tax-breakdown').innerText(),/GBP\s*268.75/);
    await page.goto(origin+'/tools/financial-health');
    for(const [k,v] of Object.entries({monthlyIncome:10000,monthlyExpenses:6000,liquidSavings:10000,otherAssets:40000,liabilities:20000,monthlyDebtPayments:2000,reserveFloor:5000,goalAmount:15000,horizonMonths:12}))await page.locator('#financial-health-'+k).fill(String(v));
    await page.locator('#financial-health-form button[type=submit]').click();await page.locator('#financial-health-result').waitFor();assert.match(await page.locator('#financial-health-breakdown').innerText(),/Current net worth\s*INR\s*30,000/);
@@ -487,11 +501,23 @@ try {
    await context.setOffline(false);
    await page.goto(origin+'/tax-rules');
    await page.locator('#country-status li').last().waitFor({state:'attached'});
+   // Simulate text enlargement independently of the existing 320px reflow tests.
+   if(viewport.width===1440){
+    const zoomCases=[['/','tools'],['/money','category-money'],['/tools/financial-health','financial-health'],['/tools/debt-repayment','debt-repayment'],['/tools/uk-dividend-tax','uk-dividend-tax']];
+    for(const [path,id] of zoomCases){
+     await page.goto(origin+path);await page.locator('#'+id).waitFor({state:'visible'});
+     await page.evaluate(()=>{document.documentElement.style.fontSize='200%';});
+     const check=await page.evaluate(()=>({rootFont:parseFloat(getComputedStyle(document.documentElement).fontSize),overflow:document.documentElement.scrollWidth>innerWidth}));
+     assert.ok(check.rootFont>=30,path+' text enlargement not applied');assert.equal(check.overflow,false,path+' text enlargement horizontal overflow');
+     accessibilityPerformance.push({viewport:viewport.width,path,textScale:2,overflow:check.overflow});
+    }
+   }
    assert.deepEqual(errors,[]);
    assert.ok(requests.every(r=>r.url.startsWith(origin+'/')&&r.method==='GET'),'Unexpected network request: '+JSON.stringify(requests));
    console.log('Browser smoke passed '+viewport.width+'px');
   }finally{await context.close();}
  }
+ writeFileSync('local-accessibility-performance.json',JSON.stringify({schemaVersion:1,scope:'Chromium emulation and local initial-load regression ceilings; not physical-device, network latency or WCAG certification',results:accessibilityPerformance},null,2)+'\n');
 }finally{
  if(browser)await browser.close();
  if(server)await new Promise(resolve=>server.close(resolve));

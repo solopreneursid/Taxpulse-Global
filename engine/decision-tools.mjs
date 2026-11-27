@@ -288,3 +288,38 @@ export function retirementScenario(input){
  for(let m=1;m<=n;m++){if(m>1&&(m-1)%12===0)spending+=round(spending*growth,10000n);balance+=round(balance*rate,120000n);out(balance);if(balance<spending){firstShortfallMonth=m;total+=balance;balance=0n;break;}balance-=spending;total+=spending;fullyFundedMonths++;}
  return {...sample,currency:input.currency,fullyFundedMonths,firstShortfallMonth,remainingBalance:out(balance),totalWithdrawn:out(total),warnings:['Finite hypothetical drawdown; nominal annual return divided by 12, monthly rounded growth and end-of-month withdrawals, spending increases at each annual anniversary. Stops at first funding shortfall after partial withdrawal. No pensions, taxes, fees, longevity estimate, volatility, guaranteed returns or advice on a safe withdrawal rate.']};
 }
+
+/** 2026 annual aggregate employer FICA, excluding per-pay-period rounding. */
+export function usEmployerFica(input){
+ exact(input,['annualWages','scopeConfirmed']);
+ if(input.scopeConfirmed!==true)throw Error('Confirm ordinary covered wages');
+ const wages=units(input.annualWages),social=round((wages<18450000n?wages:18450000n)*620n,10000n),medicare=round(wages*145n,10000n);
+ return {...sample,currency:'USD',annualWages:out(wages),employerSocialSecurity:out(social),employerMedicare:out(medicare),employerFica:out(social+medicare),wagesPlusEmployerFica:out(wages+social+medicare),sourceUrls:['https://www.irs.gov/publications/p15','https://www.irs.gov/taxtopics/tc751'],warnings:['Calendar 2026; one ordinary employer, all supplied wages covered by Social Security and Medicare, no successor employer, special employment or wage-base adjustments. Annual aggregate employer share only, not paycheck rounding or actual total employment cost; excludes FUTA, state payroll taxes, benefits and employee-only Additional Medicare Tax.']};
+}
+/** Singapore BSD only; higher of consideration and independently established market value. */
+export function singaporeBuyerDuty(input){
+ exact(input,['purchasePrice','marketValue','propertyType','scopeConfirmed']);
+ if(input.scopeConfirmed!==true||!['residential','nonresidential'].includes(input.propertyType))throw Error('Confirm pure property classification and date');
+ const price=units(input.purchasePrice),value=units(input.marketValue),basis=price>value?price:value;
+ if(basis<=0n)throw Error('Positive dutiable value required');
+ let numerator=0n,lower=0n;
+ for(const [upper,rate] of [[18000000n,1n],[36000000n,2n],[100000000n,3n],[150000000n,4n],[300000000n,5n],[100000000000n,input.propertyType==='residential'?6n:5n]]){
+  const slice=basis<=lower?0n:(basis<upper?basis:upper)-lower;numerator+=slice*rate;lower=upper;
+ }
+ const dollars=numerator/10000n,duty=(dollars<1n?1n:dollars)*100n;
+ return {...sample,currency:'SGD',dutiableValue:out(basis),buyerStampDuty:out(duty),purchasePricePlusBsd:out(price+duty),sourceUrls:["https://www.iras.gov.sg/taxes/stamp-duty/for-property/buying-or-acquiring-property/buyer's-stamp-duty-(bsd)"],warnings:['Singapore pure residential or pure non-residential property, ordinary single acquisition under rates effective from 15 February 2023, cross-checked 27 November 2026. BSD only, floor to whole SGD with minimum SGD 1. No ABSD, SSD, remission, mixed-use, linked acquisition, valuation, financing or other charges; purchase price plus BSD is not total acquisition cost.']};
+}
+/** UK dividend component after explicitly established allocation of personal allowance. */
+export function ukDividendTax(input){
+ exact(input,['otherTaxableIncome','taxableDividends','scopeConfirmed']);
+ if(input.scopeConfirmed!==true)throw Error('Confirm final taxable amounts and applicable bands');
+ const other=units(input.otherTaxableIncome),dividends=units(input.taxableDividends),allowance=dividends<50000n?dividends:50000n;
+ let start=other+allowance,end=other+dividends,numerator=0n;
+ for(const [upper,rate] of [[3770000n,1075n],[12514000n,3575n],[200000000000n,3935n]]){
+  if(end<=start)break;
+  if(start>=upper)continue;
+  const stop=end<upper?end:upper;numerator+=(stop-start)*rate;start=stop;
+ }
+ const tax=round(numerator,10000n);
+ return {...sample,currency:'GBP',taxableDividends:out(dividends),dividendAllowance:out(allowance),dividendsAboveAllowance:out(dividends-allowance),modeledDividendTax:out(tax),sourceUrls:['https://www.gov.uk/tax-on-dividends','https://www.legislation.gov.uk/ukpga/2026/11/part/1/crossheading/income-tax-charge-rates-and-allowances/made'],warnings:['UK 2026–27 ordinary individual, other income and dividends after the final applicable Personal Allowance allocation. No savings income, band extensions, reliefs, special rates, ISA or foreign tax. All eligible annual dividends included, dividend allowance consumes bands. Component only: not total income tax, Personal Allowance determination or return rounding.']};
+}

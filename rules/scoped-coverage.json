@@ -1,0 +1,454 @@
+{
+  "schemaVersion": 1,
+  "scope": "Engineering inventory of scoped preview examples; not complete statutory coverage, and not an approval or release gate input.",
+  "scopes": [
+    {
+      "country": "IN",
+      "module": "pit",
+      "status": "scoped-example",
+      "scope": "Resident ordinary salary old/new regime; explicit deductions",
+      "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
+      "independentApproval": false
+    },
+    {
+      "country": "IN",
+      "module": "payroll",
+      "status": "scoped-example",
+      "scope": "Illustrative employee EPF and supplied professional tax",
+      "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
+      "independentApproval": false
+    },
+    {
+      "country": "IN",
+      "module": "capgains",
+      "status": "scoped-example",
+      "scope": "Selected equity, property and VDA disposals",
+      "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
+      "independentApproval": false
+    },
+    {
+      "country": "IN",
+      "module": "vat",
+      "status": "scoped-example",
+      "scope": "Historical HSN 2523 IGST only",
+      "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
+      "independentApproval": false
+    },
+    {
+      "country": "IN",
+      "module": "corporate",
+      "status": "scoped-example",
+      "scope": "Historical AY 2026–27 confirmed 115BAA election",
+      "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
+      "independentApproval": false
+    },
+    {
+      "country": "IN",
+      "module": "property",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
+      "independentApproval": false
+    },
+    {
+      "country": "IN",
+      "module": "dtaa",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
+      "independentApproval": false
+    },
+    {
+      "country": "US",
+      "module": "pit",
+      "status": "scoped-example",
+      "scope": "Ordinary federal tax, limited state components",
+      "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
+      "independentApproval": false
+    },
+    {
+      "country": "US",
+      "module": "payroll",
+      "status": "scoped-example",
+      "scope": "Employee FICA and annual employer FICA",
+      "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
+      "independentApproval": false
+    },
+    {
+      "country": "US",
+      "module": "capgains",
+      "status": "scoped-example",
+      "scope": "Selected regular federal investment disposals",
+      "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
+      "independentApproval": false
+    },
+    {
+      "country": "US",
+      "module": "vat",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
+      "independentApproval": false
+    },
+    {
+      "country": "US",
+      "module": "corporate",
+      "status": "scoped-example",
+      "scope": "Regular federal C corporation component",
+      "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
+      "independentApproval": false
+    },
+    {
+      "country": "US",
+      "module": "property",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
+      "independentApproval": false
+    },
+    {
+      "country": "US",
+      "module": "dtaa",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
+      "independentApproval": false
+    },
+    {
+      "country": "GB",
+      "module": "pit",
+      "status": "scoped-example",
+      "scope": "Ordinary RUK/SCT income; separate dividend component",
+      "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
+      "independentApproval": false
+    },
+    {
+      "country": "GB",
+      "module": "payroll",
+      "status": "scoped-example",
+      "scope": "Category A employee and ordinary employer NI",
+      "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
+      "independentApproval": false
+    },
+    {
+      "country": "GB",
+      "module": "capgains",
+      "status": "scoped-example",
+      "scope": "Selected shares, property and crypto disposals",
+      "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
+      "independentApproval": false
+    },
+    {
+      "country": "GB",
+      "module": "vat",
+      "status": "scoped-example",
+      "scope": "Single ordinary standard-rated domestic supply",
+      "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
+      "independentApproval": false
+    },
+    {
+      "country": "GB",
+      "module": "corporate",
+      "status": "scoped-example",
+      "scope": "Ordinary corporation tax and scoped marginal relief",
+      "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
+      "independentApproval": false
+    },
+    {
+      "country": "GB",
+      "module": "property",
+      "status": "scoped-example",
+      "scope": "England/Northern Ireland residential SDLT",
+      "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
+      "independentApproval": false
+    },
+    {
+      "country": "GB",
+      "module": "dtaa",
+      "status": "scoped-example",
+      "scope": "UK-side credit cap for single eligible Indian-source income item",
+      "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
+      "independentApproval": false
+    },
+    {
+      "country": "CA",
+      "module": "pit",
+      "status": "scoped-example",
+      "scope": "Federal assessment; scoped regional rates",
+      "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
+      "independentApproval": false
+    },
+    {
+      "country": "CA",
+      "module": "payroll",
+      "status": "scoped-example",
+      "scope": "CPP/CPP2/EI outside Quebec; scoped Alberta salary",
+      "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
+      "independentApproval": false
+    },
+    {
+      "country": "CA",
+      "module": "capgains",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
+      "independentApproval": false
+    },
+    {
+      "country": "CA",
+      "module": "vat",
+      "status": "scoped-example",
+      "scope": "Alberta GST and five HST provinces",
+      "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
+      "independentApproval": false
+    },
+    {
+      "country": "CA",
+      "module": "corporate",
+      "status": "scoped-example",
+      "scope": "Confirmed federal general or small-business component",
+      "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
+      "independentApproval": false
+    },
+    {
+      "country": "CA",
+      "module": "property",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
+      "independentApproval": false
+    },
+    {
+      "country": "CA",
+      "module": "dtaa",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
+      "independentApproval": false
+    },
+    {
+      "country": "AU",
+      "module": "pit",
+      "status": "scoped-example",
+      "scope": "Resident ordinary income and LITO",
+      "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
+      "independentApproval": false
+    },
+    {
+      "country": "AU",
+      "module": "payroll",
+      "status": "scoped-example",
+      "scope": "Scoped salary remainder, not employer superannuation",
+      "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
+      "independentApproval": false
+    },
+    {
+      "country": "AU",
+      "module": "capgains",
+      "status": "scoped-example",
+      "scope": "Confirmed ordinary eligible discounted capital gain",
+      "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
+      "independentApproval": false
+    },
+    {
+      "country": "AU",
+      "module": "vat",
+      "status": "scoped-example",
+      "scope": "Single ordinary standard-rated supply",
+      "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
+      "independentApproval": false
+    },
+    {
+      "country": "AU",
+      "module": "corporate",
+      "status": "scoped-example",
+      "scope": "Confirmed base or full ordinary company rate",
+      "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
+      "independentApproval": false
+    },
+    {
+      "country": "AU",
+      "module": "property",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
+      "independentApproval": false
+    },
+    {
+      "country": "AU",
+      "module": "dtaa",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
+      "independentApproval": false
+    },
+    {
+      "country": "DE",
+      "module": "pit",
+      "status": "scoped-example",
+      "scope": "Ordinary tariff and joint splitting",
+      "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
+      "independentApproval": false
+    },
+    {
+      "country": "DE",
+      "module": "payroll",
+      "status": "scoped-example",
+      "scope": "Scoped monthly social contributions",
+      "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
+      "independentApproval": false
+    },
+    {
+      "country": "DE",
+      "module": "capgains",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
+      "independentApproval": false
+    },
+    {
+      "country": "DE",
+      "module": "vat",
+      "status": "scoped-example",
+      "scope": "Single ordinary standard-rated supply",
+      "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
+      "independentApproval": false
+    },
+    {
+      "country": "DE",
+      "module": "corporate",
+      "status": "scoped-example",
+      "scope": "Corporate income tax component only",
+      "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
+      "independentApproval": false
+    },
+    {
+      "country": "DE",
+      "module": "property",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
+      "independentApproval": false
+    },
+    {
+      "country": "DE",
+      "module": "dtaa",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
+      "independentApproval": false
+    },
+    {
+      "country": "SG",
+      "module": "pit",
+      "status": "scoped-example",
+      "scope": "Ordinary resident assessed income",
+      "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
+      "independentApproval": false
+    },
+    {
+      "country": "SG",
+      "module": "payroll",
+      "status": "scoped-example",
+      "scope": "Scoped employee CPF",
+      "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
+      "independentApproval": false
+    },
+    {
+      "country": "SG",
+      "module": "capgains",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
+      "independentApproval": false
+    },
+    {
+      "country": "SG",
+      "module": "vat",
+      "status": "scoped-example",
+      "scope": "Single ordinary standard-rated supply",
+      "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
+      "independentApproval": false
+    },
+    {
+      "country": "SG",
+      "module": "corporate",
+      "status": "scoped-example",
+      "scope": "YA 2026 partial/start-up exemption before rebates",
+      "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
+      "independentApproval": false
+    },
+    {
+      "country": "SG",
+      "module": "property",
+      "status": "scoped-example",
+      "scope": "Ordinary pure residential or non-residential BSD only",
+      "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
+      "independentApproval": false
+    },
+    {
+      "country": "SG",
+      "module": "dtaa",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
+      "independentApproval": false
+    },
+    {
+      "country": "AE",
+      "module": "pit",
+      "status": "scoped-example",
+      "scope": "Ordinary wage-only no personal income tax",
+      "remaining": "Complete eligibility, deductions, credits, special cases and effective dates",
+      "independentApproval": false
+    },
+    {
+      "country": "AE",
+      "module": "payroll",
+      "status": "scoped-example",
+      "scope": "Scoped non-GCC employee ILOE",
+      "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
+      "independentApproval": false
+    },
+    {
+      "country": "AE",
+      "module": "capgains",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Complete asset classes, holding periods, losses, exemptions and other taxes",
+      "independentApproval": false
+    },
+    {
+      "country": "AE",
+      "module": "vat",
+      "status": "scoped-example",
+      "scope": "Single ordinary standard-rated supply",
+      "remaining": "Complete jurisdiction and classification schedules, exemptions, effective dates, place of supply and filing rules",
+      "independentApproval": false
+    },
+    {
+      "country": "AE",
+      "module": "corporate",
+      "status": "scoped-example",
+      "scope": "Ordinary corporate tax above threshold",
+      "remaining": "Complete taxable-profit adjustments, reliefs, special regimes, regional tax and credits",
+      "independentApproval": false
+    },
+    {
+      "country": "AE",
+      "module": "property",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Complete transaction classes, valuation, regional duties, reliefs and additional charges",
+      "independentApproval": false
+    },
+    {
+      "country": "AE",
+      "module": "dtaa",
+      "status": "not-implemented",
+      "scope": null,
+      "remaining": "Treaty and residence eligibility, source rules, country-specific credit limits, relief choice and filing",
+      "independentApproval": false
+    }
+  ]
+}

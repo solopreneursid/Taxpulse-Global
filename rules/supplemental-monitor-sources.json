@@ -1,0 +1,182 @@
+[
+  {
+    "id": "US-fica",
+    "country": "US",
+    "jurisdiction": "US",
+    "topics": [
+      "payroll"
+    ],
+    "url": "https://www.irs.gov/publications/p15",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "US-corporate",
+    "country": "US",
+    "jurisdiction": "US",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.irs.gov/instructions/i1120",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "GB-dividends",
+    "country": "GB",
+    "jurisdiction": "GB",
+    "topics": [
+      "income-tax"
+    ],
+    "url": "https://www.gov.uk/tax-on-dividends",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "GB-corporate",
+    "country": "GB",
+    "jurisdiction": "GB",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.gov.uk/corporation-tax-rates",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "GB-sdlt",
+    "country": "GB",
+    "jurisdiction": "GB",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.gov.uk/stamp-duty-land-tax/residential-property-rates",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "GB-IN-credit",
+    "country": "GB",
+    "jurisdiction": "GB",
+    "topics": [
+      "income-tax"
+    ],
+    "url": "https://www.gov.uk/government/publications/india-tax-treaties/2020-uk-india-synthesised-text-of-the-multilateral-instrument-and-the-1993-double-taxation-convention-in-force",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "CA-hst",
+    "country": "CA",
+    "jurisdiction": "CA",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "CA-corporate",
+    "country": "CA",
+    "jurisdiction": "CA",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/corporation-tax-rates.html",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "AU-company",
+    "country": "AU",
+    "jurisdiction": "AU",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.ato.gov.au/tax-rates-and-codes/company-tax-rate-changes",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "AU-cgt-discount",
+    "country": "AU",
+    "jurisdiction": "AU",
+    "topics": [
+      "investment-tax"
+    ],
+    "url": "https://www.ato.gov.au/individuals-and-families/investments-and-assets/capital-gains-tax/calculating-your-cgt/cgt-discount",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "DE-corporate",
+    "country": "DE",
+    "jurisdiction": "DE",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.gesetze-im-internet.de/kstg_1977/__23.html",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "DE-vat",
+    "country": "DE",
+    "jurisdiction": "DE",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.gesetze-im-internet.de/ustg_1980/__12.html",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "SG-bsd",
+    "country": "SG",
+    "jurisdiction": "SG",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.iras.gov.sg/taxes/stamp-duty/for-property/buying-or-acquiring-property/buyer%27s-stamp-duty-%28bsd%29",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "SG-corporate",
+    "country": "SG",
+    "jurisdiction": "SG",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.iras.gov.sg/taxes/corporate-income-tax/basics-of-corporate-income-tax/corporate-income-tax-rate-rebates-and-tax-exemption-schemes",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "IN-company",
+    "country": "IN",
+    "jurisdiction": "IN",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.incometax.gov.in/iec/foportal/help/company/return-applicable",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "GB-vat",
+    "country": "GB",
+    "jurisdiction": "GB",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.gov.uk/vat-rates",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "AE-vat",
+    "country": "AE",
+    "jurisdiction": "AE",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://mof.gov.ae/en/public-finance/tax/value-added-tax-vat/",
+    "kind": "change-discovery"
+  },
+  {
+    "id": "SG-gst",
+    "country": "SG",
+    "jurisdiction": "SG",
+    "topics": [
+      "business-tax"
+    ],
+    "url": "https://www.iras.gov.sg/taxes/goods-services-tax-%28gst%29/basics-of-gst/current-gst-rates",
+    "kind": "change-discovery"
+  }
+]

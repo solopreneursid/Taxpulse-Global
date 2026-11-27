@@ -74,3 +74,20 @@ export async function importPlanningArchive(envelope,password,engineFingerprint,
  if(data.kind!=='taxpulse-planning-archive'||data.schemaVersion!==1||data.engineFingerprint!==engineFingerprint)throw Error('Incompatible planning archive');
  return validatePlanningArchive({salaryProfiles:data.salaryProfiles,scenarios:data.scenarios},ruleContext);
 }
+
+/** Recalculate independently captured examples; never sum alternatives or currencies. */
+export function planningReport(input,engineFingerprint,ruleContext={}){
+ checkFingerprint(engineFingerprint);
+ const validated=validatePlanningArchive(input,ruleContext);
+ const salary=validated.salaryProfiles.map((s,index)=>{const p=createFinancialProfile(s,ruleContext);return {index:index+1,region:p.region,currency:p.currency,taxYear:p.taxYear,annualGross:p.annualGross,annualIncomeTax:p.annualIncomeTax,annualEmployeeContributions:p.annualEmployeeContributions,annualTakeHome:p.annualTakeHome};});
+ const metrics={
+ 'monthly-budget':r=>({monthlyIncome:r.monthlyIncome,monthlyExpenses:r.monthlyExpenses,monthlyBalance:r.monthlyBalance,annualBalance:r.annualBalance,monthlyGoal:r.monthlyGoal,goalGap:r.goalGap,alternativeMonthlyBalance:r.alternative.monthlyBalance}),
+ 'financial-health':r=>({totalAssets:r.totalAssets,liabilities:r.liabilities,netWorth:r.netWorth,monthlyBalance:r.monthlyBalance,projectedLiquidSavings:r.projectedLiquidSavings,monthsToGoal:r.monthsToGoal}),
+ 'financial-runway':r=>({monthlyBalance:r.monthlyBalance,projectedSavings:r.projectedSavings,monthsToGoal:r.monthsToGoal,wholeMonthsBeforeReserve:r.wholeMonthsBeforeReserve}),
+ 'debt-repayment':r=>({basePayoffMonths:r.base.payoffMonths,baseRemaining:r.base.remaining,acceleratedPayoffMonths:r.accelerated.payoffMonths,acceleratedRemaining:r.accelerated.remaining,interestSaved:r.interestSaved,monthsSaved:r.monthsSaved}),
+ 'investment-scenario':r=>({nominalBalance:r.nominalBalance,totalContributed:r.totalContributed,modeledGrowth:r.modeledGrowth,inflationAdjustedBalance:r.inflationAdjustedBalance}),
+ 'retirement-scenario':r=>({fullyFundedMonths:r.fullyFundedMonths,firstShortfallMonth:r.firstShortfallMonth,remainingBalance:r.remainingBalance,totalWithdrawn:r.totalWithdrawn})
+ };
+ const scenarios=validated.scenarios.map(({kind,input},index)=>{const r=planningCalculators[kind](input);return {index:index+1,kind,currency:r.currency,input,metrics:metrics[kind](r),warnings:r.warnings};});
+ return {schemaVersion:1,kind:'taxpulse-planning-report',engineFingerprint,sampleOnly:true,taxRulesVerified:false,salary,scenarios,warnings:['Independent examples, not a single combined balance sheet. Do not add balances, currencies, or alternative scenarios. Recalculated with the running preview; engine fingerprint identifies the statutory engine, not an independent report signature. No statutory approval, suitability assessment, or production authorization.']};
+}
