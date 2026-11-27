@@ -26,10 +26,19 @@ test('integrated frontend builds from canonical sources and preserves original l
  const start=original.indexOf('const TAX_RULES');
  const stop=original.indexOf('\n    };',start)+7;
  const sandbox=vm.createContext({});
- const fallback=new vm.Script(original.slice(start,stop)+'\nconst COUNTRY_TAX_CONFIGS={};\n'+original.slice(k,end)+'\nJSON.stringify(COUNTRY_TAX_CONFIGS);').runInContext(sandbox,{timeout:1000});
+ const fallback=JSON.parse(new vm.Script(original.slice(start,stop)+'\nconst COUNTRY_TAX_CONFIGS={};\n'+original.slice(k,end)+'\nJSON.stringify(COUNTRY_TAX_CONFIGS);').runInContext(sandbox,{timeout:1000}));
  old.GB['2026'].modules.personal_income_tax.brackets[1].max=125140;
  old.GB['2026'].modules.personal_income_tax.brackets[2].min=125140;
- assert.deepEqual(current,{...old,...JSON.parse(fallback)});
+ // Canonical rule files own source provenance; the legacy fallback only supplied the former calculation fields.
+ for(const code of Object.keys(fallback)){
+  const canonical=JSON.parse(read('rules/2026/'+code+'.json'));
+  fallback[code]['2026'].source_url=canonical.source_url;
+ }
+ assert.deepEqual(current,{...old,...fallback});
+ for(const code of ['IN','US','GB','DE','AE','CA','AU','SG']){
+  const canonical=JSON.parse(read('rules/2026/'+code+'.json'));
+  assert.equal(current[code]['2026'].source_url,canonical.source_url);
+ }
  assert.equal(Object.keys(current).length,8);
  for(const s of [engine,rules,app])new vm.Script(s);
  const h=read('staging/integrated/index.html');
