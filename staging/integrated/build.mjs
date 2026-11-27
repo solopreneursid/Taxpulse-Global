@@ -29,7 +29,8 @@ for(const c of ['IN','US','GB']){
  write(c+'.mjs','export default '+JSON.stringify(rules[c]['2026'])+';\n');
 }
 write('country.mjs',country);
-write('statutory-context.mjs',read('engine/statutory-context.mjs'));\nwrite('browser-statutory-context.mjs.txt',read('engine/statutory-context.mjs'));\nwrite('us-filing-statuses.mjs',read('engine/us-filing-statuses.mjs'));write('worker.mjs',read('staging/integrated/worker.mjs'));
+write('statutory-context.mjs',read('engine/statutory-context.mjs'));
+write('browser-statutory-context.mjs.txt',read('engine/statutory-context.mjs'));\nwrite('us-filing-statuses.mjs',read('engine/us-filing-statuses.mjs'));write('worker.mjs',read('staging/integrated/worker.mjs'));
 
 write('regulatory-dashboard.mjs',read('engine/regulatory-dashboard.mjs'));
 write('regulatory-reconciliation.mjs',read('engine/regulatory-reconciliation.mjs'));
