@@ -1,4 +1,4 @@
-import {nationalRules} from './national-registry.mjs';
+import {nationalPeriodStart,nationalRules,resolveNationalRule} from './national-registry.mjs';
 import {resolvePayrollRule} from './payroll-registry.mjs';
 import {resolveIndiaSalaryRule} from './india-salary-registry.mjs';
 import {regionalRules,resolveRegionalRule} from './regional-registry.mjs';
@@ -33,17 +33,17 @@ function germanTariff(value,p){
 export function assessTaxableIncome(input,ruleContext={}){
  if(!input||typeof input!=='object'||Array.isArray(input)||input.taxYear!=='2026')throw new TypeError('Unsupported tax period');
  const {country}=input;
- const p=nationalRules(input.taxYear,ruleContext.national,country).national[country];
+ const nationalRule=resolveNationalRule(country,'national-assessment',input.taxYear,nationalPeriodStart(country,input.taxYear),ruleContext.national),p=nationalRule.parameters;
  if(!p)throw new TypeError('Unsupported country assessment');
  if(country==='AE'){
   if(Object.keys(input).some(k=>!['country','taxYear','salaryIncome','employeeWagesOnly'].includes(k))||input.employeeWagesOnly!==true)throw new TypeError('Only ordinary employee wages supported');
   const salaryIncome=cgOut(cgMoney(amount(input.salaryIncome)));
-  return {country,taxYear:'2026',taxYearLabel:'Calendar year 2026',sampleOnly:true,taxRulesVerified:false,inputBasis:'employee-wages',currency:'AED',salaryIncome,incomeTax:0,sourceUrls:["https://u.ae/en/information-and-services/finance-and-investment/taxation","https://www.tax.gov.ae/en/taxes/corporate.tax/corporate.tax.topics/basis.of.taxation.natural.person.aspx"],ruleId:'AE-2026-employee-wages-v1',warnings:['UAE personal income tax on ordinary employee wages only. Excludes business activity, foreign tax obligations, social contributions and other taxes or deductions. Zero income tax is not a take-home pay estimate.']};
+  return {country,taxYear:'2026',taxYearLabel:'Calendar year 2026',sampleOnly:true,taxRulesVerified:false,inputBasis:'employee-wages',currency:'AED',salaryIncome,incomeTax:0,sourceUrls:["https://u.ae/en/information-and-services/finance-and-investment/taxation","https://www.tax.gov.ae/en/taxes/corporate.tax/corporate.tax.topics/basis.of.taxation.natural.person.aspx"],ruleId:'AE-2026-employee-wages-v1',effectiveRuleVersion:nationalRule.version,warnings:['UAE personal income tax on ordinary employee wages only. Excludes business activity, foreign tax obligations, social contributions and other taxes or deductions. Zero income tax is not a take-home pay estimate.']};
  }
  const taxableInput=amount(input.taxableIncome);
  const taxableMinor=cgMoney(taxableInput);
  const taxable=cgOut(taxableMinor);
- const common={country,taxYear:'2026',sampleOnly:true,taxRulesVerified:false,inputBasis:'taxable-income'};
+ const common={country,taxYear:'2026',sampleOnly:true,taxRulesVerified:false,inputBasis:'taxable-income',effectiveRuleVersion:nationalRule.version};
  if(country==='DE'){
   if(!['individual','joint'].includes(input.assessment))throw new TypeError('Choose assessment type');
   if(Object.keys(input).some(k=>!['country','taxYear','taxableIncome','assessment'].includes(k)))throw new TypeError('Unsupported input');
@@ -213,7 +213,7 @@ export function calculateCapitalGain(input,ruleContext={}){
  const country=input.country,required=[...common,...(country==='US'?['filingStatus']:country==='IN'?['assetType']:[])];
  const keys=[...required,...(country==='IN'?[]:['assetType'])];
  if(Object.keys(input).some(k=>!keys.includes(k))||required.some(k=>!Object.hasOwn(input,k)))throw new TypeError('Unsupported fields');
- const rules=nationalRules(input.taxYear,ruleContext.national,country,'investment-assessment'),p=rules.investment[country];
+ const nationalRule=resolveNationalRule(country,'investment-assessment',input.taxYear,nationalPeriodStart(country,input.taxYear),ruleContext.national),p=nationalRule.parameters;
  const assetType=Object.hasOwn(input,'assetType')?input.assetType:'listed-equity';
  const allowed=country==='IN'?['listed-equity','equity-fund','property','crypto']:country==='US'?['listed-equity','investment-land','crypto']:['listed-equity','property','crypto'];
  if(!allowed.includes(assetType))throw new TypeError('Unsupported asset type');
@@ -279,7 +279,7 @@ export function calculateCapitalGain(input,ruleContext={}){
  }
  const base=cgRound(raw),total=cgRound(raw+(country==='IN'?raw*BigInt(p.cessPercent)/100n:0n));
  if(realized<0n)warnings.push('This disposal has a loss. No tax benefit, refund or carryforward is calculated.');
- return {country,taxYear:'2026',taxYearLabel:period.join(' to '),currency:country==='US'?'USD':country==='GB'?'GBP':'INR',sampleOnly:true,taxRulesVerified:false,ruleId:country+'-2026-investment-disposal-v2',assetType,acquired,disposed,holding,holdingYears:holding==='not-rate-determining'?null:holdingYears,realizedGain:cgOut(realized),eligibleLossesApplied:cgOut(loss),netPositiveGain:cgOut(net),allowanceApplied:cgOut(allowance),taxableGain:cgOut(net-allowance),otherTaxableIncome:cgOut(other),brackets:rows,taxBeforeCess:cgOut(base),cessAmount:cgOut(cess),estimatedGainTax:cgOut(total),sourceUrls,warnings};
+ return {country,taxYear:'2026',taxYearLabel:period.join(' to '),currency:country==='US'?'USD':country==='GB'?'GBP':'INR',sampleOnly:true,taxRulesVerified:false,ruleId:country+'-2026-investment-disposal-v2',effectiveRuleVersion:nationalRule.version,assetType,acquired,disposed,holding,holdingYears:holding==='not-rate-determining'?null:holdingYears,realizedGain:cgOut(realized),eligibleLossesApplied:cgOut(loss),netPositiveGain:cgOut(net),allowanceApplied:cgOut(allowance),taxableGain:cgOut(net-allowance),otherTaxableIncome:cgOut(other),brackets:rows,taxBeforeCess:cgOut(base),cessAmount:cgOut(cess),estimatedGainTax:cgOut(total),sourceUrls,warnings};
 }
 
 
@@ -331,7 +331,7 @@ export function calculateSalaryRemainder(input,ruleContext={}){
   // Restrict to this range until AMT and credit eligibility are modeled.
   if(pay>25000000n)throw new RangeError('US examples limited to USD 250,000 annual wages');
   gross=pay;currency='USD';period='Calendar year 2026';payFrequency='annual';
-  const us=nationalRules(input.taxYear,ruleContext.national,'US').national.US;
+  const us=resolveNationalRule('US','national-assessment',input.taxYear,nationalPeriodStart('US',input.taxYear),ruleContext.national).parameters;
   const taxable=maxBig(0n,gross-BigInt(us.standardDeduction)*100n);
   incomeTax=cgRound(cgSlices(0n,taxable,us.filing.single.bounds,us.ordinaryRates).total);
   const oasdi=payroll('oasdi'),medicare=payroll('medicare');
@@ -422,7 +422,7 @@ function extendedSalaryRemainder(input,ruleContext={}){
   const enhanced=cgRound(pensionable*BigInt(cpp.cppEnhancedRateBasisPoints))+cgMoney(c.components[1].amount);
   const baseCPP=cgMoney(c.components[0].amount)-cgRound(pensionable*BigInt(cpp.cppEnhancedRateBasisPoints)),ei=cgMoney(c.components[2].amount);
   taxable=gross-enhanced;
-  const ca=nationalRules(input.taxYear,ruleContext.national,'CA').national.CA;
+  const ca=resolveNationalRule('CA','national-assessment',input.taxYear,nationalPeriodStart('CA',input.taxYear),ruleContext.national).parameters;
   const federal=assessTaxableIncome({country:'CA',taxYear:'2026',taxableIncome:cgOut(taxable),netIncome:cgOut(taxable),fullYearResident:true},ruleContext);
   const federalExtraCredit=cgRound((baseCPP+ei+minBig(gross,BigInt(ca.employmentAmount)*100n))*BigInt(ca.creditRate));
   const federalTax=maxBig(0n,cgMoney(federal.incomeTax)-federalExtraCredit);
@@ -457,7 +457,7 @@ function extendedSalaryRemainder(input,ruleContext={}){
   currency='SGD';period='Income earned in calendar year 2026; YA 2027';payFrequency='monthly';gross=pay*12n;
   const r=calculateEmployeeContributions({country:'SG',taxYear:'2026',income:cgOut(pay),ageBand:'55-or-under',scopeConfirmed:true},ruleContext);
   const cpf=cgMoney(r.totalEmployeeContribution)*12n;
-  const sg=nationalRules(input.taxYear,ruleContext.national,'SG').national.SG;
+  const sg=resolveNationalRule('SG','national-assessment',input.taxYear,nationalPeriodStart('SG',input.taxYear),ruleContext.national).parameters;
   const earned=minBig(gross,BigInt(sg.earnedIncomeRelief)*100n);
   taxable=maxBig(0n,gross-cpf-earned);
   // IRAS resident schedule YA 2024 onward; no speculative YA 2027 rebate.
