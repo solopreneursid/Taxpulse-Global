@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "evidenceId": "taxpulse-d1-provider-restore-2026-11-27-v2",
+  "testedDate": "2026-11-27",
+  "environment": "isolated Cloudflare D1 database in the authorized preview account",
+  "testDatabase": {
+    "name": "taxpulse-isolated-recovery-20261127-v2",
+    "uuid": "8b290d73-80e4-4eab-af3c-de5fa0b845e4",
+    "deletedAfterTest": true
+  },
+  "migrationsApplied": [
+    {"file": "migrations/001-regulatory-snapshots.sql", "gitBlobSha": "cf2252f1e30591ce3032e48c5224ab0e973e7daa", "success": true},
+    {"file": "migrations/002-regulatory-version-ledger.sql", "gitBlobSha": "320651986a54d73973b68ae39a8b5942929f25f7", "success": true},
+    {"file": "migrations/003-regulatory-unique-versions.sql", "gitBlobSha": "fae1cc5d07054f0d80f88f2c596f2fd2df37940f", "success": true},
+    {"file": "migrations/004-regulatory-review-archive.sql", "gitBlobSha": "bb480a53f1e16e555d6de8f0f9a2fcf702a729f9", "success": true},
+    {"file": "migrations/005-regulatory-national-version-ledger.sql", "gitBlobSha": "67a27adcb7fd7871c1636421fbbf8ba4c6b8f224", "success": true}
+  ],
+  "timeTravel": {
+    "bookmark": "00000000-00000016-00005130-512873b8cd6495ec13196d35903e3f2b",
+    "stateBeforeRestore": {"sequence": 2, "state": "blocked", "reviewRecordPresent": true},
+    "stateAfterRestore": {"sequence": 1, "state": "active", "reviewRecordPresent": true},
+    "restoreSucceeded": true
+  },
+  "postRestoreAssertions": {
+    "snapshotArchiveRows": 1,
+    "eventRows": 1,
+    "nationalVersionLedgerRows": 1,
+    "nationalVersionDefinitionContainsPeriodParametersAndSourceUrls": true,
+    "headEnvelopeJsonValid": true,
+    "nonMonotonicHeadUpdateRejected": true,
+    "snapshotArchiveMutationRejected": true,
+    "versionLedgerMutationRejected": true
+  },
+  "previewDatabasePostCheck": {
+    "name": "taxpulse-regulatory-preview",
+    "uuid": "28d2ae96-d032-4d8a-9776-8887e5906065",
+    "head": {"sequence": 0, "state": "empty", "digest": null},
+    "migration005TriggersPresent": [
+      "regulatory_snapshot_unique_versions",
+      "regulatory_versions_immutable",
+      "regulatory_versions_record",
+      "regulatory_ledger_no_update",
+      "regulatory_ledger_no_delete"
+    ]
+  },
+  "cleanup": {
+    "testDatabaseDeletionSucceeded": true,
+    "testDatabaseStillPresent": false
+  },
+  "limitations": [
+    "This verifies Cloudflare D1 provider-level Time Travel restoration on an isolated database, not restoration of production data.",
+    "The test uses synthetic structural review metadata and does not constitute statutory approval or a cryptographic reviewer attestation.",
+    "Integrity was checked through SQL queries, archive counts, JSON validity and immutable-trigger rejection. No PRAGMA-based integrity check is claimed."
+  ]
+}

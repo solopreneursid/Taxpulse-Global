@@ -34,8 +34,10 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.equal(p.releaseAuthorization.maximumApprovalLifetimeHours,168);
  assert.equal(p.releaseAuthorization.keyRotationInvalidatesPriorApproval,true);
  assert.equal(p.releaseAuthorization.trustedKeysEnrolled,false);
- assert.equal(p.recoverySequenceFloor.binding,'RULE_SEQUENCE_FLOOR');
- assert.equal(p.recoverySequenceFloor.key,'taxpulse:regulatory-sequence-floor');
+ assert.equal(p.recoverySequenceFloor.authoritativeBinding,'REGULATORY_SEQUENCE_ANCHOR');
+ assert.equal(p.recoverySequenceFloor.mirrorBinding,'RULE_SEQUENCE_FLOOR');
+ assert.equal(p.recoverySequenceFloor.mirrorKey,'taxpulse:regulatory-sequence-floor');
+ assert.equal(p.recoverySequenceFloor.mirrorIsAuthoritative,false);
  assert.equal(p.recoverySequenceFloor.backupRestoreRegressionTest,true);
  assert.equal(p.recoverySequenceFloor.provisioned,false);
  assert.equal(p.recoverySequenceFloor.productionReady,false);
@@ -60,6 +62,13 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.equal(p.previewInfrastructure.d1Migration005.database,'taxpulse-regulatory-preview');
  assert.equal(p.previewInfrastructure.d1Migration005.applied,true);
  assert.equal(p.previewInfrastructure.d1Migration005.head.sequence,0);
+ assert.equal(p.previewInfrastructure.d1Recovery.isolatedProviderTimeTravelRestoreTest,true);
+ assert.equal(p.previewInfrastructure.d1Recovery.migrationsApplied,5);
+ assert.equal(p.previewInfrastructure.d1Recovery.reviewArchivePreserved,true);
+ assert.equal(p.previewInfrastructure.d1Recovery.nationalVersionLedgerPreserved,true);
+ assert.equal(p.previewInfrastructure.d1Recovery.immutableTriggersVerified,true);
+ assert.equal(p.previewInfrastructure.d1Recovery.testDatabaseDeleted,true);
+ assert.equal(p.previewInfrastructure.d1Recovery.productionDatabaseRestoreTest,false);
  assert.deepEqual(p.previewInfrastructure.d1Migration005.publisherSchedules,[]);
  assert.equal(p.previewInfrastructure.d1Migration005.previewCalculatorD1Binding,false);
  assert.equal(p.previewInfrastructure.d1Migration005.verifiedTriggers.length,3);

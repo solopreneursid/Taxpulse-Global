@@ -35,38 +35,46 @@ export async function verifyPublicationFixtures(snapshot,evidence,fixtures){
   }
  }
 }
-export async function publishSnapshot(db,envelope,fixtures,{publicKeyHex,engineFingerprint,review,reviewerPublicKeyHex,reviewerId,now=new Date(),sequenceFloorStore=null}){
+export function assertRecoverySequenceFloor(head,anchor,candidateSequence){
+ if(!head||!Number.isSafeInteger(head.sequence)||head.sequence<0)throw Error('Invalid D1 sequence head');
+ if(!anchor||anchor.schemaVersion!==1||!Number.isSafeInteger(anchor.sequence)||anchor.sequence<0||!['empty','active','blocked'].includes(anchor.state))throw Error('Invalid external sequence anchor');
+ if(anchor.sequence===0&&(anchor.digest!==null||anchor.state!=='empty'))throw Error('Invalid empty external sequence anchor');
+ if(anchor.sequence>0&&(anchor.state==='active'?(typeof anchor.digest!=='string'||!/^[a-f0-9]{64}$/.test(anchor.digest)):anchor.digest!==null))throw Error('Invalid external sequence anchor digest');
+ if(anchor.sequence<head.sequence)throw Error('External sequence anchor is behind D1; publication fails closed');
+ if(anchor.sequence===head.sequence){
+  if(anchor.state==='empty'&&(head.state!=='empty'||head.digest!==null))throw Error('D1 head does not match the empty external sequence anchor');
+  if(anchor.state==='active'&&(head.state!=='active'||head.digest!==anchor.digest))throw Error('D1 head digest does not match the external sequence anchor');
+  if(anchor.state==='blocked'&&head.state!=='blocked')throw Error('D1 head state does not match the blocked external sequence anchor');
+ }
+ const minimumSequence=Math.max(head.sequence,anchor.sequence);
+ if(!Number.isSafeInteger(candidateSequence)||candidateSequence<=minimumSequence)throw Error('Candidate sequence must exceed the D1 head and external recovery floor');
+ return {minimumSequence,recoveryRequired:anchor.sequence>head.sequence||anchor.state==='blocked'};
+}
+export async function publishSnapshot(db,envelope,fixtures,{publicKeyHex,engineFingerprint,review,reviewerPublicKeyHex,reviewerId,sequenceAnchor,now=new Date()}){
+ if(!sequenceAnchor||typeof sequenceAnchor.getState!=='function'||typeof sequenceAnchor.advance!=='function')throw Error('External Durable Object sequence anchor required');
  await verifyStatutoryReview(envelope,review,{publicKeyHex,reviewerPublicKeyHex,reviewerId,now});
- const head=await readRuleHead(db);
+ const head=await readRuleHead(db),anchor=await sequenceAnchor.getState();
+ const floor=assertRecoverySequenceFloor(head,anchor,envelope?.payload?.sequence);
  const previous=head.envelope?JSON.parse(head.envelope).payload:null;
- const snapshot=await verifyRuleSnapshot(envelope,{publicKeyHex,engineFingerprint,minimumSequence:head.sequence,previous,now});
+ const snapshot=await verifyRuleSnapshot(envelope,{publicKeyHex,engineFingerprint,minimumSequence:floor.minimumSequence,previous,now});
  verifyCoverage(snapshot);
  await verifyPublicationFixtures(snapshot,envelope.payload.evidence,fixtures);
- if(sequenceFloorStore){
-  const raw=await sequenceFloorStore.get('taxpulse:regulatory-sequence-floor','text');
-  if(raw===null||!/^(0|[1-9]\d*)$/.test(raw))throw Error('Durable regulatory sequence floor is not initialized');
-  const floor=Number(raw);
-  if(!Number.isSafeInteger(floor)||head.sequence>floor||snapshot.sequence<=floor)throw Error('Snapshot does not advance the durable regulatory sequence floor');
-  // Advance the independent floor before touching D1. A failed D1 write leaves
-  // the system fail-closed and requires a new higher-sequence approval.
-  await sequenceFloorStore.put('taxpulse:regulatory-sequence-floor',String(snapshot.sequence));
- }
+ // Advance the external floor before D1. A failed D1 write creates a safe sequence gap, never a replay window.
+ await sequenceAnchor.advance({sequence:snapshot.sequence,digest:snapshot.digest,expectedSequence:anchor.sequence,state:'active'});
  const result=await db.prepare("UPDATE regulatory_head SET sequence=?,digest=?,envelope=?,review_record=?,state='active' WHERE id=1 AND sequence=?").bind(snapshot.sequence,snapshot.digest,new TextDecoder().decode(snapshotBytes(envelope)),new TextDecoder().decode(snapshotBytes({review,publisherPublicKeyHex:publicKeyHex,reviewerPublicKeyHex})),head.sequence).run();
- if(result.meta?.changes!==1)throw Error('Concurrent publication; retry with fresh head');
- return {sequence:snapshot.sequence,digest:snapshot.digest,state:'active',taxRulesVerified:false};
+ if(result.meta?.changes!==1)throw Error('D1 publication failed after external sequence floor advanced; issue a fresh higher-sequence approval');
+ return {sequence:snapshot.sequence,digest:snapshot.digest,state:'active',taxRulesVerified:false,recoveryRequired:floor.recoveryRequired};
 }
-// Emergency block retains the previous envelope and advances the sequence.
-// Recovery requires a newly signed snapshot, never a replay of an older pointer.
-export async function blockSnapshot(db,expectedSequence,sequenceFloorStore=null){
- if(!Number.isSafeInteger(expectedSequence)||expectedSequence<1)throw Error('Invalid sequence');
- if(sequenceFloorStore){
-  const raw=await sequenceFloorStore.get('taxpulse:regulatory-sequence-floor','text');
-  if(raw===null||!/^(0|[1-9]\d*)$/.test(raw))throw Error('Durable regulatory sequence floor is not initialized');
-  const floor=Number(raw);
-  if(!Number.isSafeInteger(floor)||expectedSequence>floor)throw Error('Database sequence exceeds durable recovery floor');
-  if(expectedSequence+1>floor)await sequenceFloorStore.put('taxpulse:regulatory-sequence-floor',String(expectedSequence+1));
- }
- const r=await db.prepare("UPDATE regulatory_head SET sequence=sequence+1,state='blocked' WHERE id=1 AND sequence=? AND state='active'").bind(expectedSequence).run();
- if(r.meta?.changes!==1)throw Error('Concurrent update or no active snapshot');
- return {sequence:expectedSequence+1,state:'blocked'};
+// Emergency block advances the external floor before D1. A restore can never lower the anchor.
+export async function blockSnapshot(db,expectedSequence,sequenceAnchor){
+ if(!Number.isSafeInteger(expectedSequence)||expectedSequence<0)throw Error('Invalid sequence');
+ if(!sequenceAnchor||typeof sequenceAnchor.getState!=='function'||typeof sequenceAnchor.advance!=='function')throw Error('External Durable Object sequence anchor required');
+ const head=await readRuleHead(db);
+ if(head.sequence!==expectedSequence||!['active','empty'].includes(head.state))throw Error('Concurrent update or regulatory head is not blockable');
+ const anchor=await sequenceAnchor.getState(),nextSequence=Math.max(head.sequence,anchor.sequence)+1;
+ assertRecoverySequenceFloor(head,anchor,nextSequence);
+ await sequenceAnchor.advance({sequence:nextSequence,digest:null,expectedSequence:anchor.sequence,state:'blocked'});
+ const result=await db.prepare("UPDATE regulatory_head SET sequence=?,state='blocked' WHERE id=1 AND sequence=? AND state=?").bind(nextSequence,expectedSequence,head.state).run();
+ if(result.meta?.changes!==1)throw Error('D1 emergency block failed after external floor advanced; recovery requires a fresh higher-sequence approval');
+ return {sequence:nextSequence,state:'blocked',externalSequenceFloor:nextSequence};
 }
