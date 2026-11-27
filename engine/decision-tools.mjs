@@ -171,7 +171,7 @@ export function cashFlowStressScenario(input){
    if(balance<reserve){monthsBelowReserve++;if(firstReserveBreachMonth===null)firstReserveBreachMonth=month;}
    if(balance<0n&&firstNegativeMonth===null)firstNegativeMonth=month;
    if(stressed&&month>shockEnd&&firstReserveBreachMonth!==null&&reserveRestoredMonth===null&&balance>=reserve)reserveRestoredMonth=month;
-   if(month<=24)monthlyPath.push({month,shockActive:shock,monthlyIncome:scenarioOut(received),monthlyExpenses:scenarioOut(spent),netCashFlow:scenarioOut(received-spent),endingLiquidSavings:scenarioOut(balance),belowReserve:balance<reserve,negative:balance<0n});
+   if(month<=24)monthlyPath.push({month,shockActive:shock&&(incomeReduction>0n||expenseIncrease>0n),monthlyIncome:scenarioOut(received),monthlyExpenses:scenarioOut(spent),netCashFlow:scenarioOut(received-spent),endingLiquidSavings:scenarioOut(balance),belowReserve:balance<reserve,negative:balance<0n});
    scenarioOut(balance);scenarioOut(totalIncome);scenarioOut(totalExpenses);
   }
   return {summary:{endingLiquidSavings:scenarioOut(balance),minimumLiquidSavings:scenarioOut(minimum),totalIncome:scenarioOut(totalIncome),totalExpenses:scenarioOut(totalExpenses),netCashFlow:scenarioOut(totalIncome-totalExpenses),firstReserveBreachMonth,monthsBelowReserve,firstNegativeMonth,reserveRestoredMonth},monthlyPath,endingMinor:balance,minimumMinor:minimum};
