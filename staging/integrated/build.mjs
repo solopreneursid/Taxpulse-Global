@@ -59,6 +59,7 @@ write('webmanifest.txt',"{\"id\":\"/\",\"name\":\"TaxPulse Global Preview\",\"sh
 write('browser-financial-profile.mjs.txt',read('engine/financial-profile.mjs'));
 write('browser-budget.mjs.txt',read('engine/budget.mjs'));
 write('browser-decision-tools.mjs.txt',read('engine/decision-tools.mjs'));
+write('decision-tools.mjs',read('engine/decision-tools.mjs'));
 write('browser-reference-data.mjs.txt',read('engine/reference-data.mjs'));
 write('public-reference-candidate.mjs.txt','export default '+JSON.stringify(JSON.parse(read('data/public-reference-candidate.json')))+';\n');
 
@@ -87,7 +88,7 @@ for(const name of ['taxable-income','proof','history','reverse-salary','salary-o
   const content=read('engine/'+name+'.mjs').replace("import data from '../rules/historical-versions.json' with {type:'json'};","import data from './historical-versions.mjs';");
   write(name+'.mjs',content);write('browser-'+name+'.mjs.txt',content);
 }
-const fingerprintInputs=['national-registry','national-versions','historical-versions','payroll-registry','payroll-versions','rule-snapshot','statutory-review','runtime-rules','india-salary-registry','india-salary-versions','regional-registry','regional-versions','business-tax','business-tax-versions','employer-payroll','treaty-credit','statutory-context','country','primitives','us-filing-statuses','IN','US','GB','DE','AE','CA','AU','SG','taxable-income','proof','history','reverse-salary','salary-offers','negotiation','compensation','international'].map(name=>[name,readFileSync(new URL(name+'.mjs',bundle),'utf8')]);
+const fingerprintInputs=['national-registry','national-versions','historical-versions','payroll-registry','payroll-versions','rule-snapshot','statutory-review','runtime-rules','india-salary-registry','india-salary-versions','regional-registry','regional-versions','business-tax','business-tax-versions','employer-payroll','treaty-credit','decision-tools','statutory-context','country','primitives','us-filing-statuses','IN','US','GB','DE','AE','CA','AU','SG','taxable-income','proof','history','reverse-salary','salary-offers','negotiation','compensation','international'].map(name=>[name,readFileSync(new URL(name+'.mjs',bundle),'utf8')]);
 const fingerprint=createHash('sha256').update(JSON.stringify(fingerprintInputs)).digest('hex');
 write('browser-fingerprint.mjs.txt','export default '+JSON.stringify(fingerprint)+';\n');
 
