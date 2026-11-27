@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "observedOn": "2026-11-27",
+  "scope": "Preview-only D1 schema migration; no production data, signed rules, or customer data.",
+  "database": "taxpulse-regulatory-preview",
+  "migration": "005-regulatory-national-version-ledger.sql",
+  "migrationBlobSha": "67a27adcb7fd7871c1636421fbbf8ba4c6b8f224",
+  "preflight": {
+    "existingMigrations": [
+      "001",
+      "002",
+      "003",
+      "004"
+    ],
+    "regulatoryHead": {
+      "sequence": 0,
+      "state": "empty",
+      "envelopePresent": false,
+      "reviewRecordPresent": false
+    },
+    "snapshots": 0,
+    "events": 0,
+    "versionLedger": 0,
+    "publisherWorker": "hqventures-taxpulse-rule-publisher-preview",
+    "publisherDatabaseBinding": "taxpulse-regulatory-preview",
+    "publisherSchedules": [],
+    "previewWorker": "hqventures-taxpulse-integrated-preview",
+    "previewWorkerBindings": [
+      "REGULATORY_STATE:kv_namespace"
+    ],
+    "previewWorkerSchedules": []
+  },
+  "apply": {
+    "apiAccepted": true,
+    "sourceRegressionForMigration005": "passed",
+    "noRulesPublished": true,
+    "noSigningKeysEnrolled": true
+  },
+  "postflight": {
+    "nationalVersionTriggersVerified": [
+      "regulatory_snapshot_unique_versions",
+      "regulatory_versions_immutable",
+      "regulatory_versions_record"
+    ],
+    "regulatoryHead": {
+      "sequence": 0,
+      "state": "empty"
+    },
+    "snapshots": 0,
+    "events": 0,
+    "versionLedger": 0,
+    "integrityAndForeignKeyPragmas": "not run; Cloudflare D1 query API rejected PRAGMA access with SQLITE_AUTH",
+    "unrelatedDatabasesModified": false,
+    "productionModified": false
+  },
+  "limitations": [
+    "The publisher has a D1 binding but no Cron schedule; no automatic publication is enabled.",
+    "The preview calculator Worker remains KV-only and is not bound to D1.",
+    "This migration does not create a signed snapshot, enroll trusted keys, approve statutory rules, or authorize production."
+  ]
+}

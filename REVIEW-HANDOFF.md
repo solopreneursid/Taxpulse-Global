@@ -39,3 +39,11 @@ Scheduled and manually dispatched main-branch supplemental jobs now retrieve the
 
 ## Release readiness report
 The independent review-packet artifact now contains production-readiness-report.json. The 56 preview entries (54 tax components and two analogous charges) do not change the legacy API catalog: three country/personal-income-tax entries are present, five backend countries and six backend module types are absent. Catalog presence itself does not establish coverage or accuracy. Every one of the 56 statutory scopes still requires independently established evidence. The release gate remains unchanged. Founder must choose whether to retain the comprehensive eight-country/seven-module backend requirement or authorize a separately reviewed narrower release design before any production approval. No live production activation is part of this report.
+
+
+## Financial Twin stress-scenario increment
+The planning engine now includes a bounded cash-flow stress scenario. It compares a constant monthly baseline with a time-limited income reduction and expense increase, tracks the first protected-reserve breach, months below reserve, first negative balance and reserve recovery after the shock. The scenario is included in the encrypted planning archive and consolidated report. It uses user-supplied after-tax cash flow and does not forecast probability, taxes, credit, inflation, returns or emergency reimbursements. This is engineering functionality, not financial advice or statutory verification.
+
+
+## Preview D1 migration 005 — 27 November 2026
+Migration 005 has been applied to the isolated `taxpulse-regulatory-preview` database after confirming migrations 001–004, empty sequence-0 head, and zero archived snapshots/events/version rows. The publisher Worker remains unscheduled; the preview calculator Worker has no D1 binding. The national-version uniqueness, immutability and ledger-recording triggers were verified after application. No signed rule package, key enrollment or production change occurred. Evidence: `data/d1-migration-005-preview-2026-11-27.json`. D1 denied PRAGMA access to the connector query surface, so integrity_check and foreign_key_check were not claimed; the isolated provider restore drill remains separately documented.

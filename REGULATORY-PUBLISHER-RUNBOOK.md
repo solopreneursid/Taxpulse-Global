@@ -18,4 +18,4 @@ The monitoring Worker discovers candidate changes. The separate publisher valida
 The hosted preview check is a separate read-only GitHub Actions workflow triggered by data/hosted-preview-check.json changes; pin the expected deployment revision, monitoring source count and runtime state. A CI test of the local bundle does not by itself establish that the hosted revision works. Never label a failed or unexecuted hosted check as passed.
 
 ## Current status
-No trusted public key has been enrolled and no independently approved package has been published. The D1 head remains empty and the publisher schedule must remain disabled. The existing production release gate remains closed. 
+Migration 005 is applied to the empty preview D1 database and its national-version triggers are verified. No trusted public key has been enrolled and no independently approved package has been published. The D1 head remains empty and the publisher schedule remains disabled. The existing production release gate remains closed. 

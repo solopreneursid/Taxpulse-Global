@@ -1,7 +1,7 @@
 import referenceCandidate from './engine/public-reference-candidate.mjs';
 import {referenceInputs} from './engine/reference-data.mjs';
 import runtime from './engine/runtime-context.mjs';
-import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,taxableIncomeOpportunity,financialRunway,salaryCliffs,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax,residentialSdlt,ukIndiaCredit,debtRepayment,notifiedIndiaGst,ukEmployerNi,australiaDiscountGain,investmentScenario,retirementScenario,usEmployerFica,singaporeBuyerDuty,ukDividendTax,scopedInvestmentGain,scopedTransferTax,texasStateSalesTax,scopedTreatyCredit,confirmedTreatyCredit} from './engine/decision-tools.mjs';
+import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,taxableIncomeOpportunity,financialRunway,cashFlowStressScenario,salaryCliffs,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax,residentialSdlt,ukIndiaCredit,debtRepayment,notifiedIndiaGst,ukEmployerNi,australiaDiscountGain,investmentScenario,retirementScenario,usEmployerFica,singaporeBuyerDuty,ukDividendTax,scopedInvestmentGain,scopedTransferTax,texasStateSalesTax,scopedTreatyCredit,confirmedTreatyCredit} from './engine/decision-tools.mjs';
 import {calculateBudget,expenseCategories} from './engine/budget.mjs';
 import {createFinancialProfile,offerFromProfile,exportEncryptedProfile,importEncryptedProfile,validatePlanningArchive,exportPlanningArchive,importPlanningArchive,planningReport} from './engine/financial-profile.mjs';
 import {compareInternational} from './engine/international.mjs';
@@ -792,9 +792,33 @@ $('financial-runway-use').addEventListener('click',()=>{if(!savedProfile){$('fin
 
 $('financial-health-use').addEventListener('click',()=>{if(!savedProfile){$('financial-health-profile-status').textContent='Keep a salary example first.';return;}$('financial-health-currency').value=savedProfile.currency;$('financial-health-monthlyIncome').value=(savedProfile.annualTakeHome/12).toFixed(2);for(const k of ['monthlyExpenses','liquidSavings','otherAssets','liabilities','monthlyDebtPayments','reserveFloor','goalAmount','horizonMonths'])$('financial-health-'+k).value='';$('financial-health-result').hidden=true;$('financial-health-profile-status').textContent='Average monthly modeled salary remainder copied. Confirm or adjust the amount; enter all remaining balances in the same currency.';});
 
-const planningKinds=new Set(['monthly-budget','financial-runway','financial-health','debt-repayment','investment-scenario','retirement-scenario']);
+const planningKinds=new Set(['monthly-budget','financial-runway','financial-health','cash-flow-stress','debt-repayment','investment-scenario','retirement-scenario']);
 let planningArchive={salaryProfiles:[],scenarios:[]},planningGeneration=0,planningBusy=false;
 const planningStatus=$('planning-archive-status'),planningEntry=$('planning-archive-entry'),planningPassword=$('planning-archive-password'),planningFile=$('planning-archive-file');
+const stressFields=['currency','monthlyIncome','monthlyExpenses','liquidSavings','reserveFloor','horizonMonths','incomeReductionPercent','expenseIncreasePercent','shockStartMonth','shockDurationMonths'];
+const stressInput=()=>Object.fromEntries(stressFields.map(k=>[k,k==='currency'?$('cash-flow-stress-'+k).value:$('cash-flow-stress-'+k).valueAsNumber]));
+const stressResult=$('cash-flow-stress-result'),stressStatus=$('cash-flow-stress-status');
+$('cash-flow-stress-run').addEventListener('click',()=>{
+ stressResult.replaceChildren();
+ try{
+  const result=cashFlowStressScenario(stressInput()),rows=[
+   ['Baseline ending savings',result.baseline.endingLiquidSavings],
+   ['Stress ending savings',result.stress.endingLiquidSavings],
+   ['Stress minimum savings',result.stress.minimumLiquidSavings],
+   ['Change in ending savings',result.endingSavingsImpact],
+   ['First reserve breach month',result.stress.firstReserveBreachMonth],
+   ['Months below reserve',result.stress.monthsBelowReserve],
+   ['First negative-balance month',result.stress.firstNegativeMonth],
+   ['Reserve restored month',result.stress.reserveRestoredMonth]
+  ];
+  const dl=document.createElement('dl');dl.className='breakdown';
+  for(const [label,value] of rows){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=label;dd.textContent=label.includes('month')||label.includes('Months')?(value===null?'Not reached':value===0?'Already below at start':String(value)):money(value,result.currency);dl.append(dt,dd);}
+  const note=document.createElement('p');note.className='notice';note.textContent=result.warnings.join(' ');
+  stressResult.append(dl,note);stressResult.hidden=false;stressStatus.textContent='Baseline and stress scenario recalculated locally.';
+ }catch{stressStatus.textContent='Check all cash-flow amounts, percentages and shock months.';}
+});
+for(const field of stressFields.map(k=>$('cash-flow-stress-'+k)))field.addEventListener('input',()=>{stressResult.hidden=true;stressStatus.textContent='';});
+
 const planningAllowed=()=>runtime.state==='bundled-preview';
 function refreshPlanningEntries(){
  clearPlanningReport();
@@ -813,6 +837,7 @@ $('planning-archive-add').addEventListener('click',()=>{try{
  const kind=$('planning-archive-kind').value,next=structuredClone(planningArchive);
  if(kind==='salary'){if(!savedProfile)throw Error('Save a salary example first');next.salaryProfiles.push({...savedProfile.salary});}
  else if(kind==='monthly-budget'){if($('budget-result').hidden)throw Error('Calculate a budget first');const v=k=>$('budget-'+k).valueAsNumber;next.scenarios.push({kind,input:{currency:$('budget-currency').value,monthlyIncome:v('income'),expenses:Object.fromEntries(expenseCategories.map(k=>[k,v(k)])),monthlyGoal:v('goal'),alternativeIncome:v('alt-income'),alternativeHousing:v('alt-housing')}});}
+ else if(kind==='cash-flow-stress'){if(stressResult.hidden)throw Error('Calculate a cash-flow stress scenario first');next.scenarios.push({kind,input:stressInput()});}
  else {if(!planningKinds.has(kind)||$(kind+'-result').hidden)throw Error('Calculate the selected planning example first');const spec=decisionSpecs.find(s=>s.id===kind);const input=Object.fromEntries(spec.fields.map(([k,_,type])=>[k,type==='currency'?$(kind+'-'+k).value:$(kind+'-'+k).valueAsNumber]));next.scenarios.push({kind,input});}
  editPlanning(validatePlanningArchive(next,ruleContext));planningStatus.textContent='Example captured in this tab.';
  }catch{planningStatus.textContent='Calculate the selected example first; check the collection limits and preview state.';}});
@@ -822,8 +847,9 @@ $('planning-archive-load').addEventListener('click',()=>{try{
  if(!planningAllowed()||planningBusy)throw Error('Unavailable');const {list,value}=selectedPlanning();
  if(list==='salaryProfiles'){showSavedProfile(createFinancialProfile(value,ruleContext));planningStatus.textContent='Selected salary profile restored to this tab.';return;}
  if(!planningKinds.has(value.kind))throw Error('Unsupported UI scenario');
- if(value.kind==='monthly-budget'){const b=value.input;$('budget-currency').value=b.currency;for(const [k,v] of Object.entries({income:b.monthlyIncome,goal:b.monthlyGoal,'alt-income':b.alternativeIncome,'alt-housing':b.alternativeHousing,...b.expenses}))$('budget-'+k).value=String(v);clearBudget();}
- else{for(const [k,v] of Object.entries(value.input))$(value.kind+'-'+k).value=String(v);$(value.kind+'-result').hidden=true;$(value.kind+'-error').textContent='';}document.querySelector('#category-money a[href="/tools/'+value.kind+'"]').click();
+ if(value.kind==='monthly-budget'){const b=value.input;$('budget-currency').value=b.currency;for(const [k,v] of Object.entries({income:b.monthlyIncome,goal:b.monthlyGoal,'alt-income':b.alternativeIncome,'alt-housing':b.alternativeHousing,...b.expenses}))$('budget-'+k).value=String(v);clearBudget();document.querySelector('#category-money a[href="/tools/monthly-budget"]').click();}
+ else if(value.kind==='cash-flow-stress'){for(const [k,v] of Object.entries(value.input))$('cash-flow-stress-'+k).value=String(v);stressResult.hidden=true;stressStatus.textContent='Inputs loaded; calculate again to view results.';}
+ else{for(const [k,v] of Object.entries(value.input))$(value.kind+'-'+k).value=String(v);$(value.kind+'-result').hidden=true;$(value.kind+'-error').textContent='';document.querySelector('#category-money a[href="/tools/'+value.kind+'"]').click();}
  planningStatus.textContent='Inputs loaded; calculate again to view results.';
  }catch{planningStatus.textContent='Cannot load the selected entry.';}});
 async function transferPlanning(action){
@@ -853,7 +879,7 @@ let currentPlanningReport=null;
 const reportResult=$('planning-report-result'),reportConfirm=$('planning-report-confirm'),reportDownload=$('planning-report-download'),reportStatus=$('planning-report-status');
 function clearPlanningReport(){currentPlanningReport=null;reportResult.hidden=true;reportConfirm.checked=false;reportDownload.disabled=true;$('planning-report-entries').replaceChildren();reportStatus.textContent='';}
 const reportLabel=k=>k.replace(/([A-Z])/g,' $1').replace(/^./,c=>c.toUpperCase());
-const monthMetrics=new Set(['monthsToGoal','wholeMonthsBeforeReserve','basePayoffMonths','acceleratedPayoffMonths','monthsSaved','fullyFundedMonths','firstShortfallMonth']);
+const monthMetrics=new Set(['monthsToGoal','wholeMonthsBeforeReserve','basePayoffMonths','acceleratedPayoffMonths','monthsSaved','fullyFundedMonths','firstShortfallMonth','baselineFirstReserveBreachMonth','stressFirstReserveBreachMonth','stressMonthsBelowReserve','stressFirstNegativeMonth','reserveRestoredMonth']);
 $('planning-report-show').addEventListener('click',()=>{
  clearPlanningReport();
  try{
