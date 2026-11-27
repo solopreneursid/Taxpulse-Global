@@ -32,3 +32,20 @@ test('rejects preview manifests, changed subjects, expiry, swapped roles and key
   const other = prepareReleaseApproval(manifest, artifact, commit, { now, lifetimeHours: 2 });
   assert.throws(() => assembleReleaseApproval({ ...assembly, reviewer: signRole('reviewer', reviewer, { payload: other }) }), /different payloads/);
 });
+
+test('rotating either trusted release key invalidates the old approval', () => {
+  const auth = assembleReleaseApproval(assembly);
+  const rotatedFounder = newKey();
+  const rotatedReviewer = newKey();
+  const artifactSha256 = createHash('sha256').update(artifact).digest('hex');
+  assert.throws(() => verifyProductionAuthorization(manifest, auth, {
+    commit, artifactSha256, now,
+    founderPublicKeyHex: rotatedFounder.hex,
+    reviewerPublicKeyHex: reviewer.hex
+  }), /signature/i);
+  assert.throws(() => verifyProductionAuthorization(manifest, auth, {
+    commit, artifactSha256, now,
+    founderPublicKeyHex: founder.hex,
+    reviewerPublicKeyHex: rotatedReviewer.hex
+  }), /signature/i);
+});
