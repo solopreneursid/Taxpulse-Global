@@ -1,0 +1,23 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {selectSupplementalBaseline} from '../scripts/supplemental-baseline.mjs';
+import {runRegulatoryMonitor} from '../engine/regulatory-edge.mjs';
+const config=[{id:'one',country:'GB',jurisdiction:'GB',topics:['income-tax'],url:'https://www.gov.uk/income-tax-rates'}];
+test('prior supplemental observations carry forward changes and outages without activating any rule',async()=>{
+ let report;
+ const env={REGULATORY_STATE:{get:async()=>report?selectSupplementalBaseline(report,config):null,put:async(k,v)=>{assert.equal(k,'latest');report=JSON.parse(v);}}};
+ await runRegulatoryMonitor(env,config,async()=>new Response('original'));
+ assert.equal(report.sources[0].status,'baseline');
+ await runRegulatoryMonitor(env,config,async()=>new Response('changed'));
+ assert.equal(report.sources[0].status,'review_required');
+ await runRegulatoryMonitor(env,config,async()=>new Response(null,{status:503}));
+ assert.equal(report.sources[0].reviewPending,true);
+ await runRegulatoryMonitor(env,config,async()=>new Response('changed'));
+ assert.equal(report.sources[0].reviewPending,true);
+ assert.equal(report.automaticRuleChanges,false);
+ assert.deepEqual(selectSupplementalBaseline(report,[{...config[0],url:'https://www.gov.uk/new'}]).sources,[]);
+ assert.throws(()=>selectSupplementalBaseline({...report,automaticRuleChanges:true},config));
+ assert.throws(()=>selectSupplementalBaseline({...report,sources:[...report.sources,...report.sources]},config));
+ assert.throws(()=>selectSupplementalBaseline({...report,sources:[{...report.sources[0],resolvedUrl:'https://unknown.example/'}]},config));
+ assert.throws(()=>selectSupplementalBaseline({...report,checkedAt:'2020-01-01T00:00:00Z'},config));
+});

@@ -33,3 +33,6 @@ All 56 inventory entries now have a narrow preview example or an explicitly mark
 
 ## Correctness review follow-up
 Reserve runway reports a time-zero breach when liquid savings are below the protected floor. Saving or loading a salary profile invalidates any asynchronous transfer generation, preventing an older import from replacing a newer selection. Decision examples with source URLs display explicit preliminary official-source references locally; no fetch is made unless the user chooses a link. These engineering fixes are not statutory approval.
+
+## Supplemental change detection
+Scheduled and manually dispatched main-branch supplemental jobs now retrieve the preceding successful main observation artifact using read-only Actions permissions. No PR artifact is used as a baseline. Changed content and pending review survive outages when the prior artifact is available; URL changes establish a new baseline. Expired/missing observations are explicitly marked baseline unavailable. Hash changes are review signals, not proof that a statutory rule changed. This path requires a successful successive main run to demonstrate real historical comparison; the regression fixtures exercise the logic now.
