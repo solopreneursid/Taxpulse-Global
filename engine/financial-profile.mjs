@@ -1,4 +1,4 @@
-import {financialHealthSnapshot,financialRunway,debtRepayment,investmentScenario,retirementScenario} from './decision-tools.mjs';
+import {financialHealthSnapshot,financialRunway,debtRepayment,investmentScenario,retirementScenario,cashFlowStressScenario} from './decision-tools.mjs';
 import {calculateBudget} from './budget.mjs';
 import {encryptRecord,decryptRecord} from './secure-records.mjs';
 import {calculateSalaryRemainder} from './taxable-income.mjs';
@@ -54,7 +54,7 @@ export async function importEncryptedProfile(envelope,password,engineFingerprint
  return createFinancialProfile(data.salary,ruleContext);
 }
 
-const planningCalculators=Object.freeze({'monthly-budget':calculateBudget,'financial-health':financialHealthSnapshot,'financial-runway':financialRunway,'debt-repayment':debtRepayment,'investment-scenario':investmentScenario,'retirement-scenario':retirementScenario});
+const planningCalculators=Object.freeze({'monthly-budget':calculateBudget,'financial-health':financialHealthSnapshot,'financial-runway':financialRunway,'cash-flow-stress':cashFlowStressScenario,'debt-repayment':debtRepayment,'investment-scenario':investmentScenario,'retirement-scenario':retirementScenario});
 /** Versioned input-only archive. Validate every item before making any restored values available. */
 export function validatePlanningArchive(input,ruleContext={}){
  exact(input,['salaryProfiles','scenarios']);
@@ -84,6 +84,7 @@ export function planningReport(input,engineFingerprint,ruleContext={}){
  'monthly-budget':r=>({monthlyIncome:r.monthlyIncome,monthlyExpenses:r.monthlyExpenses,monthlyBalance:r.monthlyBalance,annualBalance:r.annualBalance,monthlyGoal:r.monthlyGoal,goalGap:r.goalGap,alternativeMonthlyBalance:r.alternative.monthlyBalance}),
  'financial-health':r=>({totalAssets:r.totalAssets,liabilities:r.liabilities,netWorth:r.netWorth,monthlyBalance:r.monthlyBalance,projectedLiquidSavings:r.projectedLiquidSavings,monthsToGoal:r.monthsToGoal}),
  'financial-runway':r=>({monthlyBalance:r.monthlyBalance,projectedSavings:r.projectedSavings,monthsToGoal:r.monthsToGoal,wholeMonthsBeforeReserve:r.wholeMonthsBeforeReserve}),
+ 'cash-flow-stress':r=>({baselineEndingLiquidSavings:r.baseline.endingLiquidSavings,stressEndingLiquidSavings:r.stress.endingLiquidSavings,endingSavingsImpact:r.endingSavingsImpact,baselineFirstReserveBreachMonth:r.baseline.firstReserveBreachMonth,stressFirstReserveBreachMonth:r.stress.firstReserveBreachMonth,stressMonthsBelowReserve:r.stress.monthsBelowReserve,stressFirstNegativeMonth:r.stress.firstNegativeMonth,reserveRestoredMonth:r.stress.reserveRestoredMonth}),
  'debt-repayment':r=>({basePayoffMonths:r.base.payoffMonths,baseRemaining:r.base.remaining,acceleratedPayoffMonths:r.accelerated.payoffMonths,acceleratedRemaining:r.accelerated.remaining,interestSaved:r.interestSaved,monthsSaved:r.monthsSaved}),
  'investment-scenario':r=>({nominalBalance:r.nominalBalance,totalContributed:r.totalContributed,modeledGrowth:r.modeledGrowth,inflationAdjustedBalance:r.inflationAdjustedBalance}),
  'retirement-scenario':r=>({fullyFundedMonths:r.fullyFundedMonths,firstShortfallMonth:r.firstShortfallMonth,remainingBalance:r.remainingBalance,totalWithdrawn:r.totalWithdrawn})
