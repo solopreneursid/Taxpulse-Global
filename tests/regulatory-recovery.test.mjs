@@ -13,11 +13,11 @@ test('database backup restore preserves audit history and rejects replay',()=>{c
 test('D1-compatible ledger migration backfills existing consistent archives and is idempotent',()=>{const db=new DatabaseSync(':memory:');try{db.exec(migration('001-regulatory-snapshots.sql'));activate(db,1,[{version:'v1',rate:100}]);activate(db,2,[{version:'v1',rate:100},{version:'v2',rate:200}]);db.exec(migration('002-regulatory-version-ledger.sql'));db.exec(migration('002-regulatory-version-ledger.sql'));assert.deepEqual(db.prepare('SELECT version,first_sequence FROM regulatory_version_ledger ORDER BY version').all().map(r=>[r.version,r.first_sequence]),[['v1',1],['v2',2]]);assert.throws(()=>activate(db,3,[{version:'v1',rate:999}]),/immutable historical version changed/);}finally{db.close();}});
 test('conflicting existing archive fails migration without accepting an arbitrary version',()=>{const db=new DatabaseSync(':memory:');try{db.exec(migration('001-regulatory-snapshots.sql'));activate(db,1,[{version:'v1',rate:100}]);activate(db,2,[{version:'v1',rate:200}]);assert.throws(()=>db.exec(migration('002-regulatory-version-ledger.sql')),/immutable version ledger/);assert.equal(db.prepare('SELECT count(*) n FROM regulatory_version_ledger').get().n,0);}finally{db.close();}});
 
-test('all four migrations survive isolated backup and restore with review archive and blocked head',()=>{
+test('all five migrations survive isolated backup and restore with review archive and blocked head',()=>{
  const dir=mkdtempSync(join(tmpdir(),'taxpulse-reviewed-recovery-'));let source,restored;
  try{
   source=new DatabaseSync(join(dir,'original.db'));source.exec('PRAGMA foreign_keys=ON');
-  setup(source);source.exec(migration('003-regulatory-unique-versions.sql'));source.exec(migration('004-regulatory-review-archive.sql'));
+  setup(source);source.exec(migration('003-regulatory-unique-versions.sql'));source.exec(migration('004-regulatory-review-archive.sql'));source.exec(migration('005-regulatory-national-version-ledger.sql'));
   // Synthetic structural fixtures only, not cryptographically valid statutory approvals.
   const publish=(db,sequence,versions,reviewSequence=sequence)=>{
    const digest=String(sequence).padStart(64,'0');
