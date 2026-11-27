@@ -79,10 +79,6 @@ function walkUrls(value,country,urls,context=null){
    const candidate=value[key];
    if(typeof candidate==='string'&&COUNTRIES.includes(candidate.toUpperCase()))next=candidate.toUpperCase();
   }
-  for(const key of ['jurisdictions','countries','countryCodes']){
-   const candidates=value[key];
-   if(Array.isArray(candidates)&&candidates.some(item=>String(item).toUpperCase()===country))next=country;
-  }
   for(const [key,child] of Object.entries(value)){
    if(COUNTRIES.includes(key.toUpperCase()))walkUrls(child,country,urls,key.toUpperCase());
    else walkUrls(child,country,urls,next);
@@ -146,7 +142,7 @@ function collectSourceRecords(paths,country){
   let data;
   try{data=readJson(path);}catch{data=readText(path);}
   const urls=new Set();
-  const context=fileCountryContext(path,country)?country:null;
+  const context=fileCountryContext(path,country)||(path.startsWith('rules/evidence/')&&evidenceAppliesToCountry(path,country))?country:null;
   walkUrls(data,country,urls,context);
   for(const url of urls)records.push({
    url,
