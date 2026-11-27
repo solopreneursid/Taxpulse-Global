@@ -130,7 +130,11 @@ export function validateBusinessTaxRules(registry) {
            row.smallBusinessRateBasisPoints < 0 || row.smallBusinessRateBasisPoints > 10000 ||
            row.smallBusinessRateBasisPoints > row.rateBasisPoints) ||
         row.mainRateThreshold !== null && (!Number.isSafeInteger(row.mainRateThreshold) || row.mainRateThreshold < 0) ||
-        row.zeroRateThreshold !== null && (!Number.isSafeInteger(row.zeroRateThreshold) || row.zeroRateThreshold < 0)) {
+        row.zeroRateThreshold !== null && (!Number.isSafeInteger(row.zeroRateThreshold) || row.zeroRateThreshold < 0) ||
+        row.country === 'GB' && row.mainRateThreshold === null ||
+        row.country !== 'GB' && row.mainRateThreshold !== null ||
+        row.country === 'AE' && row.zeroRateThreshold === null ||
+        row.country !== 'AE' && row.zeroRateThreshold !== null) {
       throw new TypeError('Invalid corporate tax rates');
     }
     const singapore = row.country === 'SG';
