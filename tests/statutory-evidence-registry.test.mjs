@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
 import {resolve} from 'node:path';
 import {buildStatutoryEvidenceRegistry} from '../scripts/build-statutory-evidence-registry.mjs';
 
@@ -42,7 +43,6 @@ test('no scope is falsely marked independently approved or production enabled',(
 
 test('registry digest and local metadata hashes are valid',()=>{
  const {registryDigestSha256,...payload}=registry;
- const {createHash}=await import('node:crypto');
  const digest=createHash('sha256').update(JSON.stringify(payload)).digest('hex');
  assert.equal(registryDigestSha256,digest);
  for(const entry of registry.entries){
