@@ -24,6 +24,13 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.equal(p.releaseAuthorization.maximumApprovalLifetimeHours,168);
  assert.equal(p.releaseAuthorization.keyRotationInvalidatesPriorApproval,true);
  assert.equal(p.releaseAuthorization.trustedKeysEnrolled,false);
+ assert.equal(p.supplementalSourceMonitoring.sourceCount,38);
+ assert.equal(p.supplementalSourceMonitoring.schedule,'25 2 * * *');
+ assert.equal(p.supplementalSourceMonitoring.cadence,'daily');
+ assert.equal(p.supplementalSourceMonitoring.previousSuccessfulMainArtifactComparison,true);
+ assert.equal(p.supplementalSourceMonitoring.readOnly,true);
+ assert.equal(p.supplementalSourceMonitoring.automaticRuleChanges,false);
+ assert.equal(p.supplementalSourceMonitoring.hashChangesRequireManualReview,true);
  assert.ok(p.countries.every(c=>c.scopedPreviewExamples===7&&!c.manifestVerified&&!c.productionEnabled&&c.recordedEvidenceCount===0&&c.remaining.length===7));
  assert.equal(p.countries.find(c=>c.country==='IN').missingBackendModules.length,6);
  assert.equal(p.countries.find(c=>c.country==='CA').missingBackendModules.length,7);
