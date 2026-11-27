@@ -106,20 +106,20 @@ The engine does not determine taxability, product/service classification, regist
 
 ## Scoped corporate-tax API
 
-The legacy `countryCalculate` endpoint exposes `module: "corporate"` for all eight countries by routing to the existing effective-dated corporate tax registry:
+The legacy `countryCalculate` endpoint exposes `module: "corporate"` for all eight countries by routing to the existing scoped jurisdiction calculators:
 
 | Country | Input contract | Component boundary |
 |---|---|---|
-| India | Taxable profit, Section 115BAA election and caller eligibility confirmation | 22% base income-tax component only; excludes 10% surcharge and 4% health/education cess |
-| United States | Taxable profit | Regular federal C-corporation 21% component only |
-| United Kingdom | Taxable profit above GBP 250,000, one associated company, non-ring-fence confirmation | 25% main-rate component only; no small-profits rate or marginal relief |
+| India | Taxable profit | Section 115BAA domestic-company scenario at 22% plus modeled 10% surcharge and 4% cess; no MAT |
+| United States | Taxable profit | Regular federal C-corporation 21% component |
+| United Kingdom | Taxable profit | Standard non-ring-fence small-profits/main-rate and marginal-relief schedule under the single-associated-company scope |
 | Germany | Taxable profit | 15% Körperschaftsteuer only; excludes solidarity surcharge and municipal trade tax |
-| UAE | Taxable profit, non-qualifying-free-zone and outside-Pillar-Two confirmations | 0% up to AED 375,000 and 9% above |
-| Canada | Taxable profit and caller-confirmed eligible small-business allocation | Federal Part I 15% general / 9% small-business component only |
-| Australia | Taxable profit, aggregated turnover below AUD 50 million and passive income at or below 80% | 25% base-rate-entity component only |
-| Singapore | Taxable profit and caller-confirmed none/partial/start-up exemption scheme | YA 2026 17% component before corporate tax rebate/cash grant |
+| UAE | Taxable profit | 0% up to AED 375,000 and 9% above under standard non-free-zone scope |
+| Canada | Taxable profit and `corporateScope=general\|small` | Federal general 15% or small-business 9% component |
+| Australia | Taxable profit and `corporateScope=base-rate-entity\|full-rate` | 25% or 30% company-rate scenario |
+| Singapore | Taxable profit and `corporateScope=partial-exemption\|startup-exemption` | YA 2026 17% component with the selected partial/start-up exemption, before rebate/cash grant |
 
-All results are calculated on user-established taxable profit. The engine does not determine tax adjustments, deductions, loss utilization, eligibility evidence, group relief, transfer pricing, special incentives, state/provincial taxes or the final return liability. The caller-provided eligibility flags are not independent verification. All outputs remain sample-only and unverified.
+The engine does not determine tax adjustments, deductions, loss utilization, eligibility evidence, group relief, transfer pricing, special incentives, state/provincial taxes or the final return liability. The selected scope must match the taxpayer's actual facts; the caller's `scopeConfirmed` flag is not independent verification. All outputs remain sample-only and unverified.
 
 ## Release boundary
 
