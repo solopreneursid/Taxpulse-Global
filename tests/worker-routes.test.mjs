@@ -28,7 +28,7 @@ test('generated Worker routes and validation',async()=>{
  for(const path of ['/assets/engine/browser-vault.mjs','/assets/engine/secure-records.mjs','/assets/engine/document-text.mjs','/assets/local-tools.mjs'])assert.equal((await call(path)).status,200);
  assert.equal((await call('/assets/secure-records.mjs')).status,404);
  const manifest=await call('/app.webmanifest');assert.equal(manifest.status,200);assert.equal((await manifest.json()).display,'standalone');const sw=await call('/sw.js');assert.equal(sw.status,200);assert.equal(sw.headers.get('service-worker-allowed'),'/');assert.match(await sw.text(),/No tax calculations are available offline/);
- const openapi=await (await call('/openapi.json')).json();for(const path of ['/v1/business/indirect-tax','/v1/business/corporate-tax','/v1/property/transfer-tax','/v1/investment/scoped-gain','/v1/treaty/credit','/v1/treaty/confirmed-credit','/v1/treaty/uk-india-credit','/v1/employer-payroll/fica'])assert.ok(openapi.paths[path]?.post,path);
+ const openapi=await (await call('/openapi.json')).json();for(const path of ['/v1/business/indirect-tax','/v1/business/corporate-tax','/v1/business/scoped-corporate-tax','/v1/property/transfer-tax','/v1/property/uk-sdlt','/v1/property/sg-bsd','/v1/investment/scoped-gain','/v1/treaty/credit','/v1/treaty/scoped-credit','/v1/treaty/confirmed-credit','/v1/treaty/uk-india-credit','/v1/employer-payroll/fica'])assert.ok(openapi.paths[path]?.post,path);
  const catalog=await (await call('/v1/catalog')).json();assert.equal(catalog.countries.length,8);assert.deepEqual(catalog.countries.map(c=>c.code),['IN','US','GB','DE','AE','CA','AU','SG']);assert.deepEqual(catalog.filingStatusOptions.US,['single','mfj','hoh','mfs']);assert.match(catalog.countries.find(c=>c.code==='IN').taxYearLabel,/2026-27/);
  assert.equal((await (await call('/openapi.json')).json()).openapi,'3.1.0');
  const payload={country:'GB',taxYear:'2026',module:'pit',parameters:{grossSalary:130000}};
@@ -94,6 +94,15 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(businessTax.status,200);assert.equal((await businessTax.json()).taxAmount,20);
  const corporate=await call('/v1/business/corporate-tax',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'DE',taxYear:'2026',taxableProfit:100000,scopeConfirmed:true})});
  assert.equal(corporate.status,200);assert.equal((await corporate.json()).corporateIncomeTaxComponent,15000);
+
+ const scopedCorporate=await call('/v1/business/scoped-corporate-tax',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jurisdiction:'AU-base',taxableProfit:100000,scopeConfirmed:true})});
+ assert.equal(scopedCorporate.status,200);assert.equal((await scopedCorporate.json()).grossCorporateTax,25000);
+ const ukSdlt=await call('/v1/property/uk-sdlt',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({consideration:300000,buyerScope:'ordinary',transactionDate:'2026-11-27',scopeConfirmed:true})});
+ assert.equal(ukSdlt.status,200);assert.equal((await ukSdlt.json()).stampDuty,5000);
+ const singaporeBsd=await call('/v1/property/sg-bsd',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({purchasePrice:1000000,marketValue:1000000,propertyType:'residential',transactionDate:'2026-11-27',scopeConfirmed:true})});
+ assert.equal(singaporeBsd.status,200);assert.equal((await singaporeBsd.json()).buyerStampDuty,24600);
+ const scopedTreaty=await call('/v1/treaty/scoped-credit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jurisdiction:'US-GB',foreignTaxPaid:300,treatyPermittedTax:250,domesticTax:1000,worldwideTaxableIncome:100000,foreignTaxableIncome:20000,domesticTaxOnItem:250,scopeConfirmed:true})});
+ assert.equal(scopedTreaty.status,200);assert.equal((await scopedTreaty.json()).modeledCredit,200);
  const property=await call('/v1/property/transfer-tax',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jurisdiction:'DE-BE',taxableConsideration:100000,transactionDate:'2026-11-27',scopeConfirmed:true})});
  assert.equal(property.status,200);assert.equal((await property.json()).transferTax,6000);
  const scopedGain=await call('/v1/investment/scoped-gain',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jurisdiction:'CA',confirmedNetGain:100000,transactionDate:'2026-11-27',scopeConfirmed:true})});
@@ -106,7 +115,7 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(ukIndiaTreaty.status,200);assert.equal((await ukIndiaTreaty.json()).modeledCredit,100);
  const employer=await call('/v1/employer-payroll/fica',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({annualWages:100000,scopeConfirmed:true})});
  assert.equal(employer.status,200);assert.equal((await employer.json()).employerFica,7650);
- for(const path of ['/v1/business/indirect-tax','/v1/business/corporate-tax','/v1/property/transfer-tax','/v1/investment/scoped-gain','/v1/treaty/credit','/v1/treaty/confirmed-credit','/v1/treaty/uk-india-credit','/v1/employer-payroll/fica'])assert.equal((await call(path)).status,405,path);
+ for(const path of ['/v1/business/indirect-tax','/v1/business/corporate-tax','/v1/business/scoped-corporate-tax','/v1/property/transfer-tax','/v1/property/uk-sdlt','/v1/property/sg-bsd','/v1/investment/scoped-gain','/v1/treaty/credit','/v1/treaty/scoped-credit','/v1/treaty/confirmed-credit','/v1/treaty/uk-india-credit','/v1/employer-payroll/fica'])assert.equal((await call(path)).status,405,path);
 
  const extendedPay=await call('/v1/salary/remainder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'AU',region:'AU',taxYear:'2026',pay:100000,scopeConfirmed:true})});
  assert.equal(extendedPay.status,200);assert.equal((await extendedPay.json()).annualRemainder,77480);
