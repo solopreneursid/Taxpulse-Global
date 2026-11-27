@@ -348,13 +348,13 @@ export function retirementScenario(input){
 }
 
 /** 2026 annual aggregate employer FICA, excluding per-pay-period rounding. */
-export function usEmployerFica(input){
+export function usEmployerFica(input,ruleContext={}){
  exact(input,['annualWages','scopeConfirmed']);
  if(input.scopeConfirmed!==true)throw Error('Confirm ordinary covered wages');
  const result=calculateUsEmployerFica({
   country:'US',taxYear:'2026',coveredWages:input.annualWages,
   singleEmployer:true,scopeConfirmed:true
- });
+ },ruleContext);
  const wages=units(result.coveredWages),tax=units(result.employerFicaTotal);
  return {...sample,currency:'USD',annualWages:result.coveredWages,
   employerSocialSecurity:result.socialSecurityEmployerTax,
