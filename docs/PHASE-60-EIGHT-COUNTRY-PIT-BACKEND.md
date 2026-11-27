@@ -104,8 +104,25 @@ The legacy `countryCalculate` endpoint exposes `module: "vat"` as an indirect-ta
 
 The engine does not determine taxability, product/service classification, registration thresholds, place of supply, customer status, exemptions, zero-rating, reverse charge, imports, input-tax recovery, local surcharges or return treatment. The India example is tied to HSN 2523 and the cited 2025 notification; the US example is state-only Texas sales tax, not VAT. All results remain sample-only and unverified.
 
+## Scoped corporate-tax API
+
+The legacy `countryCalculate` endpoint exposes `module: "corporate"` for all eight countries by routing to the existing effective-dated corporate tax registry:
+
+| Country | Input contract | Component boundary |
+|---|---|---|
+| India | Taxable profit, Section 115BAA election and caller eligibility confirmation | 22% base income-tax component only; excludes 10% surcharge and 4% health/education cess |
+| United States | Taxable profit | Regular federal C-corporation 21% component only |
+| United Kingdom | Taxable profit above GBP 250,000, one associated company, non-ring-fence confirmation | 25% main-rate component only; no small-profits rate or marginal relief |
+| Germany | Taxable profit | 15% Körperschaftsteuer only; excludes solidarity surcharge and municipal trade tax |
+| UAE | Taxable profit, non-qualifying-free-zone and outside-Pillar-Two confirmations | 0% up to AED 375,000 and 9% above |
+| Canada | Taxable profit and caller-confirmed eligible small-business allocation | Federal Part I 15% general / 9% small-business component only |
+| Australia | Taxable profit, aggregated turnover below AUD 50 million and passive income at or below 80% | 25% base-rate-entity component only |
+| Singapore | Taxable profit and caller-confirmed none/partial/start-up exemption scheme | YA 2026 17% component before corporate tax rebate/cash grant |
+
+All results are calculated on user-established taxable profit. The engine does not determine tax adjustments, deductions, loss utilization, eligibility evidence, group relief, transfer pricing, special incentives, state/provincial taxes or the final return liability. The caller-provided eligibility flags are not independent verification. All outputs remain sample-only and unverified.
+
 ## Release boundary
 
-All results remain `sampleOnly: true` and `taxRulesVerified: false`. The country manifest remains unverified and production-disabled. The backend exposes PIT, scoped salary remainder, capital-gains components, indirect-tax components, property transfer/registration components and one-item treaty-credit components for all eight countries. Corporate tax is the only module not yet exposed in the legacy country API. The 56-scope release gate is unchanged and still blocks production.
+All results remain `sampleOnly: true` and `taxRulesVerified: false`. The country manifest remains unverified and production-disabled. The backend catalog now exposes all seven module families across all eight countries (56 entries). This does not establish complete statutory coverage: the calculation components remain scoped, sample-only and taxRulesVerified=false. Every one of the 56 statutory scopes still requires independent source review, independently computed test fixtures and reviewer evidence. Trusted publisher/reviewer keys remain unenrolled, the independent security assessment remains pending, and production authorization remains blocked. The 56-scope release gate is unchanged and still blocks production.
 
 Independent statutory review must validate source law, effective periods, eligibility, reliefs, rounding and independently computed fixtures before any scope can be marked verified.
