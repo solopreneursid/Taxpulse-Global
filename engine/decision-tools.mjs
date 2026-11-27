@@ -192,3 +192,49 @@ export function scopedCorporateTax(input){
  const tax=round(numerator,input.jurisdiction.startsWith('SG-')?40000n:10000n);
  return {...sample,currency,taxableProfit:out(p),grossCorporateTax:out(tax),profitAfterModeledTax:out(p-tax),effectiveRatePercent:p===0n?0:Number(round(tax*10000n,p))/100,sourceUrls:[source],sourceReviewedOn:'2026-11-27',taxPeriod:period,scope,warnings:[scope+' '+period+'. Taxable profit must already be independently established, not turnover or accounting profit. Gross modeled rate calculation before other credits, offsets, reliefs, adjustments, withholding, dividend taxes or filing-specific rounding. No eligibility, accounting adjustments, associated-company count, free-zone status or tax residence inferred. No filing or statutory approval.']};
 }
+
+/** England and Northern Ireland, one ordinary freehold residential purchase. */
+export function residentialSdlt(input){
+ exact(input,['consideration','buyerScope','scopeConfirmed']);
+ if(input.scopeConfirmed!==true||!['ordinary','first-time'].includes(input.buyerScope)||!Number.isSafeInteger(input.consideration)||input.consideration<0||input.consideration>1e9)throw Error('Confirm scope and whole-pound chargeable consideration');
+ const p=BigInt(input.consideration);
+ let numerator=0n;
+ const first=input.buyerScope==='first-time'&&p<=500000n;
+ if(first)numerator=(p>300000n?p-300000n:0n)*5n;
+ else {
+  let lower=0n;for(const [upper,rate] of [[125000n,0n],[250000n,2n],[925000n,5n],[1500000n,10n],[1000000000n,12n]]){
+   const taxable=p<=lower?0n:(p<upper?p:upper)-lower;numerator+=taxable*rate;lower=upper;
+  }
+ }
+ const tax=numerator/100n;
+ return {...sample,currency:'GBP',consideration:Number(p),stampDuty:Number(tax),priceAndDuty:Number(p+tax),firstTimeReliefApplied:first,sourceUrls:['https://www.gov.uk/stamp-duty-land-tax/residential-property-rates','https://www.gov.uk/hmrc-internal-manuals/stamp-duty-land-tax-manual/sdltm00050'],sourceReviewedOn:'2026-11-27',warnings:['England or Northern Ireland, ordinary individual UK-resident buyer(s) for SDLT, one unlinked freehold residential transaction, no higher rates or other reliefs. Rates for transactions from 1 April 2025, cross-checked 27 November 2026. First-time option assumes all purchasers meet the relief conditions including main residence intention; above GBP 500,000 ordinary bands apply. Tax rounded down to whole pounds. Excludes lease rent, linked transactions, companies, additional dwellings, non-resident surcharge, Scotland, Wales and fees.']};
+}
+/** A single income item, UK-side treaty credit cap, with eligibility already established. */
+export function ukIndiaCredit(input){
+ exact(input,['foreignTaxPaidGbp','treatyEligibleCapGbp','ukTaxWithIncome','ukTaxWithoutIncome','scopeConfirmed']);
+ if(input.scopeConfirmed!==true)throw Error('Confirm UK residence, Indian source and eligible taxes');
+ const paid=units(input.foreignTaxPaidGbp),cap=units(input.treatyEligibleCapGbp),withIncome=units(input.ukTaxWithIncome),without=units(input.ukTaxWithoutIncome);
+ if(without>withIncome)throw Error('UK tax without income must not exceed tax with income');
+ const attributable=withIncome-without,credit=[paid,cap,attributable].reduce((a,b)=>a<b?a:b);
+ return {...sample,currency:'GBP',ukTaxOnItem:out(attributable),modeledCredit:out(credit),ukTaxAfterCredit:out(withIncome-credit),foreignTaxNotCredited:out(paid-credit),combinedTax:out(withIncome-credit+paid),sourceUrls:['https://www.gov.uk/government/publications/india-tax-treaties/2020-uk-india-synthesised-text-of-the-multilateral-instrument-and-the-1993-double-taxation-convention-in-force','https://www.gov.uk/government/publications/calculating-foreign-tax-credit-relief-on-income-hs263-self-assessment-helpsheet/relief-for-foreign-tax-paid-2026-hs263'],sourceReviewedOn:'2026-11-27',warnings:['UK-side Article 24 credit-cap example for one ordinary Indian-source income item, UK tax year 2025–26, following HMRC HS263 2026. All figures already established in GBP using applicable conversion rules. No residence, treaty rate, treaty eligibility, income sourcing, refundable foreign tax, relief election, ordering of multiple sources, dividends, capital gains, or tax-sparing rules inferred. Credit is limited to paid tax, confirmed treaty-permitted amount and UK liability attributable to this item. Not a claim or filing determination.']};
+}
+/** Fixed nominal monthly amortization, integer minor units, bounded horizon. */
+export function debtRepayment(input){
+ exact(input,['currency','principal','annualRatePercent','monthlyPayment','extraPayment','horizonMonths']);
+ currency(input.currency);
+ const principal=units(input.principal),rate=units(input.annualRatePercent,100,100),payment=units(input.monthlyPayment),extra=units(input.extraPayment);
+ if(principal<=0n||payment<=0n||!Number.isSafeInteger(input.horizonMonths)||input.horizonMonths<1||input.horizonMonths>600)throw Error('Choose positive debt, payment and 1–600 months');
+ const monthlyInterest=b=>round(b*rate,120000n);
+ const simulate=limit=>{
+  let balance=principal,interest=0n,total=0n,months=0,reason=null;const schedule=[];
+  while(balance>0n&&months<input.horizonMonths){
+   const charge=monthlyInterest(balance);
+   if(limit<=charge){reason='payment-does-not-reduce-principal';break;}
+   const due=balance+charge,paid=limit<due?limit:due;balance=due-paid;interest+=charge;total+=paid;months++;
+   schedule.push({month:months,payment:out(paid),interest:out(charge),principalRepaid:out(paid-charge),remaining:out(balance)});
+  }
+  return {status:balance===0n?'paid':reason||'horizon-ended',payoffMonths:balance===0n?months:null,monthsModeled:months,interest:out(interest),totalPaid:out(total),remaining:out(balance),schedule};
+ };
+ const base=simulate(payment),accelerated=simulate(payment+extra),both=base.status==='paid'&&accelerated.status==='paid';
+ return {...sample,currency:input.currency,base,accelerated,interestSaved:both?out(units(base.interest,100,1e12)-units(accelerated.interest,100,1e12)):null,monthsSaved:both?base.payoffMonths-accelerated.payoffMonths:null,warnings:['Fixed nominal annual interest divided into 12 monthly periods; monthly interest rounded to nearest minor unit, payment at period end. No fees, rate changes, penalty, daily accrual, new borrowing or lender-specific rounding. If payment does not reduce principal the schedule stops before that payment; unpaid balances are not projected beyond the stop or horizon. Interest and months saved shown only if both plans pay off within the selected horizon. Example, not a lender quote.']};
+}

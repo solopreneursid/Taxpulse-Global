@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax} from '../engine/decision-tools.mjs';
+import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,salaryCliffs,taxableIncomeOpportunity,financialRunway,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax,residentialSdlt,ukIndiaCredit,debtRepayment} from '../engine/decision-tools.mjs';
 const ctc={annualCtc:1800000,employerContributions:100000,nonCashBenefits:200000,employeeContributions:21600,otherPayrollDeductions:2500,residentIndividual:true,ageGroup:'under-60',oldEligibleDeductions:0,newEligibleDeductions:0};
 test('CTC cash component and tax reconciliation',()=>{
  const r=indiaCtc(ctc);assert.equal(r.annualGross,1500000);assert.equal(r.new.incomeTax,97500);assert.equal(r.new.annualCash,1378400);assert.equal(r.taxRulesVerified,false);
@@ -109,4 +109,24 @@ test('company tax components US Canada Germany and Singapore with explicitly con
  assert.equal(scopedCorporateTax({...input,jurisdiction:'SG-PTE',taxableProfit:10000}).grossCorporateTax,425);
  assert.equal(scopedCorporateTax({...input,jurisdiction:'SG-PTE',taxableProfit:0}).grossCorporateTax,0);
  assert.throws(()=>scopedCorporateTax({...input,jurisdiction:'CA-small',taxableProfit:500000.01}));
+});
+
+test('residential SDLT whole-pound rounding and first-time relief boundary',()=>{
+ const i={consideration:295000,buyerScope:'ordinary',scopeConfirmed:true};assert.equal(residentialSdlt(i).stampDuty,4750);
+ for(const [consideration,stampDuty] of [[125000,0],[125049,0],[125050,1],[250000,2500],[925000,36250],[1500000,93750],[2000000,153750]])assert.equal(residentialSdlt({...i,consideration}).stampDuty,stampDuty);
+ assert.equal(residentialSdlt({...i,buyerScope:'first-time',consideration:500000}).stampDuty,10000);
+ assert.equal(residentialSdlt({...i,buyerScope:'first-time',consideration:500001}).stampDuty,15000);
+ assert.throws(()=>residentialSdlt({...i,scopeConfirmed:false}));assert.throws(()=>residentialSdlt({...i,consideration:295000.01}));
+});
+test('UK India credit applies the lowest of attributable UK tax, paid tax and confirmed treaty cap',()=>{
+ const i={foreignTaxPaidGbp:3000,treatyEligibleCapGbp:2500,ukTaxWithIncome:12000,ukTaxWithoutIncome:9000,scopeConfirmed:true};const r=ukIndiaCredit(i);assert.equal(r.modeledCredit,2500);assert.equal(r.ukTaxAfterCredit,9500);assert.equal(r.combinedTax,12500);assert.equal(r.foreignTaxNotCredited,500);
+ assert.equal(ukIndiaCredit({...i,foreignTaxPaidGbp:1000}).modeledCredit,1000);assert.equal(ukIndiaCredit({...i,ukTaxWithoutIncome:11000}).modeledCredit,1000);assert.throws(()=>ukIndiaCredit({...i,scopeConfirmed:false}));assert.throws(()=>ukIndiaCredit({...i,ukTaxWithoutIncome:13000}));
+});
+test('debt repayment exact cent reconciliation, final partial payment and savings',()=>{
+ const i={currency:'INR',principal:1000,annualRatePercent:12,monthlyPayment:500,extraPayment:500,horizonMonths:12};const r=debtRepayment(i);
+ assert.deepEqual(r.base.schedule,[{month:1,payment:500,interest:10,principalRepaid:490,remaining:510},{month:2,payment:500,interest:5.1,principalRepaid:494.9,remaining:15.1},{month:3,payment:15.25,interest:.15,principalRepaid:15.1,remaining:0}]);
+ assert.equal(r.base.interest,15.25);assert.equal(r.accelerated.payoffMonths,2);assert.equal(r.accelerated.interest,10.1);assert.equal(r.interestSaved,5.15);assert.equal(r.monthsSaved,1);
+ const zero=debtRepayment({...i,annualRatePercent:0});assert.equal(zero.base.payoffMonths,2);assert.equal(zero.interestSaved,0);
+ const stalled=debtRepayment({...i,monthlyPayment:10,extraPayment:0});assert.equal(stalled.base.status,'payment-does-not-reduce-principal');assert.equal(stalled.interestSaved,null);
+ assert.equal(debtRepayment({...i,horizonMonths:1}).base.status,'horizon-ended');assert.throws(()=>debtRepayment({...i,annualRatePercent:101}));assert.throws(()=>debtRepayment({...i,horizonMonths:601}));
 });
