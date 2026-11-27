@@ -4,7 +4,7 @@ const FLOOR_KEY='taxpulse:regulatory-sequence-floor';
 export async function readDurableSequenceFloor(store){
  if(!store||typeof store.get!=='function'||typeof store.put!=='function')throw Error('Durable sequence-floor storage unavailable');
  const raw=await store.get(FLOOR_KEY,'text');
- if(raw===null||typeof raw!=='string'||!/^(0|[1-9]\\d*)$/.test(raw))throw Error('Durable regulatory sequence floor is not initialized');
+ if(raw===null||typeof raw!=='string'||!/^(0|[1-9]\d*)$/.test(raw))throw Error('Durable regulatory sequence floor is not initialized');
  const floor=Number(raw);
  if(!Number.isSafeInteger(floor)||floor<0)throw Error('Invalid durable regulatory sequence floor');
  return floor;
