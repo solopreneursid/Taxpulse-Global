@@ -7,6 +7,12 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.equal(p.missingBackendCountries.length,0);
  assert.equal(Object.keys(p.backendPITInputBasis).length,8);
  assert.equal(p.backendPITInputBasis.DE,'taxableIncome with individual or eligible joint assessment');assert.equal(p.missingBackendModules.length,6);assert.equal(p.productionAuthorized,false);assert.match(p.gate,/blocked/);
+ assert.equal(Object.values(p.apiIntegration.routes).every(r=>r.worker&&r.openApi),true);
+ assert.deepEqual(p.apiIntegration.bundledPreviewSalaryRemainderCountries,['US','GB','CA','AU','IN','SG','DE','AE']);
+ assert.deepEqual(p.apiIntegration.signedPreviewSalaryRemainderCountries,['US','GB','CA','AU','SG']);
+ assert.equal(p.apiIntegration.payrollCompleteness,'narrow salary scenarios only; not a complete payroll, withholding, employer-contribution or filing engine');
+ assert.equal(p.apiIntegration.propertyTransferTaxJurisdictions.length,7);
+ assert.equal(p.apiIntegration.productionEnabled,false);
  assert.equal(p.scopedTaxComponents.indirectTaxRules.length,12);
  assert.equal(p.scopedTaxComponents.corporateTaxRules.length,4);
  assert.equal(p.scopedTaxComponents.employerPayrollComponents.length,1);
