@@ -24,7 +24,7 @@ test('every scope records gaps and explicit source and test evidence states',()=
  for(const entry of registry.entries){
   assert.ok(entry.knownGaps.length>0,entry.scopeId);
   assert.ok(['recorded-source-urls','no-source-urls-recorded'].includes(entry.sourceStatus),entry.scopeId);
-  assert.ok(['country-specific-test-file-references','module-test-file-references-only','no-test-file-reference-recorded'].includes(entry.testStatus),entry.scopeId);
+  assert.ok(['module-test-file-references-only','no-test-file-reference-recorded'].includes(entry.testStatus),entry.scopeId);
   assert.ok(Array.isArray(entry.sourceReferences),entry.scopeId);
   assert.ok(Array.isArray(entry.testFiles),entry.scopeId);
   assert.ok(Array.isArray(entry.implementationFiles),entry.scopeId);
