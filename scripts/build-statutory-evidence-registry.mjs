@@ -164,7 +164,7 @@ function collectSourceRecords(paths,country){
 }
 function countrySpecificTests(paths,country){
  const aliases=COUNTRY_ALIASES[country]||[];
- const pattern=new RegExp(`(?:['"]${country}['"]|\\b${country}\\b|${aliases.map(x=>x.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\$&')).join('|')})`,'i');
+ const pattern=new RegExp(`(?:['"]${country}['"]|\\b${country}\\b|${aliases.join('|')})`,'i');
  return paths.filter(path=>pattern.test(readText(path)));
 }
 export function buildStatutoryEvidenceRegistry(){
