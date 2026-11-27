@@ -58,6 +58,14 @@ The 30-source read-only regulatory probe recorded five candidate observation gro
 
 Migration 005 is applied to the empty `taxpulse-regulatory-preview` D1 database. The publisher Worker remains unscheduled; the calculator preview Worker remains KV-only. No signing keys are enrolled, no rules are published, no production system was changed, and monetization remains disabled.
 
+## Scoped tax component expansion — 27 November 2026
+
+The preview now contains a separate versioned 2026 business-tax registry with 12 indirect-tax jurisdiction components and four corporate-tax components. It adds date-resolved standard VAT/GST/HST and Texas state-only sales tax, tax-inclusive/exclusive price arithmetic, US/Canada/Germany/Singapore corporate components, and reuses the payroll registry for the US employer FICA calculation. The one-item treaty-credit tool now delegates to a bounded four-limit arithmetic module.
+
+The browser preview build includes these modules and their rule registry in the engine fingerprint and static asset revision. The standard indirect-tax tool requires a transaction date and explicit confirmation of seller registration, domestic place of supply, standard-rate classification and absence of reliefs. The existing tool pages for company tax, US employer FICA and treaty credit delegate to the new shared components where their scope matches; other country-specific examples retain their narrower existing implementations.
+
+This does not complete any of the 56 statutory scopes. India GST, local US sales taxes, Canadian PST/QST, full corporate liabilities, tax classification, full place-of-supply logic, statutory eligibility and filing treatment remain incomplete. The corporate components are before selected rebates/reliefs where noted. The new registry is not part of a trusted signed production package, all outputs remain sample-only and taxRulesVerified=false, and the release gate, manifest and production deployment remain unchanged. Independent review is still required.
+
 ## Founder and independent-review actions
 1. Appoint qualified independent reviewers for the 56 country/module scopes, including an explicit decision on the two analogous/non-applicable cases.
 2. Appoint an independent security assessor and approve an isolated test scope.
