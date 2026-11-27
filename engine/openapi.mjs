@@ -2048,5 +2048,101 @@ export const spec = {
           }
         }
       },
+      "/v1/employer-payroll/uk-ni": {
+        "post": {
+          "operationId": "calculateUkEmployerNi",
+          "description": "UK 2026–27 ordinary category-A employee employer National Insurance for 12 equal monthly payments. Excludes Employment Allowance, special employee classes and other employer costs.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "region",
+                    "monthlyGross",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "region": {
+                      "enum": [
+                        "RUK",
+                        "SCT"
+                      ]
+                    },
+                    "monthlyGross": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100000
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Monthly and annual employer NI component"
+            },
+            "400": {
+              "description": "Unsupported payroll scope"
+            }
+          }
+        }
+      },
+      "/v1/business/india-notified-gst": {
+        "post": {
+          "operationId": "calculateNotifiedIndiaGstExample",
+          "description": "Historical notified HSN 2523 IGST component as at 22 September 2025 only. This is not a general GST calculator or return.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "classification",
+                    "priceBasis",
+                    "amount",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "classification": {
+                      "const": "2523-2025-09-22"
+                    },
+                    "priceBasis": {
+                      "enum": [
+                        "exclusive",
+                        "inclusive"
+                      ]
+                    },
+                    "amount": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Historical notified GST example with official source"
+            },
+            "400": {
+              "description": "Unsupported or unconfirmed GST classification"
+            }
+          }
+        }
+      },
   }
 };
