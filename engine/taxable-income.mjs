@@ -1,4 +1,4 @@
-import {nationalPeriodStart,nationalRules,resolveNationalRule} from './national-registry.mjs';
+import {nationalPeriodStart,resolveNationalRule} from './national-registry.mjs';
 import {resolvePayrollRule} from './payroll-registry.mjs';
 import {resolveIndiaSalaryRule} from './india-salary-registry.mjs';
 import {regionalRules,resolveRegionalRule} from './regional-registry.mjs';
