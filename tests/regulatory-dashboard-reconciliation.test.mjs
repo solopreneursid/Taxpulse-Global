@@ -14,3 +14,10 @@ test('dashboard combines fresh independently delivered observations without appr
  const stale=await loadRegulatorySummary(config,env(edge,{...independent,checkedAt:'2026-11-24T00:00:00Z'}),now);assert.equal(stale.reconciliation.reachable,1);
  const malformed=await loadRegulatorySummary(config,env(edge,{...independent,automaticRuleChanges:true}),now);assert.equal(malformed.reconciliation,null);
 });
+
+test('malformed edge state fails safely and does not hide valid independent observations',async()=>{
+ const independent={...report([row(config[0]),row(config[1])]),collectorProof:proof};
+ const r=await loadRegulatorySummary(config,env({mode:'review_only',automaticRuleChanges:false,checkedAt:now.toISOString(),sources:{}},independent),now);
+ assert.equal(r.stale,true);assert.equal(r.reconciliation.reachable,2);assert.ok(r.sources.every(s=>s.status==='not_checked'&&s.reconciliationStatus==='independent_only'));
+ const absent=await loadRegulatorySummary(config,{REGULATORY_STATE:{get:async()=>{throw Error('KV unavailable');}}},now);assert.equal(absent.reconciliation.reachable,0);assert.equal(absent.taxRulesVerified,false);
+});
