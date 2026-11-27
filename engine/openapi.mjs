@@ -1311,5 +1311,448 @@ export const spec = {
         }
       }
     }
+    {
+      "/v1/business/indirect-tax": {
+        "post": {
+          "operationId": "calculateIndirectTaxComponent",
+          "description": "One explicitly confirmed 2026 standard-rated supply in a supported jurisdiction. Not a VAT/GST return or determination of place of supply, registration or input-credit entitlement.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "country",
+                    "jurisdiction",
+                    "taxYear",
+                    "transactionDate",
+                    "amount",
+                    "mode",
+                    "sellerRegistered",
+                    "standardRatedSupply",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "country": {
+                      "enum": [
+                        "GB",
+                        "DE",
+                        "AU",
+                        "SG",
+                        "AE",
+                        "CA",
+                        "US"
+                      ]
+                    },
+                    "jurisdiction": {
+                      "type": "string"
+                    },
+                    "taxYear": {
+                      "const": "2026"
+                    },
+                    "transactionDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "amount": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "mode": {
+                      "enum": [
+                        "exclusive",
+                        "inclusive"
+                      ]
+                    },
+                    "sellerRegistered": {
+                      "const": true
+                    },
+                    "standardRatedSupply": {
+                      "const": true
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Sample indirect tax component with rule provenance and limitations"
+            },
+            "400": {
+              "description": "Unsupported or out-of-scope transaction"
+            }
+          }
+        }
+      },
+      "/v1/business/corporate-tax": {
+        "post": {
+          "operationId": "calculateCorporateTaxComponent",
+          "description": "Tax on user-established 2026 taxable profit in supported countries. Eligibility and relief inputs must be independently established; not a corporate tax return.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "country",
+                    "taxYear",
+                    "taxableProfit",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "country": {
+                      "enum": [
+                        "US",
+                        "GB",
+                        "DE",
+                        "CA",
+                        "AU",
+                        "SG",
+                        "AE"
+                      ]
+                    },
+                    "taxYear": {
+                      "const": "2026"
+                    },
+                    "taxableProfit": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "eligibleSmallBusinessProfit": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "smallBusinessEligibilityConfirmed": {
+                      "type": "boolean"
+                    },
+                    "reliefScheme": {
+                      "enum": [
+                        "none",
+                        "partial",
+                        "startup"
+                      ]
+                    },
+                    "reliefEligibilityConfirmed": {
+                      "type": "boolean"
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Sample corporate income tax component with source and scope"
+            },
+            "400": {
+              "description": "Unsupported or unconfirmed corporate tax input"
+            }
+          }
+        }
+      },
+      "/v1/property/transfer-tax": {
+        "post": {
+          "operationId": "calculateScopedPropertyTransferCharge",
+          "description": "Selected date-bound property transfer tax or registration-fee examples. Jurisdiction and transaction scope must be explicitly confirmed; not total closing costs.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "jurisdiction",
+                    "taxableConsideration",
+                    "transactionDate",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "jurisdiction": {
+                      "enum": [
+                        "DE-BE",
+                        "CA-ON",
+                        "IN-DL-male",
+                        "IN-DL-female",
+                        "US-NY",
+                        "AU-NSW",
+                        "AE-DU"
+                      ]
+                    },
+                    "taxableConsideration": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "transactionDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Selected property transfer component with official source"
+            },
+            "400": {
+              "description": "Unsupported jurisdiction or transaction"
+            }
+          }
+        }
+      },
+      "/v1/investment/scoped-gain": {
+        "post": {
+          "operationId": "calculateScopedInvestmentGainComponent",
+          "description": "Selected capital-gain inclusion or tax components for Canada, Germany, Singapore and UAE using an already established positive gain. Not a total capital-gains assessment.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "jurisdiction",
+                    "confirmedNetGain",
+                    "transactionDate",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "jurisdiction": {
+                      "enum": [
+                        "CA",
+                        "DE",
+                        "SG",
+                        "AE"
+                      ]
+                    },
+                    "confirmedNetGain": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "transactionDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Selected investment tax component with limitations"
+            },
+            "400": {
+              "description": "Unsupported investment scope"
+            }
+          }
+        }
+      },
+      "/v1/treaty/credit": {
+        "post": {
+          "operationId": "calculateGenericTreatyCreditLimit",
+          "description": "Arithmetic-only one-item foreign tax credit limited by four user-established amounts. Does not determine treaty eligibility, residence or source.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "currency",
+                    "worldwideIncome",
+                    "foreignSourceIncome",
+                    "domesticTaxOnWorldwideIncome",
+                    "foreignTaxPaid",
+                    "treatyLimit",
+                    "taxOnForeignItem",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "currency": {
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "worldwideIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "foreignSourceIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "domesticTaxOnWorldwideIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "foreignTaxPaid": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "treatyLimit": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "taxOnForeignItem": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Arithmetic credit limit with explicit non-statutory limitations"
+            },
+            "400": {
+              "description": "Invalid or inconsistent credit amounts"
+            }
+          }
+        }
+      },
+      "/v1/treaty/confirmed-credit": {
+        "post": {
+          "operationId": "calculateConfirmedTreatyCreditComponent",
+          "description": "Selected bilateral treaty credit examples after the user independently establishes treaty eligibility and domestic limits. Historical or narrow country-specific scope applies.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "jurisdiction",
+                    "foreignTaxPaid",
+                    "treatyPermittedTax",
+                    "domesticLimit",
+                    "availableDomesticTax",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "jurisdiction": {
+                      "enum": [
+                        "CA-GB",
+                        "AU-GB",
+                        "DE-GB",
+                        "SG-GB",
+                        "AE-GB"
+                      ]
+                    },
+                    "foreignTaxPaid": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "treatyPermittedTax": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "domesticLimit": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "availableDomesticTax": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Selected bilateral credit component with scope and sources"
+            },
+            "400": {
+              "description": "Unsupported treaty or inconsistent credit inputs"
+            }
+          }
+        }
+      },
+      "/v1/employer-payroll/fica": {
+        "post": {
+          "operationId": "calculateUsEmployerFicaComponent",
+          "description": "US 2026 employer Social Security and Medicare share for one employee and one employer. Excludes FUTA, state unemployment and special wage classes.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "annualWages",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "annualWages": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Employer FICA component and wage-base source metadata"
+            },
+            "400": {
+              "description": "Unsupported employer payroll input"
+            }
+          }
+        }
+      }
+    },
   }
 };
