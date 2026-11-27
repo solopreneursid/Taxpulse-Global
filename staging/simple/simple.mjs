@@ -3,7 +3,7 @@ import {referenceInputs} from './engine/reference-data.mjs';
 import runtime from './engine/runtime-context.mjs';
 import {indiaCtc,purchasingPower,relocationBreakEven,indiaDeductionScenario,businessBreakEven,indiaTaxCliffs,indiaTaxOpportunity,taxableIncomeOpportunity,financialRunway,salaryCliffs,standardIndirectTax,financialHealthSnapshot,scopedCorporateTax,residentialSdlt,ukIndiaCredit,debtRepayment,notifiedIndiaGst,ukEmployerNi,australiaDiscountGain,investmentScenario,retirementScenario} from './engine/decision-tools.mjs';
 import {calculateBudget,expenseCategories} from './engine/budget.mjs';
-import {createFinancialProfile,offerFromProfile,exportEncryptedProfile,importEncryptedProfile} from './engine/financial-profile.mjs';
+import {createFinancialProfile,offerFromProfile,exportEncryptedProfile,importEncryptedProfile,validatePlanningArchive,exportPlanningArchive,importPlanningArchive} from './engine/financial-profile.mjs';
 import {compareInternational} from './engine/international.mjs';
 import {compareCompensation} from './engine/compensation.mjs';
 import {negotiateSalary} from './engine/negotiation.mjs';
@@ -777,3 +777,58 @@ $('salary-cliffs-use').addEventListener('click',()=>{clearSalaryCliffs();$('sala
 $('financial-runway-use').addEventListener('click',()=>{if(!savedProfile){$('financial-runway-profile-status').textContent='Keep a salary example first.';return;}$('financial-runway-currency').value=savedProfile.currency;$('financial-runway-monthlyIncome').value=(savedProfile.annualTakeHome/12).toFixed(2);for(const k of ['monthlyExpenses','liquidSavings','reserveFloor','goalAmount','horizonMonths'])$('financial-runway-'+k).value='';$('financial-runway-result').hidden=true;$('financial-runway-profile-status').textContent='Average monthly modeled salary remainder copied. Confirm or adjust the amount and enter all other assumptions.';});
 
 $('financial-health-use').addEventListener('click',()=>{if(!savedProfile){$('financial-health-profile-status').textContent='Keep a salary example first.';return;}$('financial-health-currency').value=savedProfile.currency;$('financial-health-monthlyIncome').value=(savedProfile.annualTakeHome/12).toFixed(2);for(const k of ['monthlyExpenses','liquidSavings','otherAssets','liabilities','monthlyDebtPayments','reserveFloor','goalAmount','horizonMonths'])$('financial-health-'+k).value='';$('financial-health-result').hidden=true;$('financial-health-profile-status').textContent='Average monthly modeled salary remainder copied. Confirm or adjust the amount; enter all remaining balances in the same currency.';});
+
+const planningKinds=new Set(['financial-runway','financial-health','debt-repayment','investment-scenario','retirement-scenario']);
+let planningArchive={salaryProfiles:[],scenarios:[]},planningGeneration=0,planningBusy=false;
+const planningStatus=$('planning-archive-status'),planningEntry=$('planning-archive-entry'),planningPassword=$('planning-archive-password'),planningFile=$('planning-archive-file');
+const planningAllowed=()=>runtime.state==='bundled-preview';
+function refreshPlanningEntries(){
+ planningEntry.replaceChildren();const option=(value,label)=>{const o=document.createElement('option');o.value=value;o.textContent=label;planningEntry.append(o);};
+ if(!planningArchive.salaryProfiles.length&&!planningArchive.scenarios.length)option('','No entries');
+ planningArchive.salaryProfiles.forEach((s,i)=>option('salary:'+i,'Salary '+(i+1)+' · '+s.region));
+ planningArchive.scenarios.forEach((s,i)=>option('scenario:'+i,'Scenario '+(i+1)+' · '+s.kind));
+}
+function clearPlanningTransfer(){planningGeneration++;planningPassword.value='';planningFile.value='';}
+function editPlanning(next){if(!planningAllowed()||planningBusy)throw Error('Planning archive unavailable');planningArchive=next;refreshPlanningEntries();clearPlanningTransfer();}
+function selectedPlanning(){
+ const m=/^(salary|scenario):(\d+)$/.exec(planningEntry.value);if(!m)throw Error('Choose an entry');
+ const list=m[1]==='salary'?'salaryProfiles':'scenarios',index=Number(m[2]);if(!Object.hasOwn(planningArchive[list],index))throw Error('Unknown entry');return {list,index,value:planningArchive[list][index]};
+}
+$('planning-archive-add').addEventListener('click',()=>{try{
+ const kind=$('planning-archive-kind').value,next=structuredClone(planningArchive);
+ if(kind==='salary'){if(!savedProfile)throw Error('Save a salary example first');next.salaryProfiles.push({...savedProfile.salary});}
+ else {if(!planningKinds.has(kind)||$(kind+'-result').hidden)throw Error('Calculate the selected planning example first');const spec=decisionSpecs.find(s=>s.id===kind);const input=Object.fromEntries(spec.fields.map(([k,_,type])=>[k,type==='currency'?$(kind+'-'+k).value:$(kind+'-'+k).valueAsNumber]));next.scenarios.push({kind,input});}
+ editPlanning(validatePlanningArchive(next,ruleContext));planningStatus.textContent='Example captured in this tab.';
+ }catch{planningStatus.textContent='Calculate the selected example first; check the collection limits and preview state.';}});
+$('planning-archive-remove').addEventListener('click',()=>{try{const {list,index}=selectedPlanning(),next=structuredClone(planningArchive);next[list].splice(index,1);editPlanning(next);planningStatus.textContent='Entry removed.';}catch{planningStatus.textContent='Select an available entry.';}});
+$('planning-archive-clear').addEventListener('click',()=>{clearPlanningTransfer();planningArchive={salaryProfiles:[],scenarios:[]};refreshPlanningEntries();planningStatus.textContent='Collection cleared. Existing calculator inputs are unchanged.';});
+$('planning-archive-load').addEventListener('click',()=>{try{
+ if(!planningAllowed()||planningBusy)throw Error('Unavailable');const {list,value}=selectedPlanning();
+ if(list==='salaryProfiles'){showSavedProfile(createFinancialProfile(value,ruleContext));planningStatus.textContent='Selected salary profile restored to this tab.';return;}
+ if(!planningKinds.has(value.kind))throw Error('Unsupported UI scenario');
+ for(const [k,v] of Object.entries(value.input))$(value.kind+'-'+k).value=String(v);
+ $(value.kind+'-result').hidden=true;$(value.kind+'-error').textContent='';document.querySelector('#category-money a[href="/tools/'+value.kind+'"]').click();
+ planningStatus.textContent='Inputs loaded; calculate again to view results.';
+ }catch{planningStatus.textContent='Cannot load the selected entry.';}});
+async function transferPlanning(action){
+ if(planningBusy||!planningAllowed()){planningStatus.textContent='Planning transfer unavailable.';return;}
+ planningBusy=true;const generation=planningGeneration,pass=planningPassword.value,file=planningFile.files?.[0],archive=structuredClone(planningArchive);planningPassword.value='';planningFile.value='';
+ $('planning-archive-export').disabled=true;$('planning-archive-import').disabled=true;
+ try{
+  if(action==='export'){
+   const encrypted=await exportPlanningArchive(archive,pass,engineFingerprint,ruleContext);
+   if(generation!==planningGeneration)return;
+   const url=URL.createObjectURL(new Blob([JSON.stringify(encrypted)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='taxpulse-planning-archive.json';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);planningStatus.textContent='Encrypted archive downloaded.';
+  }else{
+   if(!file||file.size>2100000)throw Error('Invalid file');const encrypted=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await file.arrayBuffer()));const restored=await importPlanningArchive(encrypted,pass,engineFingerprint,ruleContext);
+   if(generation!==planningGeneration)return;
+   if(restored.scenarios.some(s=>!planningKinds.has(s.kind)))throw Error('Unsupported workspace scenario');
+   planningArchive=restored;refreshPlanningEntries();planningStatus.textContent='Archive validated and replaced the collection. Select an entry to load it.';
+  }
+ }catch{if(generation===planningGeneration)planningStatus.textContent='Transfer failed. Check passphrase, file and engine version. Collection unchanged.';}
+ finally{planningBusy=false;$('planning-archive-export').disabled=false;$('planning-archive-import').disabled=false;}
+}
+$('planning-archive-export').addEventListener('click',()=>transferPlanning('export'));
+$('planning-archive-import').addEventListener('click',()=>transferPlanning('import'));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)clearPlanningTransfer();});
+window.addEventListener('pagehide',clearPlanningTransfer);
