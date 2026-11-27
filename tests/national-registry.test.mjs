@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {nationalRules,resolveNationalRule,validateNationalRegistry} from '../engine/national-registry.mjs';
+import {nationalEvidenceRules,nationalRules,resolveNationalRule,validateNationalRegistry} from '../engine/national-registry.mjs';
 import {assessTaxableIncome,calculateCapitalGain,calculateSalaryRemainder} from '../engine/taxable-income.mjs';
 import {historicalRuleCatalog} from '../engine/history.mjs';
 const baseline=JSON.parse(readFileSync(new URL('../rules/national-investment-2026.json',import.meta.url)));
@@ -13,6 +13,10 @@ test('national and investment schedules resolve against explicit jurisdiction pe
  const sg=resolveNationalRule('SG','national-assessment','2026','2025-01-01');
  assert.equal(sg.version,'SG-2026-national-assessment-v1');
  assert.equal(sg.effectiveUntil,'2026-01-01');
+ const sgSalary=resolveNationalRule('SG','salary-assessment','2026','2026-01-01');
+ assert.equal(sgSalary.version,'SG-2026-salary-assessment-v1');
+ assert.equal(sgSalary.effectiveUntil,'2027-01-01');
+ assert.throws(()=>resolveNationalRule('SG','salary-assessment','2026','2025-12-31'),/No eligible statutory rule/);
  const au=resolveNationalRule('AU','national-assessment','2026','2026-07-01');
  assert.equal(au.version,'AU-2026-national-assessment-v1');
  const gb=resolveNationalRule('GB','investment-assessment','2026','2026-04-06');
@@ -33,4 +37,10 @@ test('national effective periods cannot be silently changed or omitted',()=>{
  const shifted=structuredClone(baseline);
  shifted.effectivePeriods.find(r=>r.jurisdiction==='AU'&&r.component==='national-assessment').effectiveFrom='2026-01-01';
  assert.throws(()=>validateNationalRegistry(shifted));
+});
+
+test('national evidence inventory includes every effective-dated component',async()=>{
+ const rows=await nationalEvidenceRules(baseline);
+ assert.equal(rows.length,10);
+ assert.ok(rows.some(r=>r.version==='SG-2026-salary-assessment-v1'&&r.component==='salary-assessment'));
 });
