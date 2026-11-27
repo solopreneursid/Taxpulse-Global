@@ -40,7 +40,9 @@ async function pack(sequence){
  const nationalEvidence=await nationalEvidenceRules(p.national);
  for(const r of nationalEvidence){
   const country=r.jurisdiction;
-  if(r.component==='national-assessment'){
+  if(r.component==='salary-assessment'){
+   for(const [pay,expected] of [[3000,156],[4000,459]])add(r,'salary-remainder',{country:'SG',region:'SG',taxYear:'2026',pay,scopeConfirmed:true},['incomeTax'],expected);
+  }else if(r.component==='national-assessment'){
    if(country==='US'){for(const [pay,expected] of [[16100,0],[26100,1000]])add(r,'salary-remainder',{country,region:'TX',taxYear:'2026',pay,scopeConfirmed:true},['incomeTax'],expected);}
    else if(country==='AE'){for(const salaryIncome of [1000,100000])add(r,'taxable-income',{country,taxYear:'2026',salaryIncome,employeeWagesOnly:true},['incomeTax'],0);}
    else {const rows={AU:[[100000,20520],[110000,23520]],CA:[[10000,0],[20000,496.72]],SG:[[10000,0],[30000,200]],DE:[[1000,0],[12348,0]]}[country];for(const [taxableIncome,expected] of rows)add(r,'taxable-income',{country,taxYear:'2026',taxableIncome,...(country==='DE'?{assessment:'individual'}:country==='CA'?{netIncome:taxableIncome,fullYearResident:true}:{residentEligible:true})},['incomeTax'],expected);}
