@@ -32,6 +32,11 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.equal(p.releaseAuthorization.maximumApprovalLifetimeHours,168);
  assert.equal(p.releaseAuthorization.keyRotationInvalidatesPriorApproval,true);
  assert.equal(p.releaseAuthorization.trustedKeysEnrolled,false);
+ assert.equal(p.recoverySequenceFloor.binding,'RULE_SEQUENCE_FLOOR');
+ assert.equal(p.recoverySequenceFloor.key,'taxpulse:regulatory-sequence-floor');
+ assert.equal(p.recoverySequenceFloor.backupRestoreRegressionTest,true);
+ assert.equal(p.recoverySequenceFloor.provisioned,false);
+ assert.equal(p.recoverySequenceFloor.productionReady,false);
  assert.equal(p.supplementalSourceMonitoring.sourceCount,38);
  assert.equal(p.supplementalSourceMonitoring.schedule,'25 2 * * *');
  assert.equal(p.supplementalSourceMonitoring.cadence,'daily');
