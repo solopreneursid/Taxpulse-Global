@@ -49,12 +49,13 @@ export const spec = {
                   },
                   "module": {
                     "enum": [
-                      "pit"
+                      "pit",
+                      "payroll"
                     ]
                   },
                   "parameters": {
                     "type": "object",
-                    "description": "For IN, US and GB PIT, parameters use grossSalary and optional preTaxDeductions; US filingStatus is one of single (default), mfj, hoh or mfs, and IN requires residentIndividual. For DE, parameters require taxableIncome and assessment (individual or joint). For AE, parameters require salaryIncome and employeeWagesOnly=true. For CA, parameters require taxableIncome, netIncome and fullYearResident=true. For AU and SG, parameters require taxableIncome and residentEligible=true. The five extended country cases are scoped components, not gross-to-net salary estimates. All results are sampleOnly=true and taxRulesVerified=false."
+                    "description": "For module pit: IN, US and GB parameters use grossSalary and optional preTaxDeductions; US filingStatus is one of single (default), mfj, hoh or mfs, and IN requires residentIndividual. DE requires taxableIncome and assessment (individual or joint); AE requires salaryIncome and employeeWagesOnly=true; CA requires taxableIncome, netIncome and fullYearResident=true; AU and SG require taxableIncome and residentEligible=true. For module payroll: all countries require region, pay and scopeConfirmed=true. Pay is annual for IN, US, CA and AU, and monthly for GB, DE, AE and SG. IN additionally requires epfMonthlyWage and professionalTaxAnnual; DE requires annualTaxableIncome and healthSupplementRate; AE requires monthlyBasicSalary. Supported regions are IN, TX, RUK/SCT, DE, AE, AB, AU and SG respectively. Payroll results are selected salary-remainder scenarios, not payroll processing, withholding instructions or complete payslips. All results are sampleOnly=true and taxRulesVerified=false."
                   }
                 },
                 "additionalProperties": false
