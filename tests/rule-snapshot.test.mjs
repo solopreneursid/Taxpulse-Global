@@ -55,3 +55,34 @@ test('synthetic key rotation and restored-head rollback require new trusted keys
  assert.equal((await loadRuntimeRules({...rotated,RULE_DB:oldEnv.RULE_DB},engineFingerprint,{now})).state,'blocked');
  assert.equal((await loadRuntimeRules({...rotated,RULE_MIN_SEQUENCE:'4'},engineFingerprint,{now})).state,'blocked');
 });
+
+test('national rule version IDs bind immutable parameter payloads',async()=>{
+ const first=payload(),previous=await verifyRuleSnapshot(await sign(first),options);
+ const changed=payload();changed.sequence=2;changed.national.national.AU.rates[1]=1400;
+ await assert.rejects(
+  verifyRuleSnapshot(await sign(changed),{...options,previous}),
+  /Immutable national rule version changed/
+ );
+});
+test('started national rule periods cannot be replaced under a new version ID',async()=>{
+ const first=payload(),previous=await verifyRuleSnapshot(await sign(first),options);
+ const changed=payload();changed.sequence=2;
+ const row=changed.national.effectivePeriods.find(r=>r.jurisdiction==='AU'&&r.component==='national-assessment');
+ const oldVersion=row.version;row.version='AU-2026-national-assessment-v2';
+ changed.evidence=changed.evidence.map(e=>e.version===oldVersion?{...e,version:row.version}:e);
+ await assert.rejects(
+  verifyRuleSnapshot(await sign(changed),{...options,previous}),
+  /Started national rule version cannot be replaced/
+ );
+});
+test('started regional, payroll and salary versions cannot disappear from signed snapshots',async()=>{
+ const first=payload(),previous=await verifyRuleSnapshot(await sign(first),options);
+ const changed=payload();changed.sequence=2;
+ const row=changed.regional.versions.find(r=>r.jurisdiction==='US-IL');
+ const oldVersion=row.version;row.version='US-IL-2026-regional-v2';
+ changed.evidence=changed.evidence.map(e=>e.version===oldVersion?{...e,version:row.version}:e);
+ await assert.rejects(
+  verifyRuleSnapshot(await sign(changed),{...options,previous}),
+  /Started or historical version cannot be replaced/
+ );
+});
