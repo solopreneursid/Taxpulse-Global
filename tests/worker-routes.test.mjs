@@ -28,6 +28,7 @@ test('generated Worker routes and validation',async()=>{
  for(const path of ['/assets/engine/browser-vault.mjs','/assets/engine/secure-records.mjs','/assets/engine/document-text.mjs','/assets/local-tools.mjs'])assert.equal((await call(path)).status,200);
  assert.equal((await call('/assets/secure-records.mjs')).status,404);
  const manifest=await call('/app.webmanifest');assert.equal(manifest.status,200);assert.equal((await manifest.json()).display,'standalone');const sw=await call('/sw.js');assert.equal(sw.status,200);assert.equal(sw.headers.get('service-worker-allowed'),'/');assert.match(await sw.text(),/No tax calculations are available offline/);
+ const openapi=await (await call('/openapi.json')).json();for(const path of ['/v1/business/indirect-tax','/v1/business/corporate-tax','/v1/business/scoped-corporate-tax','/v1/property/transfer-tax','/v1/property/uk-sdlt','/v1/property/sg-bsd','/v1/investment/scoped-gain','/v1/investment/au-discount-gain','/v1/treaty/credit','/v1/treaty/scoped-credit','/v1/treaty/confirmed-credit','/v1/treaty/uk-india-credit','/v1/employer-payroll/fica','/v1/employer-payroll/uk-ni','/v1/business/india-notified-gst'])assert.ok(openapi.paths[path]?.post,path);
  const catalog=await (await call('/v1/catalog')).json();assert.equal(catalog.countries.length,8);assert.deepEqual(catalog.countries.map(c=>c.code),['IN','US','GB','DE','AE','CA','AU','SG']);assert.deepEqual(catalog.filingStatusOptions.US,['single','mfj','hoh','mfs']);assert.match(catalog.countries.find(c=>c.code==='IN').taxYearLabel,/2026-27/);
  assert.equal((await (await call('/openapi.json')).json()).openapi,'3.1.0');
  const payload={country:'GB',taxYear:'2026',module:'pit',parameters:{grossSalary:130000}};
@@ -42,8 +43,11 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(html.headers.get('x-frame-options'),'DENY');
  assert.equal(html.headers.get('cross-origin-opener-policy'),'same-origin');
  assert.equal(html.headers.get('cross-origin-resource-policy'),'same-origin');
- assert.deepEqual(catalog.modules,['pit','payroll','capgains','vat','corporate','property','dtaa']);assert.equal(Object.hasOwn(catalog.disabledModules,'payroll'),false);
- assert.equal(Object.keys(catalog.disabledModules).length,0);
+ assert.deepEqual(catalog.modules,['pit']);
+ for(const module of ['payroll','capgains','vat','corporate','property','dtaa']){
+  assert.ok(catalog.disabledModules[module]);
+  assert.equal((await post(JSON.stringify({...payload,module}))).status,400);
+ }
  const schema=(await (await call('/openapi.json')).json()).paths['/v1/country/calculate'].post.requestBody.content['application/json'].schema;
  assert.deepEqual(schema.properties.module.enum,catalog.modules);
  const countrySchema=(await (await call('/openapi.json')).json()).paths['/v1/country/calculate'].post.requestBody.content['application/json'].schema.properties.country.enum;assert.deepEqual(countrySchema,['IN','US','GB','DE','AE','CA','AU','SG']);
@@ -66,127 +70,6 @@ test('generated Worker routes and validation',async()=>{
   assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
   assert.ok(Number.isFinite(result.incomeTax));
  }
- const extendedPayrollCases=[
-  ['IN',{region:'IN',pay:1000000,epfMonthlyWage:15000,professionalTaxAnnual:2500,scopeConfirmed:true},'INR'],
-  ['US',{region:'TX',pay:100000,scopeConfirmed:true},'USD'],
-  ['GB',{region:'RUK',pay:5000,scopeConfirmed:true},'GBP'],
-  ['DE',{region:'DE',pay:5000,annualTaxableIncome:50000,healthSupplementRate:2.9,scopeConfirmed:true},'EUR'],
-  ['AE',{region:'AE',pay:20000,monthlyBasicSalary:16000,scopeConfirmed:true},'AED'],
-  ['CA',{region:'AB',pay:100000,scopeConfirmed:true},'CAD'],
-  ['AU',{region:'AU',pay:100000,scopeConfirmed:true},'AUD'],
-  ['SG',{region:'SG',pay:5000,scopeConfirmed:true},'SGD']
- ];
- for(const [country,parameters,currency] of extendedPayrollCases){
-  const response=await post(JSON.stringify({country,taxYear:'2026',module:'payroll',parameters}));
-  assert.equal(response.status,200,country);
-  const result=await response.json();
-  assert.equal(result.country,country);assert.equal(result.module,'payroll');
-  assert.equal(result.currency,currency);assert.equal(result.sampleOnly,true);
-  assert.equal(result.taxRulesVerified,false);
-  assert.ok(Number.isFinite(result.annualGross)&&result.annualGross>0);
-  assert.ok(Number.isFinite(result.annualRemainder)&&result.annualRemainder>=0);
-  assert.ok(result.warnings.some(w=>w.includes('not payroll processing')));
- }
- assert.equal((await post(JSON.stringify({country:'US',taxYear:'2026',module:'payroll',parameters:{region:'TX',pay:100000}}))).status,400);
- const capitalGainCases=[
-  ['IN',{acquired:'2020-01-01',disposed:'2026-12-01',saleProceeds:350000,adjustedBasis:100000,eligibleLosses:0,otherTaxableIncome:1500000,assetType:'listed-equity',scopeConfirmed:true},'estimatedGainTax'],
-  ['US',{acquired:'2020-01-01',disposed:'2026-12-01',saleProceeds:20000,adjustedBasis:10000,eligibleLosses:0,otherTaxableIncome:100000,filingStatus:'single',scopeConfirmed:true},'estimatedGainTax'],
-  ['GB',{acquired:'2020-01-01',disposed:'2026-12-01',saleProceeds:62600,adjustedBasis:50000,eligibleLosses:0,otherTaxableIncome:20000,scopeConfirmed:true},'estimatedGainTax'],
-  ['AU',{proceeds:50000,costBase:30000,eligibleCapitalLosses:2000,otherTaxableIncome:100000,acquired:'2024-06-01',disposed:'2026-11-27',scopeConfirmed:true},'modeledIncrementalIncomeTax'],
-  ['CA',{confirmedNetGain:10000,transactionDate:'2026-11-27',scopeConfirmed:true},'includedGain'],
-  ['DE',{confirmedNetGain:10000,transactionDate:'2026-11-27',scopeConfirmed:true},'modeledTax'],
-  ['SG',{confirmedNetGain:10000,transactionDate:'2026-11-27',scopeConfirmed:true},'modeledTax'],
-  ['AE',{confirmedNetGain:10000,transactionDate:'2026-11-27',scopeConfirmed:true},'modeledTax']
- ];
- for(const [country,parameters,resultField] of capitalGainCases){
-  const response=await post(JSON.stringify({country,taxYear:'2026',module:'capgains',parameters}));
-  assert.equal(response.status,200,country);
-  const result=await response.json();
-  assert.equal(result.country,country);assert.equal(result.taxYear,'2026');assert.equal(result.module,'capgains');
-  assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
-  assert.ok(Number.isFinite(result[resultField]),country+' '+resultField);
-  assert.ok(result.sourceUrls.length>0);
- }
- assert.equal((await post(JSON.stringify({country:'CA',taxYear:'2026',module:'capgains',parameters:{confirmedNetGain:10000,transactionDate:'2026-11-27',scopeConfirmed:false}}))).status,400);
- const propertyCases=[
-  ['IN',{purchaserCategory:'male',taxableConsideration:1000000,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
-  ['US',{taxableConsideration:300001,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
-  ['GB',{consideration:295000,buyerScope:'ordinary',transactionDate:'2026-11-27',scopeConfirmed:true},'stampDuty'],
-  ['DE',{taxableConsideration:100000,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
-  ['AE',{taxableConsideration:100000,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
-  ['CA',{taxableConsideration:400000,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
-  ['AU',{taxableConsideration:1350000,transactionDate:'2026-11-27',scopeConfirmed:true},'transferTax'],
-  ['SG',{purchasePrice:4500100,marketValue:4500100,propertyType:'residential',transactionDate:'2026-11-27',scopeConfirmed:true},'buyerStampDuty']
- ];
- for(const [country,parameters,resultField] of propertyCases){
-  const response=await post(JSON.stringify({country,taxYear:'2026',module:'property',parameters}));
-  assert.equal(response.status,200,country);
-  const result=await response.json();
-  assert.equal(result.country,country);assert.equal(result.taxYear,'2026');assert.equal(result.module,'property');
-  assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
-  assert.ok(Number.isFinite(result[resultField]));assert.ok(result.sourceUrls.length>0);
-  if(country==='AE')assert.equal(result.chargeType,'registration-fee');
- }
- assert.equal((await post(JSON.stringify({country:'IN',taxYear:'2026',module:'property',parameters:{purchaserCategory:'other',taxableConsideration:1000000,transactionDate:'2026-11-27',scopeConfirmed:true}}))).status,400);
- const indirectTaxCases=[
-  ['IN',{classification:'2523-2025-09-22',priceBasis:'exclusive',amount:100,scopeConfirmed:true},'taxAmount'],
-  ['US',{exclusiveAmount:100,scopeConfirmed:true},'stateTax'],
-  ['GB',{amount:100,mode:'exclusive',transactionDate:'2026-11-27',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true},'taxAmount'],
-  ['DE',{amount:100,mode:'exclusive',transactionDate:'2026-11-27',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true},'taxAmount'],
-  ['AE',{amount:100,mode:'exclusive',transactionDate:'2026-11-27',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true},'taxAmount'],
-  ['CA',{province:'ON',amount:100,mode:'exclusive',transactionDate:'2026-11-27',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true},'taxAmount'],
-  ['AU',{amount:100,mode:'exclusive',transactionDate:'2026-11-27',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true},'taxAmount'],
-  ['SG',{amount:100,mode:'exclusive',transactionDate:'2026-11-27',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true},'taxAmount']
- ];
- for(const [country,parameters,resultField] of indirectTaxCases){
-  const response=await post(JSON.stringify({country,taxYear:'2026',module:'vat',parameters}));
-  assert.equal(response.status,200,country);
-  const result=await response.json();
-  assert.equal(result.country,country);assert.equal(result.taxYear,'2026');assert.equal(result.module,'vat');
-  assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
-  assert.ok(Number.isFinite(result[resultField]));assert.ok(result.sourceUrls.length>0);
-  if(country==='IN')assert.match(result.taxYearLabel,/Historical HSN 2523/);
-  if(country==='US')assert.equal(result.taxType,'STATE_SALES_TAX');
- }
- assert.equal((await post(JSON.stringify({country:'CA',taxYear:'2026',module:'vat',parameters:{province:'QC',amount:100,mode:'exclusive',transactionDate:'2026-11-27',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true}}))).status,400);
- const treatyCases=[
-  ['IN',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticTax:10000,worldwideTaxableIncome:100000,foreignTaxableIncome:20000,domesticTaxOnItem:3000,scopeConfirmed:true}],
-  ['US',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticTax:10000,worldwideTaxableIncome:100000,foreignTaxableIncome:20000,domesticTaxOnItem:3000,scopeConfirmed:true}],
-  ['GB',{foreignTaxPaidGbp:3000,treatyEligibleCapGbp:2500,ukTaxWithIncome:12000,ukTaxWithoutIncome:9000,scopeConfirmed:true}],
-  ['CA',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:true}],
-  ['AU',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:true}],
-  ['DE',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:true}],
-  ['SG',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:true}],
-  ['AE',{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:true}]
- ];
- for(const [country,parameters] of treatyCases){
-  const response=await post(JSON.stringify({country,taxYear:'2026',module:'dtaa',parameters}));
-  assert.equal(response.status,200,country);
-  const result=await response.json();
-  assert.equal(result.country,country);assert.equal(result.taxYear,'2026');assert.equal(result.module,'dtaa');
-  assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
-  assert.ok(Number.isFinite(result.modeledCredit));assert.ok(result.sourceUrls.length>0);
- }
- assert.equal((await post(JSON.stringify({country:'CA',taxYear:'2026',module:'dtaa',parameters:{foreignTaxPaid:3000,treatyPermittedTax:2500,domesticLimit:2000,availableDomesticTax:5000,scopeConfirmed:false}}))).status,400);
- const corporateCases=[
-  ['IN',{taxableProfit:1000000,scopeConfirmed:true},'INR'],
-  ['US',{taxableProfit:100000,scopeConfirmed:true},'USD'],
-  ['GB',{taxableProfit:300000,scopeConfirmed:true},'GBP'],
-  ['DE',{taxableProfit:100000,scopeConfirmed:true},'EUR'],
-  ['AE',{taxableProfit:500000,scopeConfirmed:true},'AED'],
-  ['CA',{taxableProfit:100000,corporateScope:'general',scopeConfirmed:true},'CAD'],
-  ['AU',{taxableProfit:100000,corporateScope:'base-rate-entity',scopeConfirmed:true},'AUD'],
-  ['SG',{taxableProfit:100000,corporateScope:'partial-exemption',scopeConfirmed:true},'SGD']
- ];
- for(const [country,parameters,currency] of corporateCases){
-  const response=await post(JSON.stringify({country,taxYear:'2026',module:'corporate',parameters}));
-  assert.equal(response.status,200,country);
-  const result=await response.json();
-  assert.equal(result.country,country);assert.equal(result.taxYear,'2026');assert.equal(result.module,'corporate');
-  assert.equal(result.currency,currency);assert.equal(result.sampleOnly,true);assert.equal(result.taxRulesVerified,false);
-  assert.ok(Number.isFinite(result.grossCorporateTax));assert.ok(result.sourceUrls.length>0);
- }
- assert.equal((await post(JSON.stringify({country:'CA',taxYear:'2026',module:'corporate',parameters:{taxableProfit:100000,corporateScope:'unsupported',scopeConfirmed:true}}))).status,400);
  const assess=await call('/v1/taxable-income/calculate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'DE',taxYear:'2026',taxableIncome:50000,assessment:'individual'})});
  assert.equal(assess.status,200);assert.equal((await assess.json()).incomeTax,10548);
  assert.equal((await call('/v1/taxable-income/calculate')).status,405);
@@ -207,6 +90,41 @@ test('generated Worker routes and validation',async()=>{
  const contribution=await call('/v1/contributions/calculate',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'CA',taxYear:'2026',income:100000,scopeConfirmed:true})});
  assert.equal(contribution.status,200);assert.equal((await contribution.json()).totalEmployeeContribution,5769.52);
  assert.equal((await call('/v1/contributions/calculate')).status,405);
+ const businessTax=await call('/v1/business/indirect-tax',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'GB',jurisdiction:'GB',taxYear:'2026',transactionDate:'2026-11-27',amount:100,mode:'exclusive',sellerRegistered:true,standardRatedSupply:true,scopeConfirmed:true})});
+ assert.equal(businessTax.status,200);assert.equal((await businessTax.json()).taxAmount,20);
+ const corporate=await call('/v1/business/corporate-tax',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'DE',taxYear:'2026',taxableProfit:100000,scopeConfirmed:true})});
+ assert.equal(corporate.status,200);assert.equal((await corporate.json()).corporateIncomeTaxComponent,15000);
+
+ const scopedCorporate=await call('/v1/business/scoped-corporate-tax',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jurisdiction:'AU-base',taxableProfit:100000,scopeConfirmed:true})});
+ assert.equal(scopedCorporate.status,200);assert.equal((await scopedCorporate.json()).grossCorporateTax,25000);
+ const ukSdlt=await call('/v1/property/uk-sdlt',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({consideration:300000,buyerScope:'ordinary',transactionDate:'2026-11-27',scopeConfirmed:true})});
+ assert.equal(ukSdlt.status,200);assert.equal((await ukSdlt.json()).stampDuty,5000);
+ const singaporeBsd=await call('/v1/property/sg-bsd',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({purchasePrice:1000000,marketValue:1000000,propertyType:'residential',transactionDate:'2026-11-27',scopeConfirmed:true})});
+ assert.equal(singaporeBsd.status,200);assert.equal((await singaporeBsd.json()).buyerStampDuty,24600);
+ const scopedTreaty=await call('/v1/treaty/scoped-credit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jurisdiction:'US-GB',foreignTaxPaid:300,treatyPermittedTax:250,domesticTax:1000,worldwideTaxableIncome:100000,foreignTaxableIncome:20000,domesticTaxOnItem:250,scopeConfirmed:true})});
+ assert.equal(scopedTreaty.status,200);assert.equal((await scopedTreaty.json()).modeledCredit,200);
+ const property=await call('/v1/property/transfer-tax',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jurisdiction:'DE-BE',taxableConsideration:100000,transactionDate:'2026-11-27',scopeConfirmed:true})});
+ assert.equal(property.status,200);assert.equal((await property.json()).transferTax,6000);
+ const scopedGain=await call('/v1/investment/scoped-gain',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jurisdiction:'CA',confirmedNetGain:100000,transactionDate:'2026-11-27',scopeConfirmed:true})});
+ assert.equal(scopedGain.status,200);assert.equal((await scopedGain.json()).includedGain,50000);
+ const australianGain=await call('/v1/investment/au-discount-gain',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({proceeds:50000,costBase:30000,eligibleCapitalLosses:2000,otherTaxableIncome:100000,acquired:'2024-06-01',disposed:'2026-11-27',scopeConfirmed:true})});
+ assert.equal(australianGain.status,200);assert.equal((await australianGain.json()).modeledIncrementalIncomeTax,2700);
+
+ const treaty=await call('/v1/treaty/credit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({currency:'USD',worldwideIncome:100000,foreignSourceIncome:20000,domesticTaxOnWorldwideIncome:10000,foreignTaxPaid:3000,treatyLimit:2500,taxOnForeignItem:3000,scopeConfirmed:true})});
+ assert.equal(treaty.status,200);assert.equal((await treaty.json()).allowedCredit,2000);
+ const confirmedTreaty=await call('/v1/treaty/confirmed-credit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jurisdiction:'DE-GB',foreignTaxPaid:500,treatyPermittedTax:600,domesticLimit:700,availableDomesticTax:800,scopeConfirmed:true})});
+ assert.equal(confirmedTreaty.status,200);assert.equal((await confirmedTreaty.json()).modeledCredit,500);
+ const ukIndiaTreaty=await call('/v1/treaty/uk-india-credit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({foreignTaxPaidGbp:100,treatyEligibleCapGbp:150,ukTaxWithIncome:1000,ukTaxWithoutIncome:900,scopeConfirmed:true})});
+ assert.equal(ukIndiaTreaty.status,200);assert.equal((await ukIndiaTreaty.json()).modeledCredit,100);
+ const employer=await call('/v1/employer-payroll/fica',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({annualWages:100000,scopeConfirmed:true})});
+ assert.equal(employer.status,200);assert.equal((await employer.json()).employerFica,7650);
+ const ukEmployer=await call('/v1/employer-payroll/uk-ni',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({region:'RUK',monthlyGross:4000,scopeConfirmed:true})});
+ assert.equal(ukEmployer.status,200);assert.equal((await ukEmployer.json()).monthlyEmployerNi,537.45);
+ const indiaGst=await call('/v1/business/india-notified-gst',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({classification:'2523-2025-09-22',priceBasis:'exclusive',amount:100,scopeConfirmed:true})});
+ assert.equal(indiaGst.status,200);assert.equal((await indiaGst.json()).taxAmount,18);
+
+ for(const path of ['/v1/business/indirect-tax','/v1/business/corporate-tax','/v1/business/scoped-corporate-tax','/v1/property/transfer-tax','/v1/property/uk-sdlt','/v1/property/sg-bsd','/v1/investment/scoped-gain','/v1/investment/au-discount-gain','/v1/treaty/credit','/v1/treaty/scoped-credit','/v1/treaty/confirmed-credit','/v1/treaty/uk-india-credit','/v1/employer-payroll/fica','/v1/employer-payroll/uk-ni','/v1/business/india-notified-gst'])assert.equal((await call(path)).status,405,path);
+
  const extendedPay=await call('/v1/salary/remainder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'AU',region:'AU',taxYear:'2026',pay:100000,scopeConfirmed:true})});
  assert.equal(extendedPay.status,200);assert.equal((await extendedPay.json()).annualRemainder,77480);
  const history=await call('/v1/history/rules');assert.equal(history.status,200);assert.equal((await history.json()).rules.length,14);
@@ -217,6 +135,15 @@ test('generated Worker routes and validation',async()=>{
  assert.equal(dePay.status,200);assert.equal((await dePay.json()).annualRemainder,36402);
  const aePay=await call('/v1/salary/remainder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'AE',region:'AE',taxYear:'2026',pay:20000,monthlyBasicSalary:16000,scopeConfirmed:true})});
  assert.equal(aePay.status,200);assert.equal((await aePay.json()).annualRemainder,239937);
+ const gbPay=await call('/v1/salary/remainder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'GB',region:'RUK',taxYear:'2026',pay:4000,scopeConfirmed:true})});
+ assert.equal(gbPay.status,200);assert.equal((await gbPay.json()).annualRemainder,38080.08);
+ const caPay=await call('/v1/salary/remainder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'CA',region:'AB',taxYear:'2026',pay:100000,scopeConfirmed:true})});
+ assert.equal(caPay.status,200);assert.equal((await caPay.json()).annualRemainder,74458.5);
+ const inPay=await call('/v1/salary/remainder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'IN',region:'IN',taxYear:'2026',pay:1500000,epfMonthlyWage:15000,professionalTaxAnnual:2500,scopeConfirmed:true})});
+ assert.equal(inPay.status,200);assert.equal((await inPay.json()).annualRemainder,1378400);
+ const sgPay=await call('/v1/salary/remainder',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({country:'SG',region:'SG',taxYear:'2026',pay:5000,scopeConfirmed:true})});
+ assert.equal(sgPay.status,200);assert.equal((await sgPay.json()).annualRemainder,46960);
+
  for(const path of ['/salary','/taxes','/career','/abroad','/money','/business','/tax-rules','/tools/salary-remainder','/tools/investment-tax']){const page=await call(path);assert.equal(page.status,200,path);assert.match(await page.text(),/category-card/);}
  assert.equal((await call('/tools/not-a-tool')).status,404);
  assert.equal((await call('/missing')).status,404);

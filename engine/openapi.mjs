@@ -49,18 +49,12 @@ export const spec = {
                   },
                   "module": {
                     "enum": [
-                      "pit",
-                      "payroll",
-                      "capgains",
-                      "vat",
-                      "corporate",
-                      "property",
-                      "dtaa"
+                      "pit"
                     ]
                   },
                   "parameters": {
                     "type": "object",
-                    "description": "For module pit: IN, US and GB parameters use grossSalary and optional preTaxDeductions; US filingStatus is one of single (default), mfj, hoh or mfs, and IN requires residentIndividual. DE requires taxableIncome and assessment (individual or joint); AE requires salaryIncome and employeeWagesOnly=true; CA requires taxableIncome, netIncome and fullYearResident=true; AU and SG require taxableIncome and residentEligible=true. For module payroll: all countries require region, pay and scopeConfirmed=true. Pay is annual for IN, US, CA and AU, and monthly for GB, DE, AE and SG. IN additionally requires epfMonthlyWage and professionalTaxAnnual; DE requires annualTaxableIncome and healthSupplementRate; AE requires monthlyBasicSalary. Supported regions are IN, TX, RUK/SCT, DE, AE, AB, AU and SG respectively. Payroll results are selected salary-remainder scenarios, not payroll processing, withholding instructions or complete payslips. For module capgains: IN, US and GB require acquired, disposed, saleProceeds, adjustedBasis, eligibleLosses, otherTaxableIncome and scopeConfirmed=true; IN also requires assetType and US requires filingStatus. AU requires proceeds, costBase, eligibleCapitalLosses, otherTaxableIncome, acquired, disposed and scopeConfirmed=true. CA, DE, SG and AE require confirmedNetGain, transactionDate and scopeConfirmed=true; these return inclusion or narrow tariff/exclusion components rather than complete tax liabilities. For module property: all countries require transactionDate and scopeConfirmed=true. IN additionally requires taxableConsideration and purchaserCategory male/female; US, DE, AE, CA and AU require taxableConsideration; GB requires whole-pound consideration and buyerScope ordinary/first-time; SG requires purchasePrice, marketValue and propertyType residential/nonresidential. The modeled jurisdictions are Delhi, New York State outside NYC, England/Northern Ireland, Berlin, Dubai, Ontario, New South Wales and Singapore respectively. Dubai returns a registration fee, not a tax; Singapore is BSD only. For module vat (indirect tax): IN requires classification 2523-2025-09-22, priceBasis exclusive/inclusive and amount; this is an historical HSN 2523 cement IGST example effective 2025-09-22, not a general 2026 GST calculator. US requires exclusiveAmount and returns Texas state sales tax only; local taxes are excluded and the US has no federal VAT. GB, DE, AU, SG and AE require amount, mode, transactionDate, sellerRegistered=true, standardRatedSupply=true and scopeConfirmed=true. CA additionally requires province AB/ON/NS/NB/NL/PE. These return standard-rated domestic VAT/GST components only. For module corporate: all countries require taxableProfit and scopeConfirmed=true. IN uses the domestic-company Section 115BAA component (22% plus modeled surcharge and cess); US uses the regular federal C-corporation rate; GB uses the standard small-profits/main-rate and marginal-relief schedule under the published single-associated-company, non-ring-fence scope; DE is the 15% Körperschaftsteuer component only; AE applies 0% up to AED 375,000 and 9% above for the standard non-free-zone scope; CA additionally requires corporateScope=general or small; AU requires corporateScope=base-rate-entity or full-rate; SG requires corporateScope=partial-exemption or startup-exemption. All corporate outputs are scoped scenarios on user-established taxable profit, not complete returns or final liabilities. For module dtaa: all countries require scopeConfirmed=true and caller-established tax amounts and treaty caps. IN and US use foreignTaxPaid, treatyPermittedTax, domesticTax, worldwideTaxableIncome, foreignTaxableIncome and domesticTaxOnItem. GB uses foreignTaxPaidGbp, treatyEligibleCapGbp, ukTaxWithIncome and ukTaxWithoutIncome. CA, AU, DE, SG and AE use foreignTaxPaid, treatyPermittedTax, domesticLimit and availableDomesticTax. The modeled treaty pairs are each country with the UK; GB uses the UK–India treaty credit component. Singapore's component is for a resident company; UAE's is for a juridical person subject to UAE corporate tax. This is a single-item treaty-credit component and does not determine treaty entitlement. All results are sampleOnly=true and taxRulesVerified=false."
+                    "description": "For IN, US and GB PIT, parameters use grossSalary and optional preTaxDeductions; US filingStatus is one of single (default), mfj, hoh or mfs, and IN requires residentIndividual. For DE, parameters require taxableIncome and assessment (individual or joint). For AE, parameters require salaryIncome and employeeWagesOnly=true. For CA, parameters require taxableIncome, netIncome and fullYearResident=true. For AU and SG, parameters require taxableIncome and residentEligible=true. The five extended country cases are scoped components, not gross-to-net salary estimates. All results are sampleOnly=true and taxRulesVerified=false."
                   }
                 },
                 "additionalProperties": false
@@ -1316,6 +1310,906 @@ export const spec = {
           }
         }
       }
-    }
+      },
+      "/v1/business/indirect-tax": {
+        "post": {
+          "operationId": "calculateIndirectTaxComponent",
+          "description": "One explicitly confirmed 2026 standard-rated supply in a supported jurisdiction. Not a VAT/GST return or determination of place of supply, registration or input-credit entitlement.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "country",
+                    "jurisdiction",
+                    "taxYear",
+                    "transactionDate",
+                    "amount",
+                    "mode",
+                    "sellerRegistered",
+                    "standardRatedSupply",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "country": {
+                      "enum": [
+                        "GB",
+                        "DE",
+                        "AU",
+                        "SG",
+                        "AE",
+                        "CA",
+                        "US"
+                      ]
+                    },
+                    "jurisdiction": {
+                      "type": "string"
+                    },
+                    "taxYear": {
+                      "const": "2026"
+                    },
+                    "transactionDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "amount": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "mode": {
+                      "enum": [
+                        "exclusive",
+                        "inclusive"
+                      ]
+                    },
+                    "sellerRegistered": {
+                      "const": true
+                    },
+                    "standardRatedSupply": {
+                      "const": true
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Sample indirect tax component with rule provenance and limitations"
+            },
+            "400": {
+              "description": "Unsupported or out-of-scope transaction"
+            }
+          }
+        }
+      },
+      "/v1/business/corporate-tax": {
+        "post": {
+          "operationId": "calculateCorporateTaxComponent",
+          "description": "Tax on user-established 2026 taxable profit in supported countries. Eligibility and relief inputs must be independently established; not a corporate tax return.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "country",
+                    "taxYear",
+                    "taxableProfit",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "country": {
+                      "enum": [
+                        "US",
+                        "GB",
+                        "DE",
+                        "CA",
+                        "AU",
+                        "SG",
+                        "AE"
+                      ]
+                    },
+                    "taxYear": {
+                      "const": "2026"
+                    },
+                    "taxableProfit": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "eligibleSmallBusinessProfit": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "smallBusinessEligibilityConfirmed": {
+                      "type": "boolean"
+                    },
+                    "reliefScheme": {
+                      "enum": [
+                        "none",
+                        "partial",
+                        "startup"
+                      ]
+                    },
+                    "reliefEligibilityConfirmed": {
+                      "type": "boolean"
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Sample corporate income tax component with source and scope"
+            },
+            "400": {
+              "description": "Unsupported or unconfirmed corporate tax input"
+            }
+          }
+        }
+      },
+      "/v1/property/transfer-tax": {
+        "post": {
+          "operationId": "calculateScopedPropertyTransferCharge",
+          "description": "Selected date-bound property transfer tax or registration-fee examples. Jurisdiction and transaction scope must be explicitly confirmed; not total closing costs.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "jurisdiction",
+                    "taxableConsideration",
+                    "transactionDate",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "jurisdiction": {
+                      "enum": [
+                        "DE-BE",
+                        "CA-ON",
+                        "IN-DL-male",
+                        "IN-DL-female",
+                        "US-NY",
+                        "AU-NSW",
+                        "AE-DU"
+                      ]
+                    },
+                    "taxableConsideration": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "transactionDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Selected property transfer component with official source"
+            },
+            "400": {
+              "description": "Unsupported jurisdiction or transaction"
+            }
+          }
+        }
+      },
+      "/v1/investment/scoped-gain": {
+        "post": {
+          "operationId": "calculateScopedInvestmentGainComponent",
+          "description": "Selected capital-gain inclusion or tax components for Canada, Germany, Singapore and UAE using an already established positive gain. Not a total capital-gains assessment.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "jurisdiction",
+                    "confirmedNetGain",
+                    "transactionDate",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "jurisdiction": {
+                      "enum": [
+                        "CA",
+                        "DE",
+                        "SG",
+                        "AE"
+                      ]
+                    },
+                    "confirmedNetGain": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "transactionDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Selected investment tax component with limitations"
+            },
+            "400": {
+              "description": "Unsupported investment scope"
+            }
+          }
+        }
+      },
+      "/v1/treaty/credit": {
+        "post": {
+          "operationId": "calculateGenericTreatyCreditLimit",
+          "description": "Arithmetic-only one-item foreign tax credit limited by four user-established amounts. Does not determine treaty eligibility, residence or source.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "currency",
+                    "worldwideIncome",
+                    "foreignSourceIncome",
+                    "domesticTaxOnWorldwideIncome",
+                    "foreignTaxPaid",
+                    "treatyLimit",
+                    "taxOnForeignItem",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "currency": {
+                      "type": "string",
+                      "pattern": "^[A-Z]{3}$"
+                    },
+                    "worldwideIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "foreignSourceIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "domesticTaxOnWorldwideIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "foreignTaxPaid": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "treatyLimit": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "taxOnForeignItem": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Arithmetic credit limit with explicit non-statutory limitations"
+            },
+            "400": {
+              "description": "Invalid or inconsistent credit amounts"
+            }
+          }
+        }
+      },
+      "/v1/treaty/confirmed-credit": {
+        "post": {
+          "operationId": "calculateConfirmedTreatyCreditComponent",
+          "description": "Selected bilateral treaty credit examples after the user independently establishes treaty eligibility and domestic limits. Historical or narrow country-specific scope applies.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "jurisdiction",
+                    "foreignTaxPaid",
+                    "treatyPermittedTax",
+                    "domesticLimit",
+                    "availableDomesticTax",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "jurisdiction": {
+                      "enum": [
+                        "CA-GB",
+                        "AU-GB",
+                        "DE-GB",
+                        "SG-GB",
+                        "AE-GB"
+                      ]
+                    },
+                    "foreignTaxPaid": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "treatyPermittedTax": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "domesticLimit": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "availableDomesticTax": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Selected bilateral credit component with scope and sources"
+            },
+            "400": {
+              "description": "Unsupported treaty or inconsistent credit inputs"
+            }
+          }
+        }
+      },
+      "/v1/employer-payroll/fica": {
+        "post": {
+          "operationId": "calculateUsEmployerFicaComponent",
+          "description": "US 2026 employer Social Security and Medicare share for one employee and one employer. Excludes FUTA, state unemployment and special wage classes.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "annualWages",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "annualWages": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Employer FICA component and wage-base source metadata"
+            },
+            "400": {
+              "description": "Unsupported employer payroll input"
+            }
+          }
+        }
+      },
+      "/v1/treaty/uk-india-credit": {
+        "post": {
+          "operationId": "calculateUkIndiaTreatyCreditComponent",
+          "description": "UK-side one-item India-source foreign tax credit example for tax year 2025–26. All eligibility and domestic limits must be independently established; not a tax-credit claim.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "foreignTaxPaidGbp",
+                    "treatyEligibleCapGbp",
+                    "ukTaxWithIncome",
+                    "ukTaxWithoutIncome",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "foreignTaxPaidGbp": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "treatyEligibleCapGbp": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "ukTaxWithIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "ukTaxWithoutIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "UK-side treaty credit component with source provenance"
+            },
+            "400": {
+              "description": "Unsupported or inconsistent treaty inputs"
+            }
+          }
+        }
+      },
+      "/v1/business/scoped-corporate-tax": {
+        "post": {
+          "operationId": "calculateScopedCorporateTaxComponent",
+          "description": "Selected national corporate tax components on already established taxable profit. Jurisdiction-specific eligibility is supplied by the caller; not a corporate return.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "jurisdiction",
+                    "taxableProfit",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "jurisdiction": {
+                      "enum": [
+                        "GB",
+                        "AE",
+                        "AU-base",
+                        "AU-full",
+                        "US",
+                        "CA-general",
+                        "CA-small",
+                        "DE",
+                        "SG-PTE",
+                        "SG-startup",
+                        "IN-115BAA"
+                      ]
+                    },
+                    "taxableProfit": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Selected corporate tax component and source provenance"
+            },
+            "400": {
+              "description": "Unsupported or unconfirmed corporate scope"
+            }
+          }
+        }
+      },
+      "/v1/property/uk-sdlt": {
+        "post": {
+          "operationId": "calculateUkResidentialSdlt",
+          "description": "England and Northern Ireland ordinary residential freehold SDLT example. Higher rates, non-resident surcharge and other reliefs are excluded.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "consideration",
+                    "buyerScope",
+                    "transactionDate",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "consideration": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 1000000000
+                    },
+                    "buyerScope": {
+                      "enum": [
+                        "ordinary",
+                        "first-time"
+                      ]
+                    },
+                    "transactionDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "UK residential SDLT component"
+            },
+            "400": {
+              "description": "Unsupported property transaction"
+            }
+          }
+        }
+      },
+      "/v1/property/sg-bsd": {
+        "post": {
+          "operationId": "calculateSingaporeBuyerStampDuty",
+          "description": "Singapore buyer's stamp duty for one ordinary pure residential or non-residential acquisition. ABSD, SSD and other charges are excluded.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "purchasePrice",
+                    "marketValue",
+                    "propertyType",
+                    "transactionDate",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "purchasePrice": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "marketValue": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "propertyType": {
+                      "enum": [
+                        "residential",
+                        "nonresidential"
+                      ]
+                    },
+                    "transactionDate": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Singapore buyer's stamp duty component"
+            },
+            "400": {
+              "description": "Unsupported property transaction"
+            }
+          }
+        }
+      },
+      "/v1/treaty/scoped-credit": {
+        "post": {
+          "operationId": "calculateScopedBilateralTreatyCredit",
+          "description": "Selected US–UK or India–UK one-item foreign tax credit limitation. Eligibility, residence, sourcing and domestic tax bases must be independently established.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "jurisdiction",
+                    "foreignTaxPaid",
+                    "treatyPermittedTax",
+                    "domesticTax",
+                    "worldwideTaxableIncome",
+                    "foreignTaxableIncome",
+                    "domesticTaxOnItem",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "jurisdiction": {
+                      "enum": [
+                        "US-GB",
+                        "IN-GB"
+                      ]
+                    },
+                    "foreignTaxPaid": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "treatyPermittedTax": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "domesticTax": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "worldwideTaxableIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "foreignTaxableIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "domesticTaxOnItem": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Selected treaty credit component"
+            },
+            "400": {
+              "description": "Unsupported or inconsistent treaty scope"
+            }
+          }
+        }
+      },
+      "/v1/employer-payroll/uk-ni": {
+        "post": {
+          "operationId": "calculateUkEmployerNi",
+          "description": "UK 2026–27 ordinary category-A employee employer National Insurance for 12 equal monthly payments. Excludes Employment Allowance, special employee classes and other employer costs.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "region",
+                    "monthlyGross",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "region": {
+                      "enum": [
+                        "RUK",
+                        "SCT"
+                      ]
+                    },
+                    "monthlyGross": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100000
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Monthly and annual employer NI component"
+            },
+            "400": {
+              "description": "Unsupported payroll scope"
+            }
+          }
+        }
+      },
+      "/v1/business/india-notified-gst": {
+        "post": {
+          "operationId": "calculateNotifiedIndiaGstExample",
+          "description": "Historical notified HSN 2523 IGST component as at 22 September 2025 only. This is not a general GST calculator or return.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "classification",
+                    "priceBasis",
+                    "amount",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "classification": {
+                      "const": "2523-2025-09-22"
+                    },
+                    "priceBasis": {
+                      "enum": [
+                        "exclusive",
+                        "inclusive"
+                      ]
+                    },
+                    "amount": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Historical notified GST example with official source"
+            },
+            "400": {
+              "description": "Unsupported or unconfirmed GST classification"
+            }
+          }
+        }
+      },
+      "/v1/investment/au-discount-gain": {
+        "post": {
+          "operationId": "calculateAustraliaCapitalGainsDiscountComponent",
+          "description": "Australian resident individual capital-gains discount example for FY 2026–27, one asset held more than 12 months. Eligibility and loss treatment are user-confirmed; not a complete CGT assessment.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "proceeds",
+                    "costBase",
+                    "eligibleCapitalLosses",
+                    "otherTaxableIncome",
+                    "acquired",
+                    "disposed",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "proceeds": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "costBase": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "eligibleCapitalLosses": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "otherTaxableIncome": {
+                      "type": "number",
+                      "minimum": 0,
+                      "multipleOf": 0.01
+                    },
+                    "acquired": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "disposed": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Australian discounted assessable gain and incremental ordinary income tax component"
+            },
+            "400": {
+              "description": "Unsupported or unconfirmed CGT scope"
+            }
+          }
+        }
+      },
   }
 };

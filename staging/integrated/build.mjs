@@ -20,7 +20,7 @@ const write=(p,v)=>writeFileSync(new URL(p,bundle),v);
 const mapping={'index.html':'staging/integrated/index.html','script-1.js':'staging/assets/script-1.js','script-2.js':'staging/assets/script-2.js','style-1.css':'staging/assets/style-1.css','style-2.css':'staging/assets/style-2.css','application.js':'staging/integrated/application.js'};
 for(const [name,path] of Object.entries(mapping))write(name+'.txt',read(path));
 write('primitives.js.txt',engine+'\n');write('country-rules.js.txt','const COUNTRY_TAX_CONFIGS = '+JSON.stringify(rules)+';\n');
-for(const name of ['primitives','api','openapi','advanced','discovery'])write(name+'.mjs',read('engine/'+name+'.mjs'));
+for(const name of ['primitives','api','openapi','advanced','discovery','decision-tools'])write(name+'.mjs',read('engine/'+name+'.mjs'));
 let country=read('engine/country.mjs');
 for(const c of ['IN','US','GB','DE','AE','CA','AU','SG']){
  const from="import "+c+" from '../rules/2026/"+c+".json' with { type: 'json' };";
@@ -59,7 +59,6 @@ write('webmanifest.txt',"{\"id\":\"/\",\"name\":\"TaxPulse Global Preview\",\"sh
 write('browser-financial-profile.mjs.txt',read('engine/financial-profile.mjs'));
 write('browser-budget.mjs.txt',read('engine/budget.mjs'));
 write('browser-decision-tools.mjs.txt',read('engine/decision-tools.mjs'));
-write('decision-tools.mjs',read('engine/decision-tools.mjs'));
 write('browser-reference-data.mjs.txt',read('engine/reference-data.mjs'));
 write('public-reference-candidate.mjs.txt','export default '+JSON.stringify(JSON.parse(read('data/public-reference-candidate.json')))+';\n');
 

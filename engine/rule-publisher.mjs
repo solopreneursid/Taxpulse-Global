@@ -35,21 +35,37 @@ export async function verifyPublicationFixtures(snapshot,evidence,fixtures){
   }
  }
 }
-export async function publishSnapshot(db,envelope,fixtures,{publicKeyHex,engineFingerprint,review,reviewerPublicKeyHex,reviewerId,now=new Date()}){
+export async function publishSnapshot(db,envelope,fixtures,{publicKeyHex,engineFingerprint,review,reviewerPublicKeyHex,reviewerId,now=new Date(),sequenceFloorStore=null}){
  await verifyStatutoryReview(envelope,review,{publicKeyHex,reviewerPublicKeyHex,reviewerId,now});
  const head=await readRuleHead(db);
  const previous=head.envelope?JSON.parse(head.envelope).payload:null;
  const snapshot=await verifyRuleSnapshot(envelope,{publicKeyHex,engineFingerprint,minimumSequence:head.sequence,previous,now});
  verifyCoverage(snapshot);
  await verifyPublicationFixtures(snapshot,envelope.payload.evidence,fixtures);
+ if(sequenceFloorStore){
+  const raw=await sequenceFloorStore.get('taxpulse:regulatory-sequence-floor','text');
+  if(raw===null||!/^(0|[1-9]\d*)$/.test(raw))throw Error('Durable regulatory sequence floor is not initialized');
+  const floor=Number(raw);
+  if(!Number.isSafeInteger(floor)||head.sequence>floor||snapshot.sequence<=floor)throw Error('Snapshot does not advance the durable regulatory sequence floor');
+  // Advance the independent floor before touching D1. A failed D1 write leaves
+  // the system fail-closed and requires a new higher-sequence approval.
+  await sequenceFloorStore.put('taxpulse:regulatory-sequence-floor',String(snapshot.sequence));
+ }
  const result=await db.prepare("UPDATE regulatory_head SET sequence=?,digest=?,envelope=?,review_record=?,state='active' WHERE id=1 AND sequence=?").bind(snapshot.sequence,snapshot.digest,new TextDecoder().decode(snapshotBytes(envelope)),new TextDecoder().decode(snapshotBytes({review,publisherPublicKeyHex:publicKeyHex,reviewerPublicKeyHex})),head.sequence).run();
  if(result.meta?.changes!==1)throw Error('Concurrent publication; retry with fresh head');
  return {sequence:snapshot.sequence,digest:snapshot.digest,state:'active',taxRulesVerified:false};
 }
 // Emergency block retains the previous envelope and advances the sequence.
 // Recovery requires a newly signed snapshot, never a replay of an older pointer.
-export async function blockSnapshot(db,expectedSequence){
+export async function blockSnapshot(db,expectedSequence,sequenceFloorStore=null){
  if(!Number.isSafeInteger(expectedSequence)||expectedSequence<1)throw Error('Invalid sequence');
+ if(sequenceFloorStore){
+  const raw=await sequenceFloorStore.get('taxpulse:regulatory-sequence-floor','text');
+  if(raw===null||!/^(0|[1-9]\d*)$/.test(raw))throw Error('Durable regulatory sequence floor is not initialized');
+  const floor=Number(raw);
+  if(!Number.isSafeInteger(floor)||expectedSequence>floor)throw Error('Database sequence exceeds durable recovery floor');
+  if(expectedSequence+1>floor)await sequenceFloorStore.put('taxpulse:regulatory-sequence-floor',String(expectedSequence+1));
+ }
  const r=await db.prepare("UPDATE regulatory_head SET sequence=sequence+1,state='blocked' WHERE id=1 AND sequence=? AND state='active'").bind(expectedSequence).run();
  if(r.meta?.changes!==1)throw Error('Concurrent update or no active snapshot');
  return {sequence:expectedSequence+1,state:'blocked'};
