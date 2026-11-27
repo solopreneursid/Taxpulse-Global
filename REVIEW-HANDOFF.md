@@ -80,6 +80,12 @@ The deterministic cash-flow stress scenario now returns a month-by-month baselin
 
 The scenario remains a sensitivity calculation using user-entered after-tax monthly income and total expenses. It does not recalculate tax, model intra-month timing, inflation, interest, investment returns, borrowing, credit access, insurance, reimbursement or event probability. The additional path is derived output; the encrypted planning archive continues to store validated scenario inputs and recalculates outputs locally. No production or release-gate change.
 
+## Independent D1 rollback floor — 27 November 2026
+
+The scheduled publisher now requires a separate KV binding named `RULE_SEQUENCE_FLOOR`, storing the monotonic key `taxpulse:regulatory-sequence-floor`. The key is independent of D1 backup/restore. Publication advances this floor before the D1 compare-and-swap; emergency blocking advances it before the D1 head update. A restored active D1 head below the floor is blocked. Recovery accepts only a newly publisher-signed and independently reviewed snapshot with a sequence above the floor. The floor is never lowered.
+
+Regression coverage exercises a real SQLite file backup at sequence 1, advances the original database and floor to sequence 2, restores the older file, confirms rollback detection and blocking, then publishes a new approved sequence 3. This uses synthetic test keys and SQLite, not a Cloudflare-hosted restore drill. The Cloudflare KV namespace, binding and initial value have not been provisioned; the scheduled publisher remains disabled pending founder-controlled infrastructure setup.
+
 ## Authentication and privileged-action boundary
 
 The public calculator preview has no user-account or server-side financial-profile authentication service. Personal financial profiles and planning archives remain browser-local and encrypted; the preview does not upload those records. This avoids introducing an account/session database and a new sensitive-data attack surface. Privileged production release authority is separate: GitHub/Cloudflare account access plus offline founder and independent-reviewer Ed25519 authorization bound to the exact commit, manifest and artifact digest. Trusted release keys are not enrolled and production remains unauthorized. Any future server-side account or data-sync feature requires a separate threat model and explicit approval.
