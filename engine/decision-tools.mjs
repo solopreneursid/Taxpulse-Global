@@ -138,7 +138,7 @@ export function standardIndirectTax(input){
  const s=indirectSchedules[input.country],amount=units(input.amount),rate=BigInt(s.rate);
  const tax=input.priceBasis==='exclusive'?round(amount*rate,10000n):round(amount*rate,10000n+rate);
  const net=input.priceBasis==='exclusive'?amount:amount-tax,gross=net+tax;
- return {...sample,currency:s.currency,ratePercent:s.rate/100,netAmount:out(net),taxAmount:out(tax),grossAmount:out(gross),scope:s.scope,sourceUrls:[s.source],sourceReviewedOn:'2026-11-27',warnings:[s.scope+'. Published standard rate cross-check as of 27 November 2026, not independently approved. Confirm registered seller, tax point, place of supply, standard-rated classification and price basis before using. Single amount rounded to nearest currency cent; not invoice-line rounding, input tax recovery, filing, exemption, zero-rating, reduced rate, reverse charge or cross-border advice.']};
+ return {...sample,currency:s.currency,ratePercent:s.rate/100,netAmount:out(net),taxAmount:out(tax),grossAmount:out(gross),scope:s.scope,sourceUrls:[s.source],sourceReviewedOn:input.country.startsWith('CA-')?'2026-11-27':'2026-11-26',warnings:[s.scope+'. Published standard rate cross-check in November 2026, not independently approved. Confirm registered seller, tax point, place of supply, standard-rated classification and price basis before using. Single amount rounded to nearest currency cent; not invoice-line rounding, input tax recovery, filing, exemption, zero-rating, reduced rate, reverse charge or cross-border advice.']};
 }
 
 /** Integrated snapshot; user-entered balances and cash flows, no estimated asset valuations. */
@@ -190,7 +190,7 @@ export function scopedCorporateTax(input){
   numerator=p*(input.jurisdiction==='AU-base'?2500n:3000n);
  }
  const tax=round(numerator,input.jurisdiction.startsWith('SG-')?40000n:10000n);
- return {...sample,currency,taxableProfit:out(p),grossCorporateTax:out(tax),profitAfterModeledTax:out(p-tax),effectiveRatePercent:p===0n?0:Number(round(tax*10000n,p))/100,sourceUrls:[source],sourceReviewedOn:'2026-11-27',taxPeriod:period,scope,warnings:[scope+' '+period+'. Taxable profit must already be independently established, not turnover or accounting profit. Gross modeled rate calculation before other credits, offsets, reliefs, adjustments, withholding, dividend taxes or filing-specific rounding. No eligibility, accounting adjustments, associated-company count, free-zone status or tax residence inferred. No filing or statutory approval.']};
+ return {...sample,currency,taxableProfit:out(p),grossCorporateTax:out(tax),profitAfterModeledTax:out(p-tax),effectiveRatePercent:p===0n?0:Number(round(tax*10000n,p))/100,sourceUrls:[source],sourceReviewedOn:['GB','AE','AU-base','AU-full'].includes(input.jurisdiction)?'2026-11-26':'2026-11-27',taxPeriod:period,scope,warnings:[scope+' '+period+'. Taxable profit must already be independently established, not turnover or accounting profit. Gross modeled rate calculation before other credits, offsets, reliefs, adjustments, withholding, dividend taxes or filing-specific rounding. No eligibility, accounting adjustments, associated-company count, free-zone status or tax residence inferred. No filing or statutory approval.']};
 }
 
 /** England and Northern Ireland, one ordinary freehold residential purchase. */
