@@ -22,9 +22,9 @@ const MODULE_SOURCE_REGISTRIES={
 };
 const MODULE_EVIDENCE={
  pit:['de-ca-2026-assessment-review.json','india-2026-rebate-marginal-relief-review.json','india-2026-regime-compare.json','pit-independent-vectors-2026-11-25.json','initial-review-2026-11-25.json','history-2026-review.json'],
- payroll:['au-sg-ae-2026-review.json','contributions-2026-review.json','extended-salary-2026-review.json','german-emirati-salary-2026-review.json','salary-remainder-2026-review.json'],
+ payroll:['payroll-ca-gst-2026-11-28.json','au-sg-ae-2026-review.json','contributions-2026-review.json','extended-salary-2026-review.json','german-emirati-salary-2026-review.json','salary-remainder-2026-review.json'],
  capgains:['capital-gains-2026-review.json','property-crypto-2026-review.json','history-expansion-2026-review.json'],
- vat:['au-sg-ae-2026-review.json','initial-review-2026-11-25.json','history-2026-review.json'],
+ vat:['payroll-ca-gst-2026-11-28.json','au-sg-ae-2026-review.json','initial-review-2026-11-25.json','history-2026-review.json'],
  corporate:['initial-review-2026-11-25.json','history-2026-review.json'],
  property:['property-crypto-2026-review.json','regional-2026-review.json'],
  dtaa:['initial-review-2026-11-25.json','history-2026-review.json']
@@ -47,7 +47,7 @@ const MODULE_IMPLEMENTATION_FILES={
 };
 const MODULE_TEST_FILES={
  pit:['tests/country.test.mjs','tests/new-country-assessments.test.mjs','tests/official-pit-vectors.test.mjs','tests/pit-audit.test.mjs','tests/statutory-context.test.mjs','tests/statutory-us-gb.test.mjs','tests/statutory-de.test.mjs','tests/statutory-ca-au.test.mjs','tests/statutory-sg.test.mjs','tests/statutory-ae.test.mjs','tests/statutory-india.test.mjs','tests/taxable-income.test.mjs'],
- payroll:['tests/salary-remainder.test.mjs','tests/extended-salary.test.mjs','tests/german-emirati-salary.test.mjs','tests/contributions.test.mjs','tests/employer-payroll.test.mjs','tests/payroll-registry.test.mjs'],
+ payroll:['tests/salary-remainder.test.mjs','tests/extended-salary.test.mjs','tests/german-emirati-salary.test.mjs','tests/contributions.test.mjs','tests/employer-payroll.test.mjs','tests/payroll-source-vectors.test.mjs','tests/payroll-registry.test.mjs'],
  capgains:['tests/capital-gain.test.mjs','tests/property-crypto.test.mjs','tests/decision-tools.test.mjs'],
  vat:['tests/business-tax.test.mjs','tests/decision-tools.test.mjs'],
  corporate:['tests/business-tax.test.mjs','tests/decision-tools.test.mjs'],
