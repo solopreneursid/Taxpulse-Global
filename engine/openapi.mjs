@@ -2094,6 +2094,173 @@ export const spec = {
           }
         }
       },
+      "/v1/employer-payroll/de-social-insurance": {
+        "post": {
+          "operationId": "calculateGermanEmployerSocialInsurance",
+          "description": "2026 full-month ordinary German employer statutory pension, unemployment, health and care contributions outside Saxony; caller-confirmed common covered wage and insurer supplementary rate. Bundled preview only; not a complete payroll or filing engine.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "country",
+                    "taxYear",
+                    "monthlyCoveredWage",
+                    "healthSupplementRate",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "country": {
+                      "const": "DE"
+                    },
+                    "taxYear": {
+                      "const": "2026"
+                    },
+                    "monthlyCoveredWage": {
+                      "type": "number",
+                      "minimum": 2500,
+                      "maximum": 100000,
+                      "multipleOf": 0.01
+                    },
+                    "healthSupplementRate": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 10,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Scoped unverified calculation component"
+            },
+            "400": {
+              "description": "Unsupported parameters"
+            },
+            "503": {
+              "description": "Unavailable in signed preview or blocked regulatory state"
+            }
+          }
+        }
+      },
+      "/v1/employer-payroll/ae-federal-pension": {
+        "post": {
+          "operationId": "calculateUaeFederalPension",
+          "description": "2026 full-month GPSSA Law 57/2023 private-sector pension contribution component; caller-confirmed eligibility and contribution salary. Bundled preview only; not a complete payroll or filing engine.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "country",
+                    "taxYear",
+                    "monthlyContributionSalary",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "country": {
+                      "const": "AE"
+                    },
+                    "taxYear": {
+                      "const": "2026"
+                    },
+                    "monthlyContributionSalary": {
+                      "type": "number",
+                      "minimum": 3000,
+                      "maximum": 70000,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Scoped unverified calculation component"
+            },
+            "400": {
+              "description": "Unsupported parameters"
+            },
+            "503": {
+              "description": "Unavailable in signed preview or blocked regulatory state"
+            }
+          }
+        }
+      },
+      "/v1/employer-payroll/au-payday-super": {
+        "post": {
+          "operationId": "calculateAustraliaPaydaySuper",
+          "description": "FY 2026–27 incremental Australian Payday Super component for one eligible employee and employer, with caller-confirmed qualifying earnings. Bundled preview only; not a complete payroll or filing engine.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "country",
+                    "taxYear",
+                    "priorYearToDateQualifyingEarnings",
+                    "currentPayQualifyingEarnings",
+                    "scopeConfirmed"
+                  ],
+                  "properties": {
+                    "country": {
+                      "const": "AU"
+                    },
+                    "taxYear": {
+                      "const": "2026"
+                    },
+                    "priorYearToDateQualifyingEarnings": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1000000000,
+                      "multipleOf": 0.01
+                    },
+                    "currentPayQualifyingEarnings": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1000000000,
+                      "multipleOf": 0.01
+                    },
+                    "scopeConfirmed": {
+                      "const": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Scoped unverified calculation component"
+            },
+            "400": {
+              "description": "Unsupported parameters"
+            },
+            "503": {
+              "description": "Unavailable in signed preview or blocked regulatory state"
+            }
+          }
+        }
+      },
       "/v1/business/india-notified-gst": {
         "post": {
           "operationId": "calculateNotifiedIndiaGstExample",
