@@ -20,7 +20,7 @@ for (const [country,jurisdiction,rate,currency] of [
   ['SG','SG',900,'SGD'],['AE','AE',500,'AED'],['CA','CA-AB',500,'CAD'],
   ['CA','CA-ON',1300,'CAD'],['CA','CA-NS',1400,'CAD'],
   ['CA','CA-NB',1500,'CAD'],['CA','CA-NL',1500,'CAD'],
-  ['CA','CA-PE',1500,'CAD'],['US','US-TX',625,'USD']
+  ['CA','CA-PE',1500,'CAD'],...['BC','MB','NT','NU','QC','SK','YT'].map(r=>['CA','CA-'+r,500,'CAD']),['US','US-TX',625,'USD']
 ]) {
   test(country+' '+jurisdiction+' exclusive standard-rate calculation',() => {
     const result=calculateIndirectTax(supply(country,jurisdiction,100));
@@ -41,7 +41,7 @@ test('inclusive calculation reverses GST and sales tax without floating point',(
 test('supply classification, seller registration and place are explicit assertions',()=>{
   assert.throws(()=>calculateIndirectTax(supply('SG','SG',100,'exclusive',{sellerRegistered:false})));
   assert.throws(()=>calculateIndirectTax(supply('DE','DE',100,'exclusive',{standardRatedSupply:false})));
-  assert.throws(()=>calculateIndirectTax(supply('CA','CA-ON',100,'exclusive',{jurisdiction:'CA-QC'})));
+  assert.throws(()=>calculateIndirectTax(supply('CA','CA-ON',100,'exclusive',{jurisdiction:'CA-ZZ'})));
   assert.throws(()=>calculateIndirectTax(supply('US','US-TX',100,'exclusive',{jurisdiction:'US-CA'})));
   assert.throws(()=>calculateIndirectTax(supply('IN','IN',100)));
   assert.throws(()=>calculateIndirectTax(supply('GB','GB',100,'exclusive',{taxYear:'2025'})));
@@ -101,4 +101,13 @@ test('invalid business registry changes fail closed',()=>{
   const invertedRates=structuredClone(rules);
   invertedRates.corporateTax[1].smallBusinessRateBasisPoints=1600;
   assert.throws(()=>validateBusinessTaxRules(invertedRates));
+});
+
+test('CRA laptop example: Manitoba GST component and Nova Scotia HST',()=>{
+ const mb=calculateIndirectTax(supply('CA','CA-MB',1000));
+ assert.equal(mb.taxAmount,50);
+ assert.match(mb.warnings[0],/PST.*excluded/);
+ const ns=calculateIndirectTax(supply('CA','CA-NS',1000));
+ assert.equal(ns.taxAmount,140);
+ assert.equal(calculateIndirectTax(supply('CA','CA-QC',1050,'inclusive')).taxAmount,50);
 });
