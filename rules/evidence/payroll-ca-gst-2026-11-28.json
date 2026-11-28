@@ -1,0 +1,43 @@
+{
+  "reviewDate": "2026-11-28",
+  "status": "engineering-source-comparison-preview-only",
+  "productionEnabled": false,
+  "countries": {
+    "DE": {
+      "sources": [
+        "https://www.deutsche-rentenversicherung.de/DRV/DE/Ueber-uns-und-Presse/Presse/Meldungen/2025/25-10-08-bundeskabinett-sv-rechengroessen-vo-2026",
+        "https://www.bundesgesundheitsministerium.de/beitraege",
+        "https://www.bundesgesundheitsministerium.de/themen/pflege/online-ratgeber-pflege/die-pflegeversicherung/finanzierung"
+      ],
+      "scope": "General statutory employer contribution shares outside Saxony; examples derived from published rates, not an official payroll calculator."
+    },
+    "AE": {
+      "sources": [
+        "https://gpssa.gov.ae/pages/en/media-center/news/gpssa-reviews-most-prominent-features-federal-law-no-57-2023",
+        "https://www.gpssa.gov.ae/pages/en/media-center/news/gpssa-insureds-contribution-payment-may-be-extended-15th-day-each-month"
+      ],
+      "scope": "GPSSA Federal Law 57/2023 private-sector employee, employer and government contribution components. Examples derived from published rates."
+    },
+    "AU": {
+      "sources": [
+        "https://www.ato.gov.au/businesses-and-organisations/super-for-employers/paying-super-on-payday/what-payments-are-qualifying-earnings/maximum-contributions-base"
+      ],
+      "scope": "ATO published Michael example: 18750 current pay yields 2250; 100000 bonus after 206250 year-to-date yields 7749.60.",
+      "referenceKind": "official-worked-example"
+    },
+    "CA": {
+      "sources": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
+        "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/3-3-2/place-supply-province-overview.html"
+      ],
+      "scope": "CRA laptop example: 1000 Manitoba sale yields 50 federal GST excluding PST; Nova Scotia delivery yields 140 HST.",
+      "referenceKind": "official-worked-example"
+    }
+  },
+  "tests": [
+    "tests/payroll-source-vectors.test.mjs",
+    "tests/business-tax.test.mjs",
+    "tests/worker-routes.test.mjs"
+  ],
+  "limitations": "Not independent statutory review. No filing, complete payroll determination, taxability classification or production approval."
+}
