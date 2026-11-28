@@ -14,7 +14,9 @@
       "currency": "GBP",
       "rateBasisPoints": 2000,
       "scope": "Standard-rated domestic supplies only. Reduced, zero-rated and exempt supplies, Northern Ireland cross-border goods rules and place-of-supply determinations are excluded.",
-      "sourceUrls": ["https://www.gov.uk/vat-rates"]
+      "sourceUrls": [
+        "https://www.gov.uk/vat-rates"
+      ]
     },
     {
       "jurisdiction": "DE",
@@ -27,7 +29,9 @@
       "currency": "EUR",
       "rateBasisPoints": 1900,
       "scope": "Standard-rated taxable domestic supplies only. Reduced-rate, zero-rate, exemption and place-of-supply rules are excluded.",
-      "sourceUrls": ["https://www.gesetze-im-internet.de/ustg_1980/__12.html"]
+      "sourceUrls": [
+        "https://www.gesetze-im-internet.de/ustg_1980/__12.html"
+      ]
     },
     {
       "jurisdiction": "AU",
@@ -40,7 +44,9 @@
       "currency": "AUD",
       "rateBasisPoints": 1000,
       "scope": "Standard-rated taxable supplies only. GST-free, input-taxed, registration-threshold and cross-border rules are excluded.",
-      "sourceUrls": ["https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/how-gst-works"]
+      "sourceUrls": [
+        "https://www.ato.gov.au/businesses-and-organisations/gst-excise-and-indirect-taxes/gst/how-gst-works"
+      ]
     },
     {
       "jurisdiction": "SG",
@@ -53,7 +59,9 @@
       "currency": "SGD",
       "rateBasisPoints": 900,
       "scope": "Standard-rated local supplies by a GST-registered business only. Zero-rated, exempt, imported-services and reverse-charge rules are excluded.",
-      "sourceUrls": ["https://www.iras.gov.sg/taxes/goods-services-tax-%28gst%29/basics-of-gst/current-gst-rates"]
+      "sourceUrls": [
+        "https://www.iras.gov.sg/taxes/goods-services-tax-%28gst%29/basics-of-gst/current-gst-rates"
+      ]
     },
     {
       "jurisdiction": "AE",
@@ -66,7 +74,9 @@
       "currency": "AED",
       "rateBasisPoints": 500,
       "scope": "Standard-rated domestic transactions only. Zero-rated, exempt, designated-zone and place-of-supply rules are excluded.",
-      "sourceUrls": ["https://tax.gov.ae/en/faq.aspx?keyword=What+is+the+standard+rate+of+VAT+in+the+UAE%3F"]
+      "sourceUrls": [
+        "https://tax.gov.ae/en/faq.aspx?keyword=What+is+the+standard+rate+of+VAT+in+the+UAE%3F"
+      ]
     },
     {
       "jurisdiction": "CA-AB",
@@ -79,7 +89,9 @@
       "currency": "CAD",
       "rateBasisPoints": 500,
       "scope": "Alberta federal GST component only. Place-of-supply, zero-rating, exemptions and registration rules are not determined.",
-      "sourceUrls": ["https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"]
+      "sourceUrls": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"
+      ]
     },
     {
       "jurisdiction": "CA-ON",
@@ -92,7 +104,9 @@
       "currency": "CAD",
       "rateBasisPoints": 1300,
       "scope": "Ontario HST standard-rate component only. Place-of-supply, zero-rating, exemptions and registration rules are not determined.",
-      "sourceUrls": ["https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"]
+      "sourceUrls": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"
+      ]
     },
     {
       "jurisdiction": "CA-NS",
@@ -105,7 +119,9 @@
       "currency": "CAD",
       "rateBasisPoints": 1400,
       "scope": "Nova Scotia HST standard-rate component only. Place-of-supply, transition, zero-rating, exemptions and registration rules are not determined.",
-      "sourceUrls": ["https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"]
+      "sourceUrls": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"
+      ]
     },
     {
       "jurisdiction": "CA-NB",
@@ -118,7 +134,9 @@
       "currency": "CAD",
       "rateBasisPoints": 1500,
       "scope": "New Brunswick HST standard-rate component only. Place-of-supply, zero-rating, exemptions and registration rules are not determined.",
-      "sourceUrls": ["https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"]
+      "sourceUrls": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"
+      ]
     },
     {
       "jurisdiction": "CA-NL",
@@ -131,7 +149,9 @@
       "currency": "CAD",
       "rateBasisPoints": 1500,
       "scope": "Newfoundland and Labrador HST standard-rate component only. Place-of-supply, zero-rating, exemptions and registration rules are not determined.",
-      "sourceUrls": ["https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"]
+      "sourceUrls": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"
+      ]
     },
     {
       "jurisdiction": "CA-PE",
@@ -144,7 +164,9 @@
       "currency": "CAD",
       "rateBasisPoints": 1500,
       "scope": "Prince Edward Island HST standard-rate component only. Place-of-supply, zero-rating, exemptions and registration rules are not determined.",
-      "sourceUrls": ["https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"]
+      "sourceUrls": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html"
+      ]
     },
     {
       "jurisdiction": "US-TX",
@@ -157,7 +179,121 @@
       "currency": "USD",
       "rateBasisPoints": 625,
       "scope": "Texas state sales-tax component only. Local jurisdictions may add up to 2 percentage points; this calculator deliberately excludes local tax and does not determine taxable-item classification.",
-      "sourceUrls": ["https://comptroller.texas.gov/taxes/sales/faq/local.php"]
+      "sourceUrls": [
+        "https://comptroller.texas.gov/taxes/sales/faq/local.php"
+      ]
+    },
+    {
+      "jurisdiction": "CA-BC",
+      "country": "CA",
+      "taxType": "GST",
+      "version": "CA-BC-2026-gst-v1",
+      "taxYear": "2026",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": "2027-01-01",
+      "currency": "CAD",
+      "rateBasisPoints": 500,
+      "scope": "British Columbia federal GST component only. PST may also apply and is excluded; the total sales tax is not calculated. Place-of-supply, exemptions, zero-rating and registration rules must be established separately.",
+      "sourceUrls": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
+        "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/3-3-2/place-supply-province-overview.html"
+      ]
+    },
+    {
+      "jurisdiction": "CA-MB",
+      "country": "CA",
+      "taxType": "GST",
+      "version": "CA-MB-2026-gst-v1",
+      "taxYear": "2026",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": "2027-01-01",
+      "currency": "CAD",
+      "rateBasisPoints": 500,
+      "scope": "Manitoba federal GST component only. PST may also apply and is excluded; the total sales tax is not calculated. Place-of-supply, exemptions, zero-rating and registration rules must be established separately.",
+      "sourceUrls": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
+        "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/3-3-2/place-supply-province-overview.html"
+      ]
+    },
+    {
+      "jurisdiction": "CA-NT",
+      "country": "CA",
+      "taxType": "GST",
+      "version": "CA-NT-2026-gst-v1",
+      "taxYear": "2026",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": "2027-01-01",
+      "currency": "CAD",
+      "rateBasisPoints": 500,
+      "scope": "Northwest Territories federal GST component only. Place-of-supply, exemptions, zero-rating and registration rules must be established separately.",
+      "sourceUrls": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
+        "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/3-3-2/place-supply-province-overview.html"
+      ]
+    },
+    {
+      "jurisdiction": "CA-NU",
+      "country": "CA",
+      "taxType": "GST",
+      "version": "CA-NU-2026-gst-v1",
+      "taxYear": "2026",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": "2027-01-01",
+      "currency": "CAD",
+      "rateBasisPoints": 500,
+      "scope": "Nunavut federal GST component only. Place-of-supply, exemptions, zero-rating and registration rules must be established separately.",
+      "sourceUrls": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
+        "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/3-3-2/place-supply-province-overview.html"
+      ]
+    },
+    {
+      "jurisdiction": "CA-QC",
+      "country": "CA",
+      "taxType": "GST",
+      "version": "CA-QC-2026-gst-v1",
+      "taxYear": "2026",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": "2027-01-01",
+      "currency": "CAD",
+      "rateBasisPoints": 500,
+      "scope": "Quebec federal GST component only. QST may also apply and is excluded; the total sales tax is not calculated. Place-of-supply, exemptions, zero-rating and registration rules must be established separately.",
+      "sourceUrls": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
+        "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/3-3-2/place-supply-province-overview.html"
+      ]
+    },
+    {
+      "jurisdiction": "CA-SK",
+      "country": "CA",
+      "taxType": "GST",
+      "version": "CA-SK-2026-gst-v1",
+      "taxYear": "2026",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": "2027-01-01",
+      "currency": "CAD",
+      "rateBasisPoints": 500,
+      "scope": "Saskatchewan federal GST component only. PST may also apply and is excluded; the total sales tax is not calculated. Place-of-supply, exemptions, zero-rating and registration rules must be established separately.",
+      "sourceUrls": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
+        "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/3-3-2/place-supply-province-overview.html"
+      ]
+    },
+    {
+      "jurisdiction": "CA-YT",
+      "country": "CA",
+      "taxType": "GST",
+      "version": "CA-YT-2026-gst-v1",
+      "taxYear": "2026",
+      "effectiveFrom": "2026-01-01",
+      "effectiveUntil": "2027-01-01",
+      "currency": "CAD",
+      "rateBasisPoints": 500,
+      "scope": "Yukon federal GST component only. Place-of-supply, exemptions, zero-rating and registration rules must be established separately.",
+      "sourceUrls": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/gst-hst-businesses/charge-collect-which-rate.html",
+        "https://www.canada.ca/en/revenue-agency/services/forms-publications/publications/3-3-2/place-supply-province-overview.html"
+      ]
     }
   ],
   "corporateTax": [
@@ -175,7 +311,9 @@
       "partialExemptionTiers": null,
       "startupExemptionTiers": null,
       "scope": "Regular federal C-corporation income-tax component applied to already determined taxable income. Excludes state tax, credits, deductions, special taxes and alternative minimum tax.",
-      "sourceUrls": ["https://www.irs.gov/instructions/i1120"]
+      "sourceUrls": [
+        "https://www.irs.gov/instructions/i1120"
+      ]
     },
     {
       "jurisdiction": "CA",
@@ -191,7 +329,9 @@
       "partialExemptionTiers": null,
       "startupExemptionTiers": null,
       "scope": "Federal Part I component only. The caller must separately establish the eligible small-business deduction profit allocation and associated-corporation business limit. Excludes provincial/territorial tax and special rates.",
-      "sourceUrls": ["https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/corporation-tax-rates.html"]
+      "sourceUrls": [
+        "https://www.canada.ca/en/revenue-agency/services/tax/businesses/topics/corporations/corporation-tax-rates.html"
+      ]
     },
     {
       "jurisdiction": "DE",
@@ -207,7 +347,9 @@
       "partialExemptionTiers": null,
       "startupExemptionTiers": null,
       "scope": "Körperschaftsteuer component only. Excludes solidarity surcharge, municipal trade tax, tax-group rules, loss carryforwards and special adjustments.",
-      "sourceUrls": ["https://www.gesetze-im-internet.de/kstg_1977/__23.html"]
+      "sourceUrls": [
+        "https://www.gesetze-im-internet.de/kstg_1977/__23.html"
+      ]
     },
     {
       "jurisdiction": "SG",
@@ -221,15 +363,29 @@
       "rateBasisPoints": 1700,
       "smallBusinessRateBasisPoints": null,
       "partialExemptionTiers": [
-        { "limit": 10000, "exemptionRateBasisPoints": 7500 },
-        { "limit": 190000, "exemptionRateBasisPoints": 5000 }
+        {
+          "limit": 10000,
+          "exemptionRateBasisPoints": 7500
+        },
+        {
+          "limit": 190000,
+          "exemptionRateBasisPoints": 5000
+        }
       ],
       "startupExemptionTiers": [
-        { "limit": 100000, "exemptionRateBasisPoints": 7500 },
-        { "limit": 100000, "exemptionRateBasisPoints": 5000 }
+        {
+          "limit": 100000,
+          "exemptionRateBasisPoints": 7500
+        },
+        {
+          "limit": 100000,
+          "exemptionRateBasisPoints": 5000
+        }
       ],
       "scope": "YA 2026 corporate income-tax component before the YA 2026 corporate tax rebate or cash grant. Partial and start-up exemption eligibility must be independently established; excludes special incentives, group relief and other adjustments.",
-      "sourceUrls": ["https://www.iras.gov.sg/taxes/corporate-income-tax/basics-of-corporate-income-tax/corporate-income-tax-rate-rebates-and-tax-exemption-schemes"]
+      "sourceUrls": [
+        "https://www.iras.gov.sg/taxes/corporate-income-tax/basics-of-corporate-income-tax/corporate-income-tax-rate-rebates-and-tax-exemption-schemes"
+      ]
     }
   ]
 }

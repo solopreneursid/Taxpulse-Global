@@ -22,11 +22,12 @@ async function sign(p){const bytes=snapshotBytes(p);return {payload:p,digest:hex
 const options={publicKeyHex,engineFingerprint,now};
 const reviewerKeys=await webcrypto.subtle.generateKey('Ed25519',true,['sign','verify']);
 const reviewerPublicKeyHex=hex(await webcrypto.subtle.exportKey('raw',reviewerKeys.publicKey)),reviewerId='synthetic-runtime-reviewer';
+const anchorBinding=state=>({idFromName(name){assert.equal(name,'taxpulse-regulatory-head-v1');return name;},get(){return {getState:async()=>state};}});
 async function runtimeEnv(envelope){
  const payload=statutoryReviewPayload(envelope,reviewerId,now.toISOString());
  const review={payload,signature:hex(await webcrypto.subtle.sign('Ed25519',reviewerKeys.privateKey,snapshotBytes(payload)))};
  const row={sequence:envelope.payload.sequence,digest:envelope.digest,envelope:JSON.stringify(envelope),state:'active',review_record:JSON.stringify({review,publisherPublicKeyHex:publicKeyHex,reviewerPublicKeyHex})};
- return {RULE_DB:{prepare:()=>({first:async()=>row})},RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,RULE_MIN_SEQUENCE:'1'};
+ return {RULE_DB:{prepare:()=>({first:async()=>row})},REGULATORY_SEQUENCE_ANCHOR:anchorBinding({schemaVersion:1,sequence:envelope.payload.sequence,digest:envelope.digest,state:'active'}),RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,RULE_MIN_SEQUENCE:'1'};
 }
 test('signed snapshot drives actual calculation without code changes',async()=>{const p=payload();const il=p.regional.versions.find(r=>r.jurisdiction==='US-IL');il.rates=[500];const envelope=await sign(p),snapshot=await verifyRuleSnapshot(envelope,options);assert.equal(calculateRegionalTax({country:'US',region:'IL',taxYear:'2026',income:100000,scopeConfirmed:true},snapshot.regional).regionalTax,5000);assert.equal(snapshot.taxRulesVerified,false);});
 test('tampering, replay, missing evidence, invalid schema and expired signature rejected',async()=>{const e=await sign(payload());await assert.rejects(verifyRuleSnapshot(e,{...options,minimumSequence:1}));await assert.rejects(verifyRuleSnapshot(e,{...options,now:new Date('2026-12-01T00:00:00Z')}));await assert.rejects(verifyRuleSnapshot(e,{...options,engineFingerprint:'d'.repeat(64)}));const tampered=structuredClone(e);tampered.payload.regional.versions[0].rates[0]=1;await assert.rejects(verifyRuleSnapshot(tampered,options));const p=payload();p.evidence.pop();await assert.rejects(verifyRuleSnapshot(await sign(p),options));const q=payload();q.mode='production';await assert.rejects(verifyRuleSnapshot(await sign(q),options));});
@@ -48,7 +49,7 @@ test('synthetic key rotation and restored-head rollback require new trusted keys
  const approval=statutoryReviewPayload(envelope,reviewerId,now.toISOString());
  const review={payload:approval,signature:hex(await webcrypto.subtle.sign('Ed25519',newReviewer.privateKey,snapshotBytes(approval)))};
  const row={sequence:3,digest:envelope.digest,envelope:JSON.stringify(envelope),state:'active',review_record:JSON.stringify({review,publisherPublicKeyHex:newPublisherHex,reviewerPublicKeyHex:newReviewerHex})};
- const rotated={...next,RULE_DB:{prepare:()=>({first:async()=>row})}};
+ const rotated={...next,RULE_DB:{prepare:()=>({first:async()=>row})},REGULATORY_SEQUENCE_ANCHOR:anchorBinding({schemaVersion:1,sequence:3,digest:envelope.digest,state:'active'})};
  assert.equal((await loadRuntimeRules(rotated,engineFingerprint,{now})).state,'signed-preview');
  assert.equal((await loadRuntimeRules({...rotated,RULE_PUBLIC_KEY:publicKeyHex},engineFingerprint,{now})).state,'blocked');
  assert.equal((await loadRuntimeRules({...rotated,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex},engineFingerprint,{now})).state,'blocked');
@@ -85,4 +86,18 @@ test('started regional, payroll and salary versions cannot disappear from signed
   verifyRuleSnapshot(await sign(changed),{...options,previous}),
   /Started or historical version cannot be replaced/
  );
+});
+
+test('signed runtime rejects stale restored head even before publisher runs',async()=>{
+ const e=await sign(payload()),env=await runtimeEnv(e);
+ const read=async binding=>loadRuntimeRules({...env,REGULATORY_SEQUENCE_ANCHOR:binding},engineFingerprint,{now});
+ assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).state,'signed-preview');
+ for(const state of [
+  {schemaVersion:1,sequence:2,digest:'d'.repeat(64),state:'active'},
+  {schemaVersion:1,sequence:1,digest:'d'.repeat(64),state:'active'},
+  {schemaVersion:1,sequence:2,digest:null,state:'blocked'},
+  {schemaVersion:1,sequence:0,digest:null,state:'empty'},null
+ ])assert.equal((await read(anchorBinding(state))).state,'blocked');
+ assert.equal((await read(undefined)).state,'blocked');
+ assert.equal((await read({idFromName:()=>1,get:()=>({getState:async()=>{throw Error('unavailable');}})})).state,'blocked');
 });

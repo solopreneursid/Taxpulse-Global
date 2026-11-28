@@ -222,8 +222,8 @@
       "country": "CA",
       "module": "vat",
       "status": "scoped-example",
-      "scope": "Calendar-2026 standard GST/HST arithmetic for Alberta, Ontario, Nova Scotia, New Brunswick, Newfoundland and Labrador, and Prince Edward Island; transaction-date selection.",
-      "remaining": "Complete other provinces/territories, PST/QST, place of supply, zero-rating, exemptions, registration, input-tax credits and filing.",
+      "scope": "Calendar-2026 standard federal GST/HST component for all 13 provinces and territories; PST/QST are explicitly excluded.",
+      "remaining": "Complete PST/QST, place of supply, zero-rating, exemptions, registration, input-tax credits and filing.",
       "independentApproval": false,
       "coverageKind": "tax-component"
     },
@@ -267,8 +267,8 @@
       "country": "AU",
       "module": "payroll",
       "status": "scoped-example",
-      "scope": "Scoped salary remainder, not employer superannuation",
-      "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
+      "scope": "Scoped salary remainder and FY 2026–27 Payday Super per-pay qualifying earnings with annual cap.",
+      "remaining": "Complete earnings classification, exemptions, PAYG withholding, awards, reporting and other employer obligations.",
       "independentApproval": false,
       "coverageKind": "tax-component"
     },
@@ -330,8 +330,8 @@
       "country": "DE",
       "module": "payroll",
       "status": "scoped-example",
-      "scope": "Scoped monthly social contributions",
-      "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
+      "scope": "Scoped employee salary assessment and ordinary full-month employer statutory pension, unemployment, health and care contributions outside Saxony.",
+      "remaining": "Complete wage base determination, special worker categories, Saxony, withholding, employer levies, accident insurance and filing.",
       "independentApproval": false,
       "coverageKind": "tax-component"
     },
@@ -456,8 +456,8 @@
       "country": "AE",
       "module": "payroll",
       "status": "scoped-example",
-      "scope": "Scoped non-GCC employee ILOE",
-      "remaining": "Complete covered wage definitions, worker/employer contributions, regional and special categories",
+      "scope": "Scoped expatriate salary/ILOE and GPSSA Federal Law 57/2023 private-sector contribution salary component.",
+      "remaining": "Complete older federal and local pension regimes, GCC workers, eligibility, gratuity, withholding, proration and filing.",
       "independentApproval": false,
       "coverageKind": "tax-component"
     },
