@@ -1,3 +1,4 @@
+import {isValidSequenceAnchor} from './regulatory-sequence-anchor.mjs';
 import {payrollRules,resolvePayrollRule} from './payroll-registry.mjs';
 import {verifyStatutoryReview} from './statutory-review.mjs';
 import {verifyRuleSnapshot} from './rule-snapshot.mjs';
@@ -6,10 +7,10 @@ import {resolveIndiaSalaryRule} from './india-salary-registry.mjs';
 const hex=b=>Array.from(new Uint8Array(b),v=>v.toString(16).padStart(2,'0')).join('');
 export async function loadRuntimeRules(env,engineFingerprint,{now=new Date()}={}){
  const baseline={state:'bundled-preview',engineFingerprint,context:{},taxRulesVerified:false};
- if(!env?.RULE_DB&&!env?.RULE_SNAPSHOTS&&!env?.RULE_PUBLIC_KEY&&!env?.RULE_MIN_SEQUENCE&&!env?.RULE_REVIEW_PUBLIC_KEY&&!env?.RULE_REVIEWER_ID)return baseline;
+ if(!env?.RULE_DB&&!env?.RULE_SNAPSHOTS&&!env?.RULE_PUBLIC_KEY&&!env?.RULE_MIN_SEQUENCE&&!env?.RULE_REVIEW_PUBLIC_KEY&&!env?.RULE_REVIEWER_ID&&!env?.REGULATORY_SEQUENCE_ANCHOR)return baseline;
  try{
   // Only the transactional archive can establish an independently approved head.
-  if(!env.RULE_DB||env.RULE_SNAPSHOTS||typeof env.RULE_PUBLIC_KEY!=='string'||typeof env.RULE_REVIEW_PUBLIC_KEY!=='string'||typeof env.RULE_REVIEWER_ID!=='string'||typeof env.RULE_MIN_SEQUENCE!=='string'||!/^\d+$/.test(env.RULE_MIN_SEQUENCE))throw Error('Incomplete runtime configuration');
+  if(!env.RULE_DB||!env.REGULATORY_SEQUENCE_ANCHOR||env.RULE_SNAPSHOTS||typeof env.RULE_PUBLIC_KEY!=='string'||typeof env.RULE_REVIEW_PUBLIC_KEY!=='string'||typeof env.RULE_REVIEWER_ID!=='string'||typeof env.RULE_MIN_SEQUENCE!=='string'||!/^\d+$/.test(env.RULE_MIN_SEQUENCE))throw Error('Incomplete runtime configuration');
   const minimum=Number(env.RULE_MIN_SEQUENCE);if(!Number.isSafeInteger(minimum)||minimum<1)throw Error('Invalid sequence floor');
   const head=await env.RULE_DB.prepare('SELECT sequence,digest,envelope,state,review_record FROM regulatory_head WHERE id=1').first();
   if(!head||head.state!=='active'||!Number.isSafeInteger(head.sequence)||head.sequence<minimum)throw Error('No active transactional rule head');
@@ -26,6 +27,12 @@ export async function loadRuntimeRules(env,engineFingerprint,{now=new Date()}={}
   // Existing connected tools must all resolve the currently advertised periods.
   for(const r of regionalRules()){const [country,region]=r.jurisdiction.split('-');resolveRegionalRule({country,region,taxYear:r.taxYear},s.regional);}
   resolveIndiaSalaryRule('2026',s.indiaSalary);for(const r of payrollRules())resolvePayrollRule(r.jurisdiction,r.component,r.taxYear,s.payroll);
+  // Read the independent authoritative anchor after signature and archive checks.
+  // A restored, still correctly signed but older D1 head must never be served.
+  const namespace=env.REGULATORY_SEQUENCE_ANCHOR;
+  const stub=namespace.get(namespace.idFromName('taxpulse-regulatory-head-v1'));
+  const anchor=await stub.getState();
+  if(!isValidSequenceAnchor(anchor)||anchor.state!=='active'||anchor.sequence!==s.sequence||anchor.digest!==s.digest)throw Error('Regulatory anchor mismatch');
   const fingerprint=hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(engineFingerprint+':'+s.digest)));
   return {state:'signed-preview',engineFingerprint:fingerprint,sequence:s.sequence,digest:s.digest,expiresAt:s.expiresAt,context:{regional:s.regional,indiaSalary:s.indiaSalary,payroll:s.payroll,national:s.national},taxRulesVerified:false};
  }catch{return {state:'blocked',engineFingerprint,context:{},taxRulesVerified:false};}
