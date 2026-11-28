@@ -103,7 +103,7 @@ test('atomic publication, fixture rejection, replay, emergency block and forward
  const mutated=await pack(2);
  mutated.envelope.payload.national.national.AU.rates[1]+=100;
  assert.throws(()=>sqlite.prepare('INSERT INTO regulatory_snapshots(sequence,digest,envelope,published_at,review_record) VALUES(?,?,?,?,?)').run(2,'d'.repeat(64),JSON.stringify(mutated.envelope),now.toISOString(),null),/immutable historical version changed/);
- const env={RULE_DB:db,RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,RULE_MIN_SEQUENCE:'1'};
+ const env={RULE_DB:db,REGULATORY_SEQUENCE_ANCHOR:anchor.binding,RULE_PUBLIC_KEY:publicKeyHex,RULE_REVIEW_PUBLIC_KEY:reviewerPublicKeyHex,RULE_REVIEWER_ID:reviewerId,RULE_MIN_SEQUENCE:'1'};
  assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).state,'signed-preview');
  await assert.rejects(publishSnapshot(db,one.envelope,one.fixtures,approvedOptions(one,anchor.client)));
  await blockSnapshot(db,1,anchor.client);assert.equal((await loadRuntimeRules(env,engineFingerprint,{now})).state,'blocked');
