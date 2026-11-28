@@ -14,7 +14,7 @@ test('readiness report distinguishes all 56 preview entries from three legacy AP
  assert.equal(p.apiIntegration.propertyTransferTaxJurisdictions.length,9);
  assert.deepEqual(p.apiIntegration.capitalGainComponentCountries,['IN','US','GB','CA','DE','SG','AE','AU']);
  assert.equal(p.apiIntegration.productionEnabled,false);
- assert.equal(p.scopedTaxComponents.indirectTaxRules.length,12);
+ assert.equal(p.scopedTaxComponents.indirectTaxRules.length,19);
  assert.equal(p.scopedTaxComponents.corporateTaxRules.length,4);
  assert.equal(p.scopedTaxComponents.employerPayrollComponents.length,2);
  assert.match(p.scopedTaxComponents.historicalIndiaGstExample,/not general GST coverage/);
