@@ -29,6 +29,20 @@ test('generated Worker routes and validation',async()=>{
  assert.equal((await call('/assets/secure-records.mjs')).status,404);
  const manifest=await call('/app.webmanifest');assert.equal(manifest.status,200);assert.equal((await manifest.json()).display,'standalone');const sw=await call('/sw.js');assert.equal(sw.status,200);assert.equal(sw.headers.get('service-worker-allowed'),'/');assert.match(await sw.text(),/No tax calculations are available offline/);
  const openapi=await (await call('/openapi.json')).json();for(const path of ['/v1/business/indirect-tax','/v1/business/corporate-tax','/v1/business/scoped-corporate-tax','/v1/property/transfer-tax','/v1/property/uk-sdlt','/v1/property/sg-bsd','/v1/investment/scoped-gain','/v1/investment/au-discount-gain','/v1/treaty/credit','/v1/treaty/scoped-credit','/v1/treaty/confirmed-credit','/v1/treaty/uk-india-credit','/v1/employer-payroll/fica','/v1/employer-payroll/uk-ni','/v1/business/india-notified-gst'])assert.ok(openapi.paths[path]?.post,path);
+ for(const [path,body,key,expected] of [
+  ['/v1/employer-payroll/de-social-insurance',{country:'DE',taxYear:'2026',monthlyCoveredWage:5000,healthSupplementRate:2.9,scopeConfirmed:true},'totalEmployerContribution',1057.5],
+  ['/v1/employer-payroll/ae-federal-pension',{country:'AE',taxYear:'2026',monthlyContributionSalary:10000,scopeConfirmed:true},'totalContribution',2600],
+  ['/v1/employer-payroll/au-payday-super',{country:'AU',taxYear:'2026',priorYearToDateQualifyingEarnings:206250,currentPayQualifyingEarnings:100000,scopeConfirmed:true},'employerSuperGuarantee',7749.6]
+ ]){
+  assert.ok(openapi.paths[path]?.post,path);
+  const send=input=>call(path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(input)});
+  const response=await send(body);assert.equal(response.status,200,path);const result=await response.json();
+  assert.equal(result[key],expected,path);assert.equal(result.taxRulesVerified,false);
+  assert.equal((await send({...body,scopeConfirmed:false})).status,400);
+  assert.equal((await call(path)).status,405);
+  const blocked=await worker.fetch(new Request('https://preview.example'+path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}),{RULE_MIN_SEQUENCE:'1'});
+  assert.equal(blocked.status,503);
+ }
  const catalog=await (await call('/v1/catalog')).json();assert.equal(catalog.countries.length,8);assert.deepEqual(catalog.countries.map(c=>c.code),['IN','US','GB','DE','AE','CA','AU','SG']);assert.deepEqual(catalog.filingStatusOptions.US,['single','mfj','hoh','mfs']);assert.match(catalog.countries.find(c=>c.code==='IN').taxYearLabel,/2026-27/);
  assert.equal((await (await call('/openapi.json')).json()).openapi,'3.1.0');
  const payload={country:'GB',taxYear:'2026',module:'pit',parameters:{grossSalary:130000}};
