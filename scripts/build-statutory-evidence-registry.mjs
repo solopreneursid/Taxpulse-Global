@@ -124,6 +124,7 @@ function evidenceAppliesToCountry(path,country){
   return found;
  }catch{return fileCountryContext(path,country);}
 }
+const EXACT_EVIDENCE_SCOPES=Object.freeze({'payroll-ca-gst-2026-11-28.json':Object.freeze({payroll:['DE','AE','AU'],vat:['CA']})});
 function sourceFilesFor(country,module,evidenceFiles){
  const candidates=[
   `rules/2026/${country}.json`,
@@ -133,7 +134,7 @@ function sourceFilesFor(country,module,evidenceFiles){
  return unique(candidates.filter(path=>exists(path)&&(
   path.startsWith('rules/2026/')||
   MODULE_SOURCE_REGISTRIES[module]?.includes(path)||
-  evidenceFiles.includes(path)&&evidenceAppliesToCountry(path,country)
+  evidenceFiles.includes(path)&&evidenceAppliesToCountry(path,country)&&(!Object.hasOwn(EXACT_EVIDENCE_SCOPES,path.split('/').at(-1))||EXACT_EVIDENCE_SCOPES[path.split('/').at(-1)][module]?.includes(country))
  )));
 }
 function collectSourceRecords(paths,country){
