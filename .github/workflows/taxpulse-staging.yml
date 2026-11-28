@@ -38,12 +38,14 @@ jobs:
         run: |
           node staging/integrated/build.mjs
           node scripts/preview-build-evidence.mjs
+          node scripts/prepare-founder-handoff.mjs preview-build-evidence.json founder-preview-handoff.json
       - uses: actions/upload-artifact@v4
         with:
           name: preview-build-evidence
           path: |
             preview-build-evidence.json
             local-accessibility-performance.json
+            founder-preview-handoff.json
           retention-days: 30
 
       - uses: actions/upload-artifact@v4
